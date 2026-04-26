@@ -296,10 +296,20 @@ const ar: Translations = {
   badge: {},
   tabs: {
     home: "الرئيسية",
+    dashboard: "لوحة التحكم",
+    inventory: "المخزون",
+    search: "بحث",
     components: "المكونات",
     pro: "Pro",
     profile: "الملف الشخصي",
   },
+  dashboardScreen: en.dashboardScreen,
+  skuListScreen: en.skuListScreen,
+  addSkuScreen: en.addSkuScreen,
+  skuDetailScreen: en.skuDetailScreen,
+  stockTakeScreen: en.stockTakeScreen,
+  inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
+  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

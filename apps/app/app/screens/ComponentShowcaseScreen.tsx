@@ -45,14 +45,14 @@ import {
   SubscriptionStatus,
 } from "@/components"
 import { ANIMATION } from "@/config/constants"
-import type { MainTabScreenProps } from "@/navigators/navigationTypes"
+import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { webDimension } from "@/types/webStyles"
 
 // =============================================================================
 // TYPES
 // =============================================================================
 
-interface ComponentShowcaseScreenProps extends MainTabScreenProps<"Components"> {}
+interface ComponentShowcaseScreenProps extends AppStackScreenProps<"ComponentShowcase"> {}
 
 // =============================================================================
 // CONSTANTS

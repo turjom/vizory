@@ -304,10 +304,20 @@ const es: Translations = {
   badge: {},
   tabs: {
     home: "Inicio",
+    dashboard: "Panel",
+    inventory: "Inventario",
+    search: "Buscar",
     components: "Componentes",
     pro: "Pro",
     profile: "Perfil",
   },
+  dashboardScreen: en.dashboardScreen,
+  skuListScreen: en.skuListScreen,
+  addSkuScreen: en.addSkuScreen,
+  skuDetailScreen: en.skuDetailScreen,
+  stockTakeScreen: en.stockTakeScreen,
+  inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
+  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

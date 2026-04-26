@@ -15,9 +15,9 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles, UnistylesRuntime } from "react-native-unistyles"
 
-import { ComponentShowcaseScreen } from "@/screens/ComponentShowcaseScreen"
-import { PaywallScreen } from "@/screens/PaywallScreen"
+import { DashboardScreen } from "@/screens/DashboardScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
+import { SearchScreen } from "@/screens/SearchScreen"
 import { SkuListScreen } from "@/screens/SkuListScreen"
 import { designTokens } from "@/theme/designTokens"
 import { haptics } from "@/utils/haptics"
@@ -38,9 +38,9 @@ const TAB_CONFIG: Record<
     labelTx: string
   }
 > = {
-  Home: { icon: "home", iconOutline: "home-outline", labelTx: "tabs:home" },
-  Components: { icon: "cube", iconOutline: "cube-outline", labelTx: "tabs:components" },
-  Paywall: { icon: "diamond", iconOutline: "diamond-outline", labelTx: "tabs:pro" },
+  Home: { icon: "home", iconOutline: "home-outline", labelTx: "tabs:dashboard" },
+  Inventory: { icon: "clipboard", iconOutline: "clipboard-outline", labelTx: "tabs:inventory" },
+  Search: { icon: "search", iconOutline: "search-outline", labelTx: "tabs:search" },
   Profile: { icon: "person", iconOutline: "person-outline", labelTx: "tabs:profile" },
 }
 
@@ -488,9 +488,9 @@ export function MainTabNavigator() {
             headerShown: false,
           }}
         >
-          <Tab.Screen name="Home" component={SkuListScreen} />
-          <Tab.Screen name="Components" component={ComponentShowcaseScreen} />
-          <Tab.Screen name="Paywall" component={PaywallScreen} />
+          <Tab.Screen name="Home" component={DashboardScreen} />
+          <Tab.Screen name="Inventory" component={SkuListScreen} />
+          <Tab.Screen name="Search" component={SearchScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />
         </Tab.Navigator>
       </View>

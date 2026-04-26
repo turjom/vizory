@@ -155,7 +155,9 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
                       tx={
                         adjustment.adjustment_type === "PURCHASE"
                           ? "skuDetailScreen:typePurchase"
-                          : "skuDetailScreen:typeSale"
+                          : adjustment.adjustment_type === "SALE"
+                            ? "skuDetailScreen:typeSale"
+                            : "skuDetailScreen:typeStockTake"
                       }
                     />
                   </View>

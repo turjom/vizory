@@ -301,10 +301,20 @@ const ja: Translations = {
   badge: {},
   tabs: {
     home: "ホーム",
+    dashboard: "ダッシュボード",
+    inventory: "在庫",
+    search: "検索",
     components: "コンポーネント",
     pro: "Pro",
     profile: "プロフィール",
   },
+  dashboardScreen: en.dashboardScreen,
+  skuListScreen: en.skuListScreen,
+  addSkuScreen: en.addSkuScreen,
+  skuDetailScreen: en.skuDetailScreen,
+  stockTakeScreen: en.stockTakeScreen,
+  inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
+  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

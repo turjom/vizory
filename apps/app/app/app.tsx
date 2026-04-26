@@ -29,6 +29,8 @@ import * as Linking from "expo-linking"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 
+import { ToastProvider } from "@/components"
+
 import { logEnvValidation } from "./config/env"
 import { initI18n, initializeLanguage } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
@@ -93,8 +95,8 @@ const config = {
       path: "",
       screens: {
         Home: "home",
-        Components: "components",
-        Paywall: "pro",
+        Inventory: "inventory",
+        Search: "search",
         Profile: "profile",
       },
     },
@@ -345,10 +347,14 @@ export function App() {
         <SafeAreaProvider initialMetrics={initialWindowMetrics} style={$safeAreaProvider}>
           <BackendProvider>
             {Platform.OS === "web" ? (
-              <ThemeProvider>{content}</ThemeProvider>
+              <ThemeProvider>
+                <ToastProvider>{content}</ToastProvider>
+              </ThemeProvider>
             ) : (
               <KeyboardProvider>
-                <ThemeProvider>{content}</ThemeProvider>
+                <ThemeProvider>
+                  <ToastProvider>{content}</ToastProvider>
+                </ThemeProvider>
               </KeyboardProvider>
             )}
           </BackendProvider>

@@ -307,10 +307,20 @@ const fr: Translations = {
   badge: {},
   tabs: {
     home: "Accueil",
+    dashboard: "Tableau de bord",
+    inventory: "Inventaire",
+    search: "Rechercher",
     components: "Composants",
     pro: "Pro",
     profile: "Profil",
   },
+  dashboardScreen: en.dashboardScreen,
+  skuListScreen: en.skuListScreen,
+  addSkuScreen: en.addSkuScreen,
+  skuDetailScreen: en.skuDetailScreen,
+  stockTakeScreen: en.stockTakeScreen,
+  inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
+  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

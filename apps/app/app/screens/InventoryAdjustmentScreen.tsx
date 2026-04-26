@@ -163,6 +163,7 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
           variant: "success",
         })
         await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
+        await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
         closeAdjustmentModal()
         navigation.goBack()
       },

@@ -301,10 +301,20 @@ const hi: Translations = {
   badge: {},
   tabs: {
     home: "होम",
+    dashboard: "डैशबोर्ड",
+    inventory: "इन्वेंटरी",
+    search: "खोजें",
     components: "कंपोनेंट्स",
     pro: "Pro",
     profile: "प्रोफ़ाइल",
   },
+  dashboardScreen: en.dashboardScreen,
+  skuListScreen: en.skuListScreen,
+  addSkuScreen: en.addSkuScreen,
+  skuDetailScreen: en.skuDetailScreen,
+  stockTakeScreen: en.stockTakeScreen,
+  inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
+  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

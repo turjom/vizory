@@ -150,7 +150,7 @@ export type SupabaseDatabase = {
           id: string
           user_id: string
           sku_id: string
-          adjustment_type: "PURCHASE" | "SALE"
+          adjustment_type: "PURCHASE" | "SALE" | "STOCK_TAKE"
           quantity: number
           reference_note: string | null
           created_at: string | null
@@ -160,7 +160,7 @@ export type SupabaseDatabase = {
           id?: string
           user_id: string
           sku_id: string
-          adjustment_type: "PURCHASE" | "SALE"
+          adjustment_type: "PURCHASE" | "SALE" | "STOCK_TAKE"
           quantity: number
           reference_note?: string | null
           created_at?: string | null
@@ -170,11 +170,41 @@ export type SupabaseDatabase = {
           id?: string
           user_id?: string
           sku_id?: string
-          adjustment_type?: "PURCHASE" | "SALE"
+          adjustment_type?: "PURCHASE" | "SALE" | "STOCK_TAKE"
           quantity?: number
           reference_note?: string | null
           created_at?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stock_takes: {
+        Row: {
+          id: string
+          user_id: string
+          sku_id: string
+          counted_quantity: number
+          system_quantity_at_time: number
+          variance: number
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sku_id: string
+          counted_quantity: number
+          system_quantity_at_time: number
+          variance: number
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sku_id?: string
+          counted_quantity?: number
+          system_quantity_at_time?: number
+          variance?: number
+          created_at?: string | null
         }
         Relationships: []
       }

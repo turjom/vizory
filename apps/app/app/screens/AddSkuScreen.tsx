@@ -125,6 +125,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       if (editingSku?.id) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.sku.detail(editingSku.id) })
       }

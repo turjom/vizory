@@ -73,6 +73,14 @@ export const skuKeys = {
 }
 
 /**
+ * Query key factory for dashboard inventory widgets
+ */
+export const dashboardKeys = {
+  all: ["dashboard"] as const,
+  inventory: (userId: string | null) => [...dashboardKeys.all, "inventory", userId] as const,
+}
+
+/**
  * All query keys
  */
 export const queryKeys = {
@@ -82,4 +90,5 @@ export const queryKeys = {
   app: appKeys,
   widget: widgetKeys,
   sku: skuKeys,
+  dashboard: dashboardKeys,
 }

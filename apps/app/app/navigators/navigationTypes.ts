@@ -14,9 +14,9 @@ export type PaywallParams = {
 
 export type MainTabParamList = {
   Home: undefined
-  Components: undefined
+  Inventory: undefined
+  Search: undefined
   Profile: undefined
-  Paywall: PaywallParams | undefined
 }
 
 // App Stack Navigator types
@@ -66,6 +66,7 @@ export type AppStackParamList = {
     skuName: string
     currentQuantity: number
   }
+  StockTake: undefined
   Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // SHIPNATIVE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

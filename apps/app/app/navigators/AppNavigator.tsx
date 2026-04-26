@@ -177,6 +177,14 @@ const AppStack = () => {
             }}
           />
           <Stack.Screen
+            name="ComponentShowcase"
+            component={Screens.ComponentShowcaseScreen}
+            options={{
+              animation: "slide_from_right",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
             name="AddSku"
             component={Screens.AddSkuScreen}
             options={{
@@ -195,6 +203,14 @@ const AppStack = () => {
           <Stack.Screen
             name="InventoryAdjustment"
             component={Screens.InventoryAdjustmentScreen}
+            options={{
+              animation: "slide_from_right",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="StockTake"
+            component={Screens.StockTakeScreen}
             options={{
               animation: "slide_from_right",
               headerShown: false,

@@ -345,12 +345,8 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
  * }
  * ```
  */
-const useSelectedAuthHook: () => AppAuthState & AppAuthActions = isConvex
-  ? useConvexAppAuth
-  : useSupabaseAppAuth
-
 export function useAuth(): AppAuthState & AppAuthActions {
-  return useSelectedAuthHook()
+  return useSupabaseAppAuth()
 }
 
 /**

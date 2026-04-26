@@ -3,11 +3,11 @@ import { FlatList, Pressable, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Card, EmptyState, Header, Screen, Spinner, Text } from "@/components"
+import { Button, Card, EmptyState, Header, Screen, Spinner, Text } from "@/components"
 import { useSkusQuery } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 
-interface SkuListScreenProps extends MainTabScreenProps<"Home"> {}
+interface SkuListScreenProps extends MainTabScreenProps<"Inventory"> {}
 
 export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ navigation }) {
   const { theme } = useUnistyles()
@@ -108,6 +108,17 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
         contentContainerStyle={[styles.listContent, skus.length === 0 && styles.emptyListContent]}
         onRefresh={handleRefresh}
         refreshing={isRefetching}
+        ListHeaderComponent={
+          skus.length > 0 ? (
+            <Button
+              variant="secondary"
+              tx="skuListScreen:stockTakeButton"
+              onPress={() => navigation.navigate("StockTake")}
+              fullWidth
+              style={styles.listHeaderButton}
+            />
+          ) : null
+        }
         ListEmptyComponent={
           <EmptyState
             icon="components"
@@ -133,6 +144,9 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing["2xl"],
+  },
+  listHeaderButton: {
+    marginBottom: theme.spacing.sm,
   },
   emptyListContent: {
     flexGrow: 1,

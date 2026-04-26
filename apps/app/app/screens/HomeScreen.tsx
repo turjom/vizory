@@ -51,7 +51,7 @@ export const HomeScreen: FC<HomeScreenProps> = function HomeScreen(_props) {
     : {}
 
   const handleNavigateToComponents = () => {
-    navigation.navigate("Components")
+    navigation.navigate("ComponentShowcase")
   }
 
   const handleTogglePush = () => {
