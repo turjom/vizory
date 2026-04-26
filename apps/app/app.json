@@ -1,7 +1,7 @@
 {
   "name": "Vizory",
   "slug": "vizory",
-  "scheme": "shipnative",
+  "scheme": "vizory",
   "entryPoint": "./index.tsx",
   "version": "1.0.0",
   "orientation": "portrait",
@@ -107,7 +107,7 @@
     "tsconfigPaths": true
   },
   "extra": {
-    "shipnative": {
+    "vizory": {
       "version": "1.0.0"
     }
   }

@@ -1,4 +1,4 @@
-import { FC, useState, useMemo } from "react"
+import { FC, useState } from "react"
 import { View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { useNavigation } from "@react-navigation/native"
@@ -18,8 +18,8 @@ import { logger } from "@/utils/Logger"
 
 interface OnboardingScreenProps extends AppStackScreenProps<"Onboarding"> {}
 
-const TOTAL_STEPS = 3
-const LAST_STEP_INDEX = TOTAL_STEPS - 1
+const TOTAL_STEPS = 2
+const LAST_STEP_INDEX = 1
 
 // =============================================================================
 // COMPONENT
@@ -34,15 +34,6 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
   const [step, setStep] = useState(0)
   const [isRequestingPermission, setIsRequestingPermission] = useState(false)
 
-  const goalOptions = useMemo(
-    () => [
-      { key: "goalBuildApp", label: t("onboardingScreen:goalBuildApp") },
-      { key: "goalLearnReactNative", label: t("onboardingScreen:goalLearnReactNative") },
-      { key: "goalJustExploring", label: t("onboardingScreen:goalJustExploring") },
-    ],
-    [t],
-  )
-
   // Slide animations
   const handleNext = async () => {
     if (step < LAST_STEP_INDEX) {
@@ -51,9 +42,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
       // Mark onboarding as complete BEFORE navigation
       // This ensures the state is saved before the navigator re-evaluates routes
       await completeOnboarding()
-      // Navigate to Paywall after saving onboarding status
-      // The Paywall screen will handle navigation to Main
-      navigation.replace("Paywall", { fromOnboarding: true })
+      navigation.replace("Main")
     }
   }
 
@@ -78,8 +67,8 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
         currentStep={0}
         totalSteps={TOTAL_STEPS}
         headerIcon="👋"
-        titleTx="onboardingScreen:welcomeTitle"
-        subtitleTx="onboardingScreen:welcomeSubtitle"
+        title="Welcome to Vizory"
+        subtitle="Track your stock, get low stock alerts, and never oversell again."
       >
         <TouchableOpacity style={styles.primaryButton} onPress={handleNext} activeOpacity={0.8}>
           <Text weight="semiBold" style={styles.primaryButtonText} tx="onboardingScreen:letsGo" />
@@ -88,34 +77,10 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
     )
   }
 
-  // Step 1: Goal Selection
-  if (step === 1) {
-    return (
-      <OnboardingScreenLayout
-        currentStep={1}
-        totalSteps={TOTAL_STEPS}
-        headerIcon="🎯"
-        titleTx="onboardingScreen:goalsTitle"
-        subtitleTx="onboardingScreen:goalsSubtitle"
-      >
-        <View style={styles.optionsContainer}>
-          {goalOptions.map((option) => (
-            <TouchableOpacity key={option.key} style={styles.optionButton} onPress={handleNext}>
-              <Text weight="semiBold" style={styles.optionText}>
-                {option.label}
-              </Text>
-              <Ionicons name="chevron-forward" size={20} color={theme.colors.foregroundSecondary} />
-            </TouchableOpacity>
-          ))}
-        </View>
-      </OnboardingScreenLayout>
-    )
-  }
-
   // Step 2: Notifications
   return (
     <OnboardingScreenLayout
-      currentStep={2}
+      currentStep={1}
       totalSteps={TOTAL_STEPS}
       headerIcon="🔔"
       titleTx="onboardingScreen:notificationsTitle"

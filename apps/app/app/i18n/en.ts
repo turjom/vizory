@@ -483,12 +483,11 @@ const en = {
     goalLearnReactNative: "Learn React Native",
     goalJustExploring: "Just Exploring",
     // Step 2: Notifications
-    notificationsTitle: "Stay Updated",
-    notificationsSubtitle:
-      "Enable notifications to get daily updates, tips, and important announcements.",
-    notificationPreviewTitle: "New Feature!",
+    notificationsTitle: "Never Miss a Low Stock Alert",
+    notificationsSubtitle: "Get notified when stock drops below your safety threshold.",
+    notificationPreviewTitle: "Low Stock Alert",
     notificationPreviewTime: "Just now",
-    notificationPreviewMessage: "Dark mode is now available. Check it out in settings!",
+    notificationPreviewMessage: "Ceramic Mug is running low — only 2 units left.",
     turnOnNotifications: "Turn On Notifications",
     enabling: "Enabling...",
     maybeLater: "Maybe Later",
