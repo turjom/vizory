@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { isConvex } from "@/config/env"
 import { deleteAccount as deleteSupabaseAccount } from "@/services/accountDeletion"
 import { useAuthStore, useSubscriptionStore } from "@/stores"
 import { GUEST_USER_KEY } from "@/stores/auth"
@@ -24,14 +23,9 @@ import { logger } from "@/utils/Logger"
 import { Button } from "./Button"
 import { Text } from "./Text"
 
-// Conditionally import Convex hooks
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { useMutation, api } = isConvex
-  ? {
-      useMutation: require("@/hooks/convex").useMutation,
-      api: require("@convex/_generated/api").api,
-    }
-  : { useMutation: null, api: null }
+// Convex removed - using Supabase only
+const useMutation = null
+const api = null
 
 export interface DeleteAccountModalProps {
   visible: boolean
@@ -89,7 +83,7 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
 
   // Convex mutation - only defined when using Convex backend
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const convexDeleteAccount = isConvex && useMutation ? useMutation(api.users.deleteAccount) : null
+  const convexDeleteAccount = null // Convex removed
 
   // Track mount state to prevent state updates after unmount
   useEffect(() => {
@@ -129,17 +123,8 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
     }
 
     try {
-      if (isConvex && convexDeleteAccount) {
-        // Convex backend: Use mutation
-        logger.debug("Deleting account via Convex mutation", { userId })
-        await convexDeleteAccount()
-
-        // Clear subscription state
-        await clearSubscriptionState()
-
-        // Reset auth state
-        resetAuthState(userId)
-      } else {
+      // Supabase only - use deleteSupabaseAccount
+      {
         // Supabase backend: Use service
         const result = await deleteSupabaseAccount()
 

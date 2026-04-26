@@ -111,9 +111,7 @@ export const AuthCallbackScreen = () => {
             // For web, we need to complete the OAuth flow
             if (Platform.OS === "web") {
               try {
-                // Dynamic import to avoid loading Convex in Supabase builds
-                // Dynamic import to ensure Convex auth is available
-                await import("@convex-dev/auth/react")
+                // Convex removed - using Supabase only
                 // Note: The flow is handled by the ConvexAuthProvider detecting the code
                 // and completing the flow automatically
 

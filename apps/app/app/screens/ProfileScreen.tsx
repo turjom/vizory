@@ -19,11 +19,7 @@
  * - Convex: Reactive queries that auto-update, no manual refetch needed
  */
 
-import { isConvex } from "@/config/env"
-
 // Conditional export based on backend provider
 // This ensures tree-shaking removes the unused version in production
 
-export const ProfileScreen = isConvex
-  ? require("./ProfileScreen.convex").ProfileScreen
-  : require("./ProfileScreen.supabase").ProfileScreen
+export { ProfileScreen } from "./ProfileScreen.supabase"

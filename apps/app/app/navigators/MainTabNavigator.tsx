@@ -16,9 +16,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles, UnistylesRuntime } from "react-native-unistyles"
 
 import { ComponentShowcaseScreen } from "@/screens/ComponentShowcaseScreen"
-import { HomeScreen } from "@/screens/HomeScreen"
 import { PaywallScreen } from "@/screens/PaywallScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
+import { SkuListScreen } from "@/screens/SkuListScreen"
 import { designTokens } from "@/theme/designTokens"
 import { haptics } from "@/utils/haptics"
 
@@ -488,7 +488,7 @@ export function MainTabNavigator() {
             headerShown: false,
           }}
         >
-          <Tab.Screen name="Home" component={HomeScreen} />
+          <Tab.Screen name="Home" component={SkuListScreen} />
           <Tab.Screen name="Components" component={ComponentShowcaseScreen} />
           <Tab.Screen name="Paywall" component={PaywallScreen} />
           <Tab.Screen name="Profile" component={ProfileScreen} />

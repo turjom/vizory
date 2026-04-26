@@ -14,7 +14,7 @@
  */
 
 import type { Backend, BackendProvider } from "./types"
-import { env, isSupabase, isConvex } from "../../config/env"
+import { env, isSupabase } from "../../config/env"
 import { logger } from "../../utils/Logger"
 
 // ============================================================================
@@ -64,10 +64,6 @@ export async function getBackendAsync(): Promise<Backend> {
         // Dynamically import Supabase backend
         const { createSupabaseBackend } = await import("./supabase")
         backendInstance = createSupabaseBackend()
-      } else if (isConvex) {
-        // Dynamically import Convex backend
-        const { createConvexBackend } = await import("./convex")
-        backendInstance = createConvexBackend()
       } else {
         throw new Error(`Unknown backend provider: ${env.backendProvider}`)
       }
@@ -109,10 +105,6 @@ export function getBackend(): Backend {
       // Supabase is available synchronously
       const { createSupabaseBackend } = require("./supabase")
       backendInstance = createSupabaseBackend()
-    } else if (isConvex) {
-      // Convex is available synchronously
-      const { createConvexBackend } = require("./convex")
-      backendInstance = createConvexBackend()
     } else {
       throw new Error(
         `Backend not initialized. Call getBackendAsync() first or use useBackend() hook.`,
@@ -163,4 +155,3 @@ export * from "./types"
 // These are tree-shaken out if not used
 
 export type { TypedSupabaseClient } from "./supabase/client"
-export type { ConvexReactClient } from "convex/react"

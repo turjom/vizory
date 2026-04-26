@@ -19,11 +19,7 @@
  * - Convex: OTP code verification with email + code + newPassword in single signIn call
  */
 
-import { isConvex } from "@/config/env"
-
 // Conditional export based on backend provider
 // This ensures tree-shaking removes the unused version in production
 
-export const ResetPasswordScreen = isConvex
-  ? require("./ResetPasswordScreen.convex").ResetPasswordScreen
-  : require("./ResetPasswordScreen.supabase").ResetPasswordScreen
+export { ResetPasswordScreen } from "./ResetPasswordScreen.supabase"

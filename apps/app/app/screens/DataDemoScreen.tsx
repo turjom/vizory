@@ -15,11 +15,7 @@
  * 4. For Convex: Use useQuery/useMutation from @/hooks/convex
  */
 
-import { isConvex } from "@/config/env"
-
 // Conditional export based on backend provider
 // This ensures tree-shaking removes the unused version in production
 
-export const DataDemoScreen = isConvex
-  ? require("./DataDemoScreen.convex").DataDemoScreen
-  : require("./DataDemoScreen.supabase").DataDemoScreen
+export { DataDemoScreen } from "./DataDemoScreen.supabase"

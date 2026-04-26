@@ -14,17 +14,7 @@
  * }
  * ```
  *
- * `useAuth()` is the ONLY auth hook you need. It works with both Supabase and Convex backends.
- *
- * ## Convex Data Hooks (if using Convex backend)
- *
- * ```tsx
- * import { useQuery, useMutation } from "@/hooks"
- * import { api } from "@convex/_generated/api"
- *
- * const users = useQuery(api.users.list)  // Reactive!
- * const updateUser = useMutation(api.users.update)
- * ```
+ * `useAuth()` is the ONLY auth hook you need.
  *
  * ## Real-time Hooks
  *
@@ -78,17 +68,6 @@ export { useWidgetData } from "./useWidgetData"
 
 export { queryClient } from "./queries/queryClient"
 export { queryKeys } from "./queries/queryKeys"
+export { useSkusQuery } from "./queries/useSkusQuery"
+export { useSkuDetailQuery } from "./queries/useSkuDetailQuery"
 
-// ============================================================================
-// Convex Data Hooks (only needed if using Convex backend)
-// ============================================================================
-
-export {
-  useQuery,
-  useMutation,
-  useAction,
-  useConvex,
-  Authenticated,
-  Unauthenticated,
-  AuthLoading,
-} from "./convex"

@@ -1,6 +1,6 @@
 {
-  "name": "reactnativestarterkit",
-  "slug": "reactnativestarterkit",
+  "name": "Vizory",
+  "slug": "vizory",
   "scheme": "shipnative",
   "entryPoint": "./index.tsx",
   "version": "1.0.0",
@@ -17,7 +17,7 @@
   ],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
-    "package": "com.reactnativestarterkit",
+    "package": "com.vizory.app",
     "adaptiveIcon": {
       "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
@@ -36,7 +36,7 @@
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.reactnativestarterkit",
+    "bundleIdentifier": "com.vizory.app",
     "infoPlist": {
       "UIViewControllerBasedStatusBarAppearance": true,
       "UIBackgroundModes": [

@@ -14,7 +14,7 @@ import { Platform } from "react-native"
 import * as Device from "expo-device"
 import { UnistylesRuntime } from "react-native-unistyles"
 
-import { isSupabase, isConvex } from "../config/env"
+import { isSupabase } from "../config/env"
 import { useNotificationStore } from "../stores/notificationStore"
 import type { SupabaseDatabase, UserPreferences } from "../types/supabase"
 import { logger } from "../utils/Logger"
@@ -27,12 +27,11 @@ const { supabase, isUsingMockSupabase } = isSupabase
   ? require("./supabase")
   : { supabase: null, isUsingMockSupabase: true }
 
-// Conditionally import Convex push token service
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const convexPushTokens = isConvex ? require("./backend/convex/pushTokens") : null
+// Convex removed - using Supabase only
+const convexPushTokens = null
 
 // For preferences (theme, notifications settings), skip sync for Convex (use React mutations instead)
-const shouldSkipPreferenceSync = isConvex || isUsingMockSupabase
+const shouldSkipPreferenceSync = isUsingMockSupabase // Convex removed
 
 type _ProfilesUpdate = SupabaseDatabase["public"]["Tables"]["profiles"]["Update"]
 type PushTokenInsert = SupabaseDatabase["public"]["Tables"]["push_tokens"]["Insert"]
@@ -268,10 +267,7 @@ export function syncPushToken(userId: string, token: string): void {
   }
 
   // Use Convex push token service if available
-  if (isConvex && convexPushTokens) {
-    void convexPushTokens.syncPushToken(token)
-    return
-  }
+  // Convex push tokens removed
 
   // Skip if mock mode (no Supabase)
   if (isUsingMockSupabase) {
@@ -324,10 +320,7 @@ export function deactivatePushToken(userId: string, token: string): void {
   }
 
   // Use Convex push token service if available
-  if (isConvex && convexPushTokens) {
-    void convexPushTokens.deactivatePushToken(token)
-    return
-  }
+  // Convex push tokens removed
 
   // Skip if mock mode (no Supabase)
   if (isUsingMockSupabase) {
@@ -365,10 +358,7 @@ export function deactivatePushToken(userId: string, token: string): void {
  */
 export function deactivateAllPushTokens(userId: string): void {
   // Use Convex push token service if available
-  if (isConvex && convexPushTokens) {
-    void convexPushTokens.deactivateAllPushTokens()
-    return
-  }
+  // Convex push tokens removed
 
   // Skip if mock mode (no Supabase)
   if (isUsingMockSupabase) {

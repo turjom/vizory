@@ -19,13 +19,12 @@
  * - Convex: HTTP action endpoints, token-based auth
  */
 
-import { isConvex } from "@/config/env"
 
 // Conditional export based on backend provider
 // This ensures tree-shaking removes the unused version in production
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const widgetService = isConvex ? require("./widgets.convex") : require("./widgets.supabase")
+const widgetService = require("./widgets.supabase")
 
 // Re-export types for TypeScript
 export type { WidgetCache } from "./widgets.supabase"

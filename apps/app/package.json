@@ -1,5 +1,5 @@
 {
-  "name": "starter-app",
+  "name": "vizory",
   "version": "0.0.1",
   "private": true,
   "main": "index.tsx",
@@ -37,9 +37,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@auth/core": "~0.37.0",
     "@bittingz/expo-widgets": "^3.0.2",
-    "@convex-dev/auth": "^0.0.90",
     "@expo-google-fonts/space-grotesk": "^0.4.0",
     "@expo/config-plugins": "^54.0.2",
     "@expo/metro-runtime": "~6.1.2",
@@ -56,7 +54,6 @@
     "@supabase/supabase-js": "^2.84.0",
     "@tanstack/react-query": "^5.90.10",
     "apisauce": "3.1.1",
-    "convex": "^1.31.4",
     "date-fns": "^4.1.0",
     "expo": "~54.0.25",
     "expo-application": "~7.0.7",

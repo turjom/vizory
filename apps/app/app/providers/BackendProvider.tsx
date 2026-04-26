@@ -103,42 +103,6 @@ function SupabaseProvider({ children }: { children: ReactNode }) {
 // Convex Provider
 // ============================================================================
 
-function ConvexProviderWrapper({ children }: { children: ReactNode }) {
-  // Only load Convex providers when using Convex backend
-  // This prevents requiring Convex packages when using Supabase
-  if (!isConvex) {
-    return <>{children}</>
-  }
-
-  // Dynamically import Convex providers only when needed
-  // This is safe because isConvex is determined at build time from env vars
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ConvexProvider } = require("../providers/ConvexProvider")
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ConvexAuthSync } = require("../providers/ConvexAuthSync")
-
-    return (
-      <ConvexProvider>
-        <ConvexAuthSync>{children}</ConvexAuthSync>
-      </ConvexProvider>
-    )
-  } catch (error) {
-    // If Convex packages are missing, show helpful error
-    const errorMessage = [
-      "Convex packages not found.",
-      "",
-      "You've set EXPO_PUBLIC_BACKEND_PROVIDER=convex but Convex packages are not installed.",
-      "",
-      "To fix this:",
-      "1. Install packages: yarn add convex @convex-dev/auth",
-      "2. Or switch to Supabase: EXPO_PUBLIC_BACKEND_PROVIDER=supabase",
-    ].join("\n")
-
-    logger.error(errorMessage, {}, error as Error)
-    throw new Error(errorMessage)
-  }
-}
 
 // ============================================================================
 // Main Provider
@@ -231,13 +195,8 @@ export function BackendProvider({
     <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>
   )
 
-  // Always wrap with both providers to support useAuth() calling both hooks unconditionally
-  // React's rules of hooks require hooks to be called in the same order every render
-  // The unused provider will be a no-op if its backend isn't configured
   return (
-    <ConvexProviderWrapper>
       <SupabaseProvider>{providerContent}</SupabaseProvider>
-    </ConvexProviderWrapper>
   )
 }
 

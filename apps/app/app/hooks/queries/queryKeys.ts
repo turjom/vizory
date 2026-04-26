@@ -62,6 +62,17 @@ export const widgetKeys = {
 }
 
 /**
+ * Query key factory for SKU-related queries
+ */
+export const skuKeys = {
+  all: ["sku"] as const,
+  lists: () => [...skuKeys.all, "list"] as const,
+  list: (userId: string | null) => [...skuKeys.lists(), userId] as const,
+  details: () => [...skuKeys.all, "detail"] as const,
+  detail: (skuId: string) => [...skuKeys.details(), skuId] as const,
+}
+
+/**
  * All query keys
  */
 export const queryKeys = {
@@ -70,4 +81,5 @@ export const queryKeys = {
   analytics: analyticsKeys,
   app: appKeys,
   widget: widgetKeys,
+  sku: skuKeys,
 }

@@ -176,6 +176,30 @@ const AppStack = () => {
               animation: "slide_from_right",
             }}
           />
+          <Stack.Screen
+            name="AddSku"
+            component={Screens.AddSkuScreen}
+            options={{
+              animation: "slide_from_right",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="SkuDetail"
+            component={Screens.SkuDetailScreen}
+            options={{
+              animation: "slide_from_right",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="InventoryAdjustment"
+            component={Screens.InventoryAdjustmentScreen}
+            options={{
+              animation: "slide_from_right",
+              headerShown: false,
+            }}
+          />
         </>
       ) : (
         // ------------------------------------------------------------------

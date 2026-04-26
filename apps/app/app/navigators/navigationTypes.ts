@@ -44,6 +44,28 @@ export type AppStackParamList = {
   Welcome: undefined
   ComponentShowcase: undefined
   DataDemo: undefined
+  AddSku:
+    | {
+        mode?: "create" | "edit"
+        sku?: {
+          id: string
+          name: string
+          sku_code: string | null
+          description: string | null
+          price: number | null
+          uom: string | null
+          safety_stock_threshold: number
+        }
+      }
+    | undefined
+  SkuDetail: {
+    skuId: string
+  }
+  InventoryAdjustment: {
+    skuId: string
+    skuName: string
+    currentQuantity: number
+  }
   Main: NavigatorScreenParams<MainTabParamList>
   // 🔥 Your screens go here
   // SHIPNATIVE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

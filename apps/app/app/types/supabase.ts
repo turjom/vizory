@@ -79,6 +79,105 @@ export type SupabaseDatabase = {
         }
         Relationships: []
       }
+      skus: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          sku_code: string | null
+          description: string | null
+          price: number | null
+          uom: string | null
+          safety_stock_threshold: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          sku_code?: string | null
+          description?: string | null
+          price?: number | null
+          uom?: string | null
+          safety_stock_threshold?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          sku_code?: string | null
+          description?: string | null
+          price?: number | null
+          uom?: string | null
+          safety_stock_threshold?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory_quantity: {
+        Row: {
+          id: string
+          user_id: string
+          sku_id: string
+          total_quantity: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sku_id: string
+          total_quantity?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sku_id?: string
+          total_quantity?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      inventory_adjustments: {
+        Row: {
+          id: string
+          user_id: string
+          sku_id: string
+          adjustment_type: "PURCHASE" | "SALE"
+          quantity: number
+          reference_note: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sku_id: string
+          adjustment_type: "PURCHASE" | "SALE"
+          quantity: number
+          reference_note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sku_id?: string
+          adjustment_type?: "PURCHASE" | "SALE"
+          quantity?: number
+          reference_note?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
