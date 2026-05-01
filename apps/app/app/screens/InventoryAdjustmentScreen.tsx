@@ -1,32 +1,83 @@
 import { FC, useMemo, useState } from "react"
-import { View } from "react-native"
+import { Pressable, View } from "react-native"
+import { format, parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { StyleSheet } from "react-native-unistyles"
+import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
-import { Button, Container, Header, Modal, Text, TextField, useToast } from "@/components"
-import { useAuth } from "@/hooks"
+import { Button, Container, Header, Text, TextField, useToast } from "@/components"
+import { useAuth, useSkuDetailQuery } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import { SkuListItem } from "@/hooks/queries/useSkusQuery"
+import type { TxKeyPath } from "@/i18n"
+import { haptics } from "@/utils/haptics"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { supabase } from "@/services/supabase"
 
-type AdjustmentType = "PURCHASE" | "SALE"
+type AdjustmentTab = "PURCHASE" | "SALE" | "SCRAP"
 
 interface InventoryAdjustmentScreenProps extends AppStackScreenProps<"InventoryAdjustment"> {}
+
+function formatRecentDate(iso: string | null, emptyLabel: string): string {
+  if (!iso) return emptyLabel
+  try {
+    return format(parseISO(iso), "MMM d · h:mm a")
+  } catch {
+    return emptyLabel
+  }
+}
+
+function pillStyleKeyForType(
+  adjustmentType: string,
+): "purchase" | "sale" | "neutral" {
+  if (adjustmentType === "PURCHASE") return "purchase"
+  if (adjustmentType === "SALE") return "sale"
+  return "neutral"
+}
+
+function pillTxForAdjustmentType(adjustmentType: string): TxKeyPath {
+  switch (adjustmentType) {
+    case "PURCHASE":
+      return "skuDetailScreen:timelinePillPurchase"
+    case "SALE":
+      return "skuDetailScreen:timelinePillSale"
+    case "STOCK_TAKE":
+      return "skuDetailScreen:timelinePillStockTake"
+    case "SCRAP":
+      return "skuDetailScreen:timelinePillScrap"
+    default:
+      return "skuDetailScreen:timelinePillOther"
+  }
+}
 
 export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
   function InventoryAdjustmentScreen({ navigation, route }) {
     const { t } = useTranslation()
+    const { theme } = useUnistyles()
     const queryClient = useQueryClient()
     const toast = useToast()
     const { userId } = useAuth()
     const [saveError, setSaveError] = useState("")
-    const [activeType, setActiveType] = useState<AdjustmentType | null>(null)
+    const [activeTab, setActiveTab] = useState<AdjustmentTab>("PURCHASE")
     const { skuId, skuName, currentQuantity } = route.params
+
+    const { data: skuDetail } = useSkuDetailQuery(skuId)
+    const recentAdjustments = useMemo(
+      () => (skuDetail?.adjustments ?? []).slice(0, 3),
+      [skuDetail?.adjustments],
+    )
+
+    const pillLabelColors = useMemo(
+      () => ({
+        purchase: theme.colors.successForeground,
+        sale: theme.colors.errorForeground,
+        neutral: theme.colors.foregroundSecondary,
+      }),
+      [theme],
+    )
 
     const adjustmentSchema = useMemo(
       () =>
@@ -58,29 +109,19 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
       formState: { isValid },
     } = useForm<AdjustmentFormData>({
       resolver: zodResolver(adjustmentSchema),
-      mode: "onBlur",
+      mode: "onChange",
       defaultValues: {
         quantity: "",
         reference_note: "",
       },
     })
 
-    const closeAdjustmentModal = () => {
-      setActiveType(null)
-      setSaveError("")
-      reset({
-        quantity: "",
-        reference_note: "",
-      })
-    }
-
     const adjustmentMutation = useMutation({
       mutationFn: async (values: AdjustmentFormData) => {
         if (!userId) throw new Error(t("inventoryAdjustmentScreen:missingUserError"))
-        if (!activeType) throw new Error(t("inventoryAdjustmentScreen:missingAdjustmentTypeError"))
 
         const quantity = Number(values.quantity)
-        const signedDelta = activeType === "PURCHASE" ? quantity : -quantity
+        const signedDelta = activeTab === "PURCHASE" ? quantity : -quantity
 
         const { data: existingQuantityRow, error: existingQuantityError } = await supabase
           .from("inventory_quantity")
@@ -95,13 +136,13 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
         const nextTotal = currentTotal + signedDelta
 
         if (nextTotal < 0) {
-          throw new Error(t("inventoryAdjustmentScreen:insufficientStockError"))
+          throw new Error(t("inventoryAdjustmentScreen:insufficientStockReduceError"))
         }
 
         const { error: insertAdjustmentError } = await supabase.from("inventory_adjustments").insert({
           user_id: userId,
           sku_id: skuId,
-          adjustment_type: activeType,
+          adjustment_type: activeTab,
           quantity,
           reference_note: values.reference_note?.trim() ? values.reference_note.trim() : null,
         })
@@ -126,10 +167,10 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
         }
       },
       onMutate: async (values) => {
-        if (!activeType || !userId) return { previousSkuLists: [] as [readonly unknown[], SkuListItem[] | undefined][] }
+        if (!userId) return { previousSkuLists: [] as [readonly unknown[], SkuListItem[] | undefined][] }
 
         const quantity = Number(values.quantity)
-        const signedDelta = activeType === "PURCHASE" ? quantity : -quantity
+        const signedDelta = activeTab === "PURCHASE" ? quantity : -quantity
 
         await queryClient.cancelQueries({ queryKey: queryKeys.sku.lists() })
 
@@ -162,9 +203,10 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
           description: t("inventoryAdjustmentScreen:successToastDescription"),
           variant: "success",
         })
+        reset({ quantity: "", reference_note: "" })
+        setSaveError("")
         await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
         await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
-        closeAdjustmentModal()
         navigation.goBack()
       },
     })
@@ -180,22 +222,16 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
       })
     }
 
-    const actionLabelTx =
-      activeType === "PURCHASE"
-        ? "inventoryAdjustmentScreen:receiveStock"
-        : "inventoryAdjustmentScreen:recordSale"
-    const modalTitleTx =
-      activeType === "PURCHASE"
-        ? "inventoryAdjustmentScreen:modalTitleReceive"
-        : "inventoryAdjustmentScreen:modalTitleSale"
+    const emptyValue = t("skuDetailScreen:valueEmpty")
 
     return (
       <Container safeAreaEdges={["bottom"]}>
         <Header
+          titleTypography="stack"
           titleTx="inventoryAdjustmentScreen:title"
           leftIcon="back"
           onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={["top"]}
+          safeAreaEdges={[]}
         />
 
         <Container preset="scroll" contentContainerStyle={styles.content}>
@@ -212,93 +248,123 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
             </View>
           </View>
 
-          <Button
-            tx="inventoryAdjustmentScreen:receiveStock"
-            onPress={() => setActiveType("PURCHASE")}
-            fullWidth
-            size="lg"
-          />
-          <Button
-            tx="inventoryAdjustmentScreen:recordSale"
-            onPress={() => setActiveType("SALE")}
-            fullWidth
-            size="lg"
-            variant="secondary"
-          />
-        </Container>
-
-        <Modal
-          visible={!!activeType}
-          onClose={closeAdjustmentModal}
-          titleTx={modalTitleTx}
-          descriptionTx="inventoryAdjustmentScreen:modalDescription"
-          size="md"
-          showCloseButton
-        >
-          <View style={styles.modalContent}>
-            <Text tx={actionLabelTx} weight="semiBold" size="lg" />
-
-            <Controller
-              control={control}
-              name="quantity"
-              render={({ field, fieldState }) => (
-                <TextField
-                  labelTx="inventoryAdjustmentScreen:quantityLabel"
-                  placeholderTx="inventoryAdjustmentScreen:quantityPlaceholder"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  keyboardType="number-pad"
-                  status={fieldState.error ? "error" : "default"}
-                  helper={fieldState.error?.message}
-                />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="reference_note"
-              render={({ field, fieldState }) => (
-                <TextField
-                  labelTx="inventoryAdjustmentScreen:referenceNoteLabel"
-                  placeholderTx="inventoryAdjustmentScreen:referenceNotePlaceholder"
-                  value={field.value}
-                  onChangeText={field.onChange}
-                  onBlur={field.onBlur}
-                  multiline
-                  maxLength={300}
-                  showCharacterCount
-                  status={fieldState.error ? "error" : "default"}
-                  helper={fieldState.error?.message}
-                />
-              )}
-            />
-
-            {saveError ? (
-              <View style={styles.errorContainer}>
-                <Text size="sm" color="error">
-                  {saveError}
-                </Text>
-              </View>
-            ) : null}
-
-            <View style={styles.modalActions}>
-              <Button
-                tx="common:cancel"
-                variant="outlined"
-                onPress={closeAdjustmentModal}
-                style={styles.actionButton}
-              />
-              <Button
-                tx="inventoryAdjustmentScreen:saveButton"
-                onPress={handleSubmit(onSubmit)}
-                loading={adjustmentMutation.isPending}
-                disabled={!isValid || adjustmentMutation.isPending}
-                style={styles.actionButton}
-              />
-            </View>
+          <View style={styles.adjustmentSegmentOuter}>
+            {(
+              [
+                { key: "PURCHASE" as const, tx: "inventoryAdjustmentScreen:receiveStock" as const },
+                { key: "SALE" as const, tx: "inventoryAdjustmentScreen:recordSale" as const },
+                { key: "SCRAP" as const, tx: "inventoryAdjustmentScreen:scrapStock" as const },
+              ] as const
+            ).map((tab) => {
+              const isActive = activeTab === tab.key
+              return (
+                <Pressable
+                  key={tab.key}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  onPress={() => {
+                    haptics.selection()
+                    setActiveTab(tab.key)
+                  }}
+                  style={[styles.adjustmentSegmentCell, isActive && styles.adjustmentSegmentCellActive]}
+                >
+                  <Text
+                    tx={tab.tx}
+                    weight={isActive ? "semiBold" : "medium"}
+                    style={isActive ? styles.adjustmentSegmentTextActive : styles.adjustmentSegmentTextInactive}
+                  />
+                </Pressable>
+              )
+            })}
           </View>
-        </Modal>
+
+          <Controller
+            control={control}
+            name="quantity"
+            render={({ field, fieldState }) => (
+              <TextField
+                labelTx="inventoryAdjustmentScreen:quantityLabel"
+                placeholderTx="inventoryAdjustmentScreen:quantityPlaceholder"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                keyboardType="number-pad"
+                status={fieldState.error ? "error" : "default"}
+                helper={fieldState.error?.message}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name="reference_note"
+            render={({ field, fieldState }) => (
+              <TextField
+                labelTx="inventoryAdjustmentScreen:referenceNoteLabel"
+                placeholderTx="inventoryAdjustmentScreen:referenceNotePlaceholder"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                multiline
+                maxLength={300}
+                showCharacterCount
+                status={fieldState.error ? "error" : "default"}
+                helper={fieldState.error?.message}
+              />
+            )}
+          />
+
+          {saveError ? (
+            <View style={styles.errorContainer}>
+              <Text size="sm" color="error">
+                {saveError}
+              </Text>
+            </View>
+          ) : null}
+
+          <Button
+            tx="inventoryAdjustmentScreen:saveButton"
+            onPress={handleSubmit(onSubmit)}
+            loading={adjustmentMutation.isPending}
+            disabled={!isValid || adjustmentMutation.isPending}
+            fullWidth
+            size="lg"
+            style={styles.saveButton}
+            TextProps={{ style: styles.saveButtonText }}
+          />
+
+          {recentAdjustments.length > 0 ? (
+            <View style={styles.recentSection}>
+              <Text tx="inventoryAdjustmentScreen:recentTitle" style={styles.recentTitle} />
+              <View style={styles.recentList}>
+                {recentAdjustments.map((adj) => {
+                  const visual = pillStyleKeyForType(adj.adjustment_type)
+                  const pillBg =
+                    visual === "purchase"
+                      ? styles.recentPill_purchase
+                      : visual === "sale"
+                        ? styles.recentPill_sale
+                        : styles.recentPill_neutral
+                  const pillTx = pillTxForAdjustmentType(adj.adjustment_type)
+                  return (
+                    <View key={adj.id} style={styles.recentRow}>
+                      <View style={[styles.recentPill, pillBg]}>
+                        <Text
+                          tx={pillTx}
+                          style={[styles.recentPillText, { color: pillLabelColors[visual] }]}
+                        />
+                      </View>
+                      <Text style={styles.recentQty}>{adj.quantity}</Text>
+                      <Text style={styles.recentDate} numberOfLines={1}>
+                        {formatRecentDate(adj.created_at, emptyValue)}
+                      </Text>
+                    </View>
+                  )
+                })}
+              </View>
+            </View>
+          ) : null}
+        </Container>
       </Container>
     )
   }
@@ -331,19 +397,113 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  modalContent: {
-    gap: theme.spacing.md,
-  },
-  modalActions: {
+  adjustmentSegmentOuter: {
     flexDirection: "row",
-    gap: theme.spacing.sm,
+    alignItems: "stretch",
+    width: "100%",
+    borderWidth: 1,
+    borderColor: theme.colors.palette.gray200,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.xxs,
+    gap: theme.spacing.xxs,
+    backgroundColor: theme.colors.palette.white,
   },
-  actionButton: {
+  adjustmentSegmentCell: {
     flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xs,
+    borderRadius: theme.radius.md,
+    backgroundColor: "#FFFFFF",
+  },
+  adjustmentSegmentCellActive: {
+    backgroundColor: "#F97316",
+  },
+  adjustmentSegmentTextActive: {
+    color: "#FFFFFF",
+    fontSize: theme.typography.sizes.sm,
+    lineHeight: theme.typography.lineHeights.sm,
+    textAlign: "center",
+  },
+  adjustmentSegmentTextInactive: {
+    color: "#6B7280",
+    fontSize: theme.typography.sizes.sm,
+    lineHeight: theme.typography.lineHeights.sm,
+    textAlign: "center",
   },
   errorContainer: {
     backgroundColor: theme.colors.errorBackground,
     borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
+  },
+  saveButton: {
+    backgroundColor: theme.colors.accent,
+    borderColor: theme.colors.accent,
+  },
+  saveButtonText: {
+    color: theme.colors.accentForeground,
+  },
+  recentSection: {
+    gap: theme.spacing.sm,
+  },
+  recentTitle: {
+    fontFamily: theme.typography.fonts.semiBold,
+    fontSize: theme.typography.sizes.sm,
+    lineHeight: theme.typography.lineHeights.sm,
+    color: theme.colors.foregroundSecondary,
+  },
+  recentList: {
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.card,
+    overflow: "hidden",
+  },
+  recentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
+  },
+  recentPill: {
+    flexShrink: 0,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xxs,
+    borderRadius: theme.radius.full,
+    maxWidth: "42%",
+  },
+  recentPill_purchase: {
+    backgroundColor: theme.colors.successBackground,
+  },
+  recentPill_sale: {
+    backgroundColor: theme.colors.errorBackground,
+  },
+  recentPill_neutral: {
+    backgroundColor: theme.colors.backgroundTertiary,
+  },
+  recentPillText: {
+    fontSize: theme.typography.sizes.xs,
+    lineHeight: theme.typography.lineHeights.xs,
+    fontFamily: theme.typography.fonts.semiBold,
+  },
+  recentQty: {
+    flexShrink: 0,
+    minWidth: 36,
+    fontSize: theme.typography.sizes.sm,
+    fontFamily: theme.typography.fonts.semiBold,
+    color: theme.colors.foreground,
+    textAlign: "center",
+  },
+  recentDate: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: theme.typography.sizes.xs,
+    lineHeight: theme.typography.lineHeights.xs,
+    color: theme.colors.foregroundSecondary,
+    textAlign: "right",
   },
 }))

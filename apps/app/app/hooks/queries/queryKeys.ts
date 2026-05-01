@@ -13,7 +13,7 @@ export const userKeys = {
   list: (filters: Record<string, unknown>) => [...userKeys.lists(), filters] as const,
   details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
-  profile: () => [...userKeys.all, "profile"] as const,
+  profile: (userId: string) => [...userKeys.all, "profile", userId] as const,
 }
 
 /**
@@ -70,6 +70,8 @@ export const skuKeys = {
   list: (userId: string | null) => [...skuKeys.lists(), userId] as const,
   details: () => [...skuKeys.all, "detail"] as const,
   detail: (skuId: string) => [...skuKeys.details(), skuId] as const,
+  lastStockTakeBySku: (userId: string | null) =>
+    [...skuKeys.all, "lastStockTakeBySku", userId] as const,
 }
 
 /**

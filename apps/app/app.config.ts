@@ -125,11 +125,8 @@ module.exports = ({ config }: ConfigContext): ExpoConfig => {
       bundleIdentifier,
       // Ensure iOS icon is preserved from app.json
       icon: config.ios?.icon || "./assets/images/app-icon-ios.png",
-      // Status bar appearance configuration for react-native-screens
-      // This must be set to YES to allow view controllers to control status bar appearance
       infoPlist: {
         ...config.ios?.infoPlist,
-        UIViewControllerBasedStatusBarAppearance: true,
         CFBundleURLTypes: urlTypes,
       },
       // This privacyManifests is to get you started.

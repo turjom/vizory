@@ -150,6 +150,9 @@ const hi: Translations = {
     title: "प्रोफ़ाइल",
     upgradeButton: "Pro में अपग्रेड करें",
     proBadge: "PRO",
+    trialDayRemaining: "मुफ्त ट्रायल — {{count}} दिन शेष",
+    trialDaysRemaining: "मुफ्त ट्रायल — {{count}} दिन शेष",
+    subscribe: "सदस्यता लें",
     settingsTitle: "सेटिंग्स",
     personalInfo: "व्यक्तिगत जानकारी",
     personalInfoSubtitle: "नाम, ईमेल संपादित करें",
@@ -188,6 +191,10 @@ const hi: Translations = {
   registerScreen: {
     title: "खाता बनाएं",
     subtitle: "शुरू करने के लिए साइन अप करें",
+    firstNameLabel: "पहला नाम",
+    firstNamePlaceholder: "अपना पहला नाम दर्ज करें",
+    lastNameLabel: "अंतिम नाम (वैकल्पिक)",
+    lastNamePlaceholder: "अपना अंतिम नाम दर्ज करें",
     emailLabel: "ईमेल",
     emailPlaceholder: "अपना ईमेल दर्ज करें",
     passwordLabel: "पासवर्ड",
@@ -303,7 +310,7 @@ const hi: Translations = {
     home: "होम",
     dashboard: "डैशबोर्ड",
     inventory: "इन्वेंटरी",
-    search: "खोजें",
+    add: "जोड़ें",
     components: "कंपोनेंट्स",
     pro: "Pro",
     profile: "प्रोफ़ाइल",
@@ -314,7 +321,6 @@ const hi: Translations = {
   skuDetailScreen: en.skuDetailScreen,
   stockTakeScreen: en.stockTakeScreen,
   inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
-  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

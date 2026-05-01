@@ -21,7 +21,7 @@ interface QuantityRow {
 
 interface AdjustmentRow {
   id: string
-  adjustment_type: "PURCHASE" | "SALE" | "STOCK_TAKE"
+  adjustment_type: "PURCHASE" | "SALE" | "STOCK_TAKE" | "SCRAP"
   quantity: number
   reference_note: string | null
   created_at: string | null

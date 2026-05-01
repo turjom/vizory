@@ -222,7 +222,6 @@ export function Modal(props: ModalProps) {
       transparent
       animationType="none"
       onRequestClose={onClose}
-      statusBarTranslucent
       testID={testID}
     >
       <KeyboardAvoidingView

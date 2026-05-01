@@ -42,7 +42,6 @@ const AppStack = () => {
   const isWeb = Platform.OS === "web"
   const { theme } = useUnistyles()
   const navigationBarColor = theme.colors.palette.neutral900
-  const statusBarStyle = UnistylesRuntime.themeName === "dark" ? "light" : "dark"
 
   // Track previous state to detect transitions
   const prevNeedsEmailVerificationRef = useRef(needsEmailVerification)
@@ -100,7 +99,6 @@ const AppStack = () => {
       screenOptions={{
         headerShown: false,
         navigationBarColor,
-        statusBarStyle,
         contentStyle: {
           flex: 1,
           backgroundColor: theme.colors.background,
@@ -179,14 +177,6 @@ const AppStack = () => {
           <Stack.Screen
             name="ComponentShowcase"
             component={Screens.ComponentShowcaseScreen}
-            options={{
-              animation: "slide_from_right",
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="AddSku"
-            component={Screens.AddSkuScreen}
             options={{
               animation: "slide_from_right",
               headerShown: false,

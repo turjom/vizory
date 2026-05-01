@@ -4,6 +4,7 @@ import { persist, createJSONStorage } from "zustand/middleware"
 
 import {
   requestPermission,
+  fetchNotificationPermissionStatus,
   registerForPushNotifications,
   scheduleNotification,
   cancelNotification,
@@ -98,8 +99,8 @@ export const useNotificationStore = create<NotificationState>()(
           logger.debug("📬 [NotificationStore] Initializing notification store")
         }
 
-        // Request permission status
-        const { status } = await requestPermission()
+        // Read permission only — do not show the system dialog at app launch
+        const { status } = await fetchNotificationPermissionStatus()
         set({ permissionStatus: status })
 
         // If granted, register for push

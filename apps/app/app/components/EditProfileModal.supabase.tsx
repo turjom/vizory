@@ -28,7 +28,7 @@ interface Profile {
   first_name: string | null
   last_name: string | null
   avatar_url: string | null
-  updated_at: string
+  updated_at: string | null
 }
 
 export interface EditProfileModalSupabaseProps {
@@ -94,7 +94,6 @@ export const EditProfileModalSupabase: FC<EditProfileModalSupabaseProps> = ({
       transparent
       animationType="fade"
       onRequestClose={handleClose}
-      statusBarTranslucent
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}

@@ -94,8 +94,16 @@ export interface ProfileUpdateData {
 export interface AppAuthActions {
   /** Sign in with email/password */
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  /** Sign up with email/password */
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
+  /**
+   * Sign up with email/password. `firstName` / optional `lastName` are sent as Supabase
+   * `user_metadata` and picked up by the DB trigger into `public.profiles`.
+   */
+  signUp: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName?: string,
+  ) => Promise<{ error: Error | null }>
   /** Sign in with Google OAuth */
   signInWithGoogle: () => Promise<{ error: Error | null }>
   /** Sign in with Apple OAuth */
@@ -137,6 +145,15 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
     (state: AuthState) => state.setHasCompletedOnboarding,
   )
   const initializeStore = useAuthStore((state: AuthState) => state.initialize)
+  const storeSignIn = useAuthStore((state: AuthState) => state.signIn)
+
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const result = await storeSignIn(email, password)
+      return { error: result.error ?? null }
+    },
+    [storeSignIn],
+  )
 
   // Transform Supabase user to unified AppUser
   const user: AppUser | null = useMemo(() => {
@@ -281,6 +298,13 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
     await initializeStore()
   }, [initializeStore])
 
+  const signUp = useCallback(
+    async (email: string, password: string, firstName: string, lastName?: string) => {
+      return auth.signUpWithPassword(email, password, firstName, lastName)
+    },
+    [auth],
+  )
+
   return {
     // State
     isAuthenticated: auth.isAuthenticated,
@@ -291,8 +315,8 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
     hasCompletedOnboarding,
     provider: "supabase",
     // Actions
-    signIn: auth.signInWithPassword,
-    signUp: auth.signUpWithPassword,
+    signIn,
+    signUp,
     signInWithGoogle: auth.signInWithGoogle,
     signInWithApple: auth.signInWithApple,
     signInWithMagicLink: auth.signInWithMagicLink,

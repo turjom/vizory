@@ -9,6 +9,7 @@ interface SkuRow {
   id: string
   name: string
   safety_stock_threshold: number
+  price: number | null
 }
 
 interface QuantityRow {
@@ -40,9 +41,12 @@ export interface WeeklyMovement {
 }
 
 export interface DashboardInventoryData {
+  /** Trimmed `profiles.first_name` for the current user, if present. */
+  greetingFirstName: string | null
   lowStockSkus: LowStockSku[]
   topSkusByQuantity: TopSkuByQuantity[]
   weeklyMovement: WeeklyMovement
+  totalInventoryValue: number | null
 }
 
 function mergeQuantities(skus: SkuRow[], quantities: QuantityRow[]) {
@@ -57,6 +61,7 @@ function mergeQuantities(skus: SkuRow[], quantities: QuantityRow[]) {
     name: sku.name,
     safetyStockThreshold: sku.safety_stock_threshold,
     totalQuantity: quantityBySkuId.get(sku.id) ?? 0,
+    price: sku.price,
   }))
 }
 
@@ -66,21 +71,25 @@ export const useDashboardInventoryQuery = () => {
   return useQuery({
     queryKey: queryKeys.dashboard.inventory(userId ?? null),
     enabled: !!userId,
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async (): Promise<DashboardInventoryData> => {
       if (!userId) {
         return {
+          greetingFirstName: null,
           lowStockSkus: [],
           topSkusByQuantity: [],
           weeklyMovement: { received: 0, sold: 0 },
+          totalInventoryValue: null,
         }
       }
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      const [skusResult, quantitiesResult, adjustmentsResult] = await Promise.all([
+      const [skusResult, quantitiesResult, adjustmentsResult, profileResult] = await Promise.all([
         supabase
           .from("skus")
-          .select("id, name, safety_stock_threshold")
+          .select("id, name, safety_stock_threshold, price")
           .eq("user_id", userId)
           .order("name", { ascending: true }),
         supabase.from("inventory_quantity").select("sku_id, total_quantity").eq("user_id", userId),
@@ -89,26 +98,41 @@ export const useDashboardInventoryQuery = () => {
           .select("adjustment_type, quantity")
           .eq("user_id", userId)
           .gte("created_at", sevenDaysAgo),
+        supabase.from("profiles").select("first_name").eq("id", userId).maybeSingle(),
       ])
 
       if (skusResult.error) throw skusResult.error
       if (quantitiesResult.error) throw quantitiesResult.error
       if (adjustmentsResult.error) throw adjustmentsResult.error
+      if (profileResult.error) throw profileResult.error
 
       const skus = (skusResult.data ?? []) as SkuRow[]
       const quantities = (quantitiesResult.data ?? []) as QuantityRow[]
       const adjustments = (adjustmentsResult.data ?? []) as AdjustmentRow[]
 
       const merged = mergeQuantities(skus, quantities)
+      const totalInventoryValue = merged.reduce((sum, row) => {
+        if (row.price == null) return sum
+        return sum + row.price * row.totalQuantity
+      }, 0)
+      const hasAnyPrice = merged.some((row) => row.price != null)
 
-      const lowStockSkus = merged
-        .filter((row) => row.totalQuantity <= row.safetyStockThreshold)
-        .map((row) => ({
-          id: row.id,
-          name: row.name,
-          totalQuantity: row.totalQuantity,
-          safetyStockThreshold: row.safetyStockThreshold,
-        }))
+      const rawFirst = profileResult.data?.first_name
+      const greetingFirstName =
+        typeof rawFirst === "string" && rawFirst.trim().length > 0 ? rawFirst.trim() : null
+
+      const lowStockRows = merged.filter((row) => row.totalQuantity <= row.safetyStockThreshold)
+      lowStockRows.sort((a, b) => {
+        const deficitA = a.safetyStockThreshold - a.totalQuantity
+        const deficitB = b.safetyStockThreshold - b.totalQuantity
+        return deficitB - deficitA
+      })
+      const lowStockSkus = lowStockRows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        totalQuantity: row.totalQuantity,
+        safetyStockThreshold: row.safetyStockThreshold,
+      }))
 
       const topSkusByQuantity = [...merged]
         .sort((a, b) => b.totalQuantity - a.totalQuantity)
@@ -127,9 +151,11 @@ export const useDashboardInventoryQuery = () => {
       })
 
       return {
+        greetingFirstName,
         lowStockSkus,
         topSkusByQuantity,
         weeklyMovement: { received, sold },
+        totalInventoryValue: hasAnyPrice ? totalInventoryValue : null,
       }
     },
   })

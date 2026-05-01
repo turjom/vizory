@@ -81,7 +81,12 @@ export interface SupabaseAuthActions {
   /** Sign in with email/password */
   signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
   /** Sign up with email/password */
-  signUpWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUpWithPassword: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName?: string,
+  ) => Promise<{ error: Error | null }>
   /** Sign in with Google OAuth */
   signInWithGoogle: () => Promise<{ error: Error | null }>
   /** Sign in with Apple OAuth */
@@ -193,15 +198,32 @@ export function useSupabaseAuth(): SupabaseAuthState & SupabaseAuthActions {
     }
   }, [])
 
-  const signUpWithPassword = useCallback(async (email: string, password: string) => {
-    setIsLoading(true)
-    try {
-      const { error } = await supabase.auth.signUp({ email, password })
-      return { error: error as Error | null }
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  const signUpWithPassword = useCallback(
+    async (email: string, password: string, firstName: string, lastName?: string) => {
+      setIsLoading(true)
+      try {
+        const fn = firstName.trim()
+        const ln = lastName?.trim() ?? ""
+        const data: Record<string, string> = {
+          first_name: fn,
+          full_name: ln ? `${fn} ${ln}`.trim() : fn,
+        }
+        if (ln) {
+          data.last_name = ln
+        }
+
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data },
+        })
+        return { error: error as Error | null }
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [],
+  )
 
   const signOut = useCallback(async () => {
     setIsLoading(true)

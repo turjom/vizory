@@ -204,6 +204,33 @@ const shouldUseMock = (): boolean => {
 export const useMockNotifications = shouldUseMock()
 
 /**
+ * Read current notification permission without prompting (for cold start / listeners).
+ */
+export async function fetchNotificationPermissionStatus(): Promise<{
+  status: "granted" | "denied" | "undetermined"
+}> {
+  if (useMockNotifications || !isNativeModuleAvailable()) {
+    if (__DEV__) {
+      logger.debug("📬 [MockNotifications] Permission status treated as granted")
+    }
+    return { status: "granted" }
+  }
+
+  const NotificationsModule = getNotifications()
+  if (!NotificationsModule) {
+    return { status: "undetermined" }
+  }
+
+  try {
+    const { status } = await NotificationsModule.getPermissionsAsync()
+    return { status: status as "granted" | "denied" | "undetermined" }
+  } catch (error) {
+    logger.error("📬 [Notifications] Error reading permission status", {}, error as Error)
+    return { status: "undetermined" }
+  }
+}
+
+/**
  * Request notification permissions
  */
 export async function requestPermission(): Promise<{
@@ -312,8 +339,12 @@ export async function registerForPushNotifications(): Promise<string | null> {
   // Setup Android notification channel before registering
   await setupAndroidChannel()
 
-  // Verify permissions
-  const { status } = await requestPermission()
+  // Do not prompt here — only register when permission was already granted (e.g. onboarding).
+  const NotificationsModuleForPerm = getNotifications()
+  if (!NotificationsModuleForPerm) {
+    return null
+  }
+  const { status } = await NotificationsModuleForPerm.getPermissionsAsync()
   if (status !== "granted") {
     if (__DEV__) {
       logger.debug("📬 [Notifications] Permission not granted, cannot get push token")

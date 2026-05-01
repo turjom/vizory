@@ -153,6 +153,9 @@ const es: Translations = {
     title: "Perfil",
     upgradeButton: "Actualizar a Pro",
     proBadge: "PRO",
+    trialDayRemaining: "Prueba gratuita — queda {{count}} día",
+    trialDaysRemaining: "Prueba gratuita — quedan {{count}} días",
+    subscribe: "Suscribirse",
     settingsTitle: "Configuración",
     personalInfo: "Información Personal",
     personalInfoSubtitle: "Editar nombre, correo",
@@ -192,6 +195,10 @@ const es: Translations = {
   registerScreen: {
     title: "Crear Cuenta",
     subtitle: "Regístrate para comenzar",
+    firstNameLabel: "Nombre",
+    firstNamePlaceholder: "Introduce tu nombre",
+    lastNameLabel: "Apellido (opcional)",
+    lastNamePlaceholder: "Introduce tu apellido",
     emailLabel: "Correo Electrónico",
     emailPlaceholder: "Ingresa tu correo",
     passwordLabel: "Contraseña",
@@ -306,7 +313,7 @@ const es: Translations = {
     home: "Inicio",
     dashboard: "Panel",
     inventory: "Inventario",
-    search: "Buscar",
+    add: "Añadir",
     components: "Componentes",
     pro: "Pro",
     profile: "Perfil",
@@ -317,7 +324,6 @@ const es: Translations = {
   skuDetailScreen: en.skuDetailScreen,
   stockTakeScreen: en.stockTakeScreen,
   inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
-  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

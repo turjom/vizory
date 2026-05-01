@@ -25,9 +25,12 @@ export async function syncOnboardingToDatabase(userId: string, completed: boolea
   }
 
   try {
-    const { error } = await supabase.from("profiles").upsert({
+    const row: SupabaseDatabase["public"]["Tables"]["profiles"]["Insert"] = {
       id: userId,
-    } as SupabaseDatabase["public"]["Tables"]["profiles"]["Insert"])
+      has_completed_onboarding: completed,
+      updated_at: new Date().toISOString(),
+    }
+    const { error } = await supabase.from("profiles").upsert(row, { onConflict: "id" })
 
     if (error) {
       const supabaseErr = extractSupabaseError(error)
@@ -111,7 +114,7 @@ export async function fetchOnboardingFromDatabase(userId: string): Promise<boole
       .from("profiles")
       .select("has_completed_onboarding")
       .eq("id", userId)
-      .single()
+      .maybeSingle()
 
     if (profileError) {
       // Check if this is a "table not found" error (expected during setup)
@@ -155,8 +158,11 @@ export async function fetchOnboardingFromDatabase(userId: string): Promise<boole
       return null
     }
 
-    const profileData = profile as { has_completed_onboarding?: boolean } | null
-    return profileData?.has_completed_onboarding ?? null
+    if (!profile) {
+      return false
+    }
+
+    return profile.has_completed_onboarding === true
   } catch (error) {
     // Network error or database unavailable
     logger.error("Failed to fetch profile from database", { userId }, error as Error)

@@ -153,6 +153,9 @@ const ja: Translations = {
     title: "プロフィール",
     upgradeButton: "Proにアップグレード",
     proBadge: "PRO",
+    trialDayRemaining: "無料トライアル — 残り{{count}}日",
+    trialDaysRemaining: "無料トライアル — 残り{{count}}日",
+    subscribe: "登録する",
     settingsTitle: "設定",
     personalInfo: "個人情報",
     personalInfoSubtitle: "名前、メールを編集",
@@ -191,6 +194,10 @@ const ja: Translations = {
   registerScreen: {
     title: "アカウント作成",
     subtitle: "始めるにはサインアップしてください",
+    firstNameLabel: "名",
+    firstNamePlaceholder: "名を入力",
+    lastNameLabel: "姓（任意）",
+    lastNamePlaceholder: "姓を入力",
     emailLabel: "メールアドレス",
     emailPlaceholder: "メールアドレスを入力",
     passwordLabel: "パスワード",
@@ -303,7 +310,7 @@ const ja: Translations = {
     home: "ホーム",
     dashboard: "ダッシュボード",
     inventory: "在庫",
-    search: "検索",
+    add: "追加",
     components: "コンポーネント",
     pro: "Pro",
     profile: "プロフィール",
@@ -314,7 +321,6 @@ const ja: Translations = {
   skuDetailScreen: en.skuDetailScreen,
   stockTakeScreen: en.stockTakeScreen,
   inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
-  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

@@ -84,6 +84,10 @@ export interface AuthScreenLayoutProps {
   cardStyle?: ViewStyle
   /** Whether to center content vertically in the card (default: false) */
   centerContent?: boolean
+  /**
+   * When true, use a solid white background instead of the default gradient (e.g. Get Started).
+   */
+  plainBackground?: boolean
 }
 
 // =============================================================================
@@ -113,6 +117,7 @@ export const AuthScreenLayout = ({
   scrollable = true,
   cardStyle,
   centerContent = false,
+  plainBackground = false,
 }: AuthScreenLayoutProps) => {
   const { theme } = useUnistyles()
   const { t } = useTranslation()
@@ -151,33 +156,26 @@ export const AuthScreenLayout = ({
         ],
       }
 
-  return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[theme.colors.gradientStart, theme.colors.gradientMiddle, theme.colors.gradientEnd]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+  const keyboardAndCard = (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={[
+        styles.keyboardView,
+        isWeb && isTabletOrLarger && styles.keyboardViewCentered,
+        isMobile && styles.keyboardViewMobile,
+      ]}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <View
+        style={[
+          styles.modalCard,
+          // On mobile, use centered card style like Welcome screen
+          !isWeb && styles.modalCardMobile,
+          isWeb && isTabletOrLarger && styles.modalCardCentered,
+          { paddingBottom: Math.max(insets.bottom, theme.spacing.xl) },
+          cardStyle,
+        ]}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={[
-            styles.keyboardView,
-            isWeb && isTabletOrLarger && styles.keyboardViewCentered,
-            isMobile && styles.keyboardViewMobile,
-          ]}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        >
-          <View
-            style={[
-              styles.modalCard,
-              // On mobile, use centered card style like Welcome screen
-              !isWeb && styles.modalCardMobile,
-              isWeb && isTabletOrLarger && styles.modalCardCentered,
-              { paddingBottom: Math.max(insets.bottom, theme.spacing.xl) },
-              cardStyle,
-            ]}
-          >
             {/* Close Button (top right) - positioned outside ScrollView for fixed position */}
             {showCloseButton && onClose && (
               <TouchableOpacity
@@ -245,8 +243,25 @@ export const AuthScreenLayout = ({
               <View style={styles.content}>{safeChildren}</View>
             </ContentWrapper>
           </View>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+    </KeyboardAvoidingView>
+  )
+
+  return (
+    <View style={styles.container}>
+      {plainBackground ? (
+        <View style={[styles.gradient, { backgroundColor: theme.colors.palette.white }]}>
+          {keyboardAndCard}
+        </View>
+      ) : (
+        <LinearGradient
+          colors={[theme.colors.gradientStart, theme.colors.gradientMiddle, theme.colors.gradientEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          {keyboardAndCard}
+        </LinearGradient>
+      )}
     </View>
   )
 }

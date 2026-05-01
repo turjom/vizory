@@ -80,7 +80,6 @@ export const LanguageSelector: FC<LanguageSelectorProps> = ({ visible, onClose }
       transparent
       animationType="fade"
       onRequestClose={onClose}
-      statusBarTranslucent
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>

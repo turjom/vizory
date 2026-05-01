@@ -1,4 +1,4 @@
-import type { ReactElement } from "react"
+import { type ReactElement, useMemo } from "react"
 import type { StyleProp, TextStyle, TouchableOpacityProps, ViewStyle } from "react-native"
 import { TouchableOpacity, View } from "react-native"
 import { useTranslation } from "react-i18next"
@@ -24,6 +24,12 @@ export interface HeaderProps {
    * Optional outer title container style override.
    */
   titleContainerStyle?: StyleProp<ViewStyle>
+  /**
+   * Preset typography for main tab titles vs stack (modal) titles.
+   * - `tab`: left-aligned, 24 / 700 (Inventory, Profile, Dashboard).
+   * - `stack`: centered, 17 / 600 (Add SKU, SKU Detail, Adjust Inventory, Stock Take).
+   */
+  titleTypography?: "tab" | "stack"
   /**
    * Optional inner header wrapper style override.
    */
@@ -166,17 +172,55 @@ export function Header(props: HeaderProps) {
     style: $styleOverride,
     titleStyle: $titleStyleOverride,
     containerStyle: $containerStyleOverride,
+    titleTypography,
   } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
   const titleContent = titleTx ? t(titleTx, titleTxOptions as Record<string, string>) : title
 
+  const resolvedTitleMode =
+    titleTypography === "tab" ? "flex" : titleTypography === "stack" ? "center" : titleMode
+
+  const mergedTitleStyle = useMemo((): StyleProp<TextStyle> => {
+    const preset: TextStyle =
+      titleTypography === "tab"
+        ? {
+            fontSize: 24,
+            fontWeight: "700",
+            textAlign: "left",
+            lineHeight: 30,
+          }
+        : titleTypography === "stack"
+          ? { fontSize: 17, fontWeight: "600", textAlign: "center" }
+          : {}
+    return [styles.title, preset, $titleStyleOverride]
+  }, [titleTypography, $titleStyleOverride])
+
+  const mergedTitleContainerStyle = useMemo((): StyleProp<ViewStyle> => {
+    const preset: ViewStyle =
+      titleTypography === "tab" ? { alignItems: "flex-start" as const } : {}
+    return [
+      styles.titleWrapperPointerEvents,
+      resolvedTitleMode === "center" && styles.titleWrapperCenter,
+      resolvedTitleMode === "flex" && styles.titleWrapperFlex,
+      preset,
+      $titleContainerStyleOverride,
+    ]
+  }, [titleTypography, resolvedTitleMode, $titleContainerStyleOverride])
+
   return (
     <View
       style={[styles.container, $containerInsets, { backgroundColor }, $containerStyleOverride]}
     >
-      <View style={[styles.row, styles.wrapper, $styleOverride]}>
+      <View
+        style={[
+          styles.row,
+          styles.wrapper,
+          titleTypography === "tab" && styles.wrapperTab,
+          $styleOverride,
+        ]}
+      >
         <HeaderAction
           tx={leftTx}
           text={leftText}
@@ -189,20 +233,8 @@ export function Header(props: HeaderProps) {
         />
 
         {!!titleContent && (
-          <View
-            style={[
-              styles.titleWrapperPointerEvents,
-              titleMode === "center" && styles.titleWrapperCenter,
-              titleMode === "flex" && styles.titleWrapperFlex,
-              $titleContainerStyleOverride,
-            ]}
-          >
-            <Text
-              weight="medium"
-              size="md"
-              text={titleContent}
-              style={[styles.title, $titleStyleOverride]}
-            />
+          <View style={mergedTitleContainerStyle}>
+            <Text weight="medium" size="md" text={titleContent} style={mergedTitleStyle} />
           </View>
         )}
 
@@ -267,9 +299,14 @@ function HeaderAction(props: HeaderActionProps) {
 
 const styles = StyleSheet.create((theme) => ({
   wrapper: {
-    height: 56,
+    minHeight: 56,
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  wrapperTab: {
+    minHeight: 64,
+    paddingTop: theme.spacing.xs,
+    paddingBottom: theme.spacing.xs,
   },
   container: {
     width: "100%",

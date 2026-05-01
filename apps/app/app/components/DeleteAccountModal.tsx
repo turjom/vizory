@@ -159,7 +159,6 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
       transparent
       animationType="fade"
       onRequestClose={handleClose}
-      statusBarTranslucent
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}

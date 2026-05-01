@@ -42,8 +42,10 @@ export const RegisterScreen = () => {
     formState: { isValid },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -56,7 +58,13 @@ export const RegisterScreen = () => {
   const onSubmit = async (data: RegisterFormData) => {
     setLoading(true)
     setError("")
-    const { error: signUpError } = await signUp(data.email, data.password)
+    const last = data.lastName.trim()
+    const { error: signUpError } = await signUp(
+      data.email,
+      data.password,
+      data.firstName.trim(),
+      last.length > 0 ? last : undefined,
+    )
     setLoading(false)
 
     if (signUpError) {
@@ -141,6 +149,52 @@ export const RegisterScreen = () => {
       onClose={handleClose}
       scrollable
     >
+      {/* First name */}
+      <View style={styles.inputContainer}>
+        <Controller
+          control={control}
+          name="firstName"
+          render={({ field, fieldState }) => (
+            <TextField
+              labelTx="registerScreen:firstNameLabel"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholderTx="registerScreen:firstNamePlaceholder"
+              autoCapitalize="words"
+              autoComplete="name-given"
+              textContentType="givenName"
+              returnKeyType="next"
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
+        />
+      </View>
+
+      {/* Last name (optional) */}
+      <View style={styles.inputContainer}>
+        <Controller
+          control={control}
+          name="lastName"
+          render={({ field, fieldState }) => (
+            <TextField
+              labelTx="registerScreen:lastNameLabel"
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              placeholderTx="registerScreen:lastNamePlaceholder"
+              autoCapitalize="words"
+              autoComplete="name-family"
+              textContentType="familyName"
+              returnKeyType="next"
+              status={fieldState.error ? "error" : "default"}
+              helper={fieldState.error?.message}
+            />
+          )}
+        />
+      </View>
+
       {/* Email Input */}
       <View style={styles.inputContainer}>
         <Controller
@@ -301,7 +355,7 @@ export const RegisterScreen = () => {
       >
         <Text color="secondary">
           <Text tx="registerScreen:hasAccount" />{" "}
-          <Text weight="semiBold" tx="registerScreen:logIn" />
+          <Text weight="semiBold" tx="registerScreen:logIn" style={styles.linkAccent} />
         </Text>
       </TouchableOpacity>
     </AuthScreenLayout>
@@ -384,7 +438,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
     borderRadius: theme.radius.lg,
     marginBottom: theme.spacing.md,
     marginTop: theme.spacing.xs,
@@ -393,7 +447,7 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.md,
   },
   primaryButtonText: {
-    color: theme.colors.primaryForeground,
+    color: theme.colors.accentForeground,
     fontSize: theme.typography.sizes.lg,
   },
   buttonDisabled: {
@@ -420,5 +474,8 @@ const styles = StyleSheet.create((theme) => ({
   linkButton: {
     alignItems: "center",
     paddingVertical: theme.spacing.sm,
+  },
+  linkAccent: {
+    color: theme.colors.accent,
   },
 }))

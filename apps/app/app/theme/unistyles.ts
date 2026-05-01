@@ -149,7 +149,7 @@ export const lightTheme = {
     accent: palette.accent500,
     accentForeground: palette.white,
 
-    background: palette.gray50,
+    background: "#FFFFFF",
     backgroundSecondary: palette.gray100,
     backgroundTertiary: palette.gray200,
 
@@ -167,7 +167,7 @@ export const lightTheme = {
     inputForeground: palette.gray900,
     inputPlaceholder: palette.gray400,
     inputBorder: palette.gray300,
-    inputBorderFocus: palette.primary500,
+    inputBorderFocus: palette.accent500,
 
     // Semantic states
     success: palette.success500,
@@ -197,8 +197,8 @@ export const lightTheme = {
 
     // Misc
     transparent: "transparent",
-    link: palette.primary600,
-    tint: palette.primary500,
+    link: palette.accent600,
+    tint: palette.accent500,
     separator: palette.gray200,
   },
 
@@ -211,18 +211,22 @@ export const lightTheme = {
       // On native: uses PostScript names (e.g., "SpaceGrotesk-Regular")
       regular: Platform.select({
         web: "spaceGroteskRegular",
+        ios: "-apple-system",
         default: "SpaceGrotesk-Regular",
       }),
       medium: Platform.select({
         web: "spaceGroteskMedium",
+        ios: "-apple-system",
         default: "SpaceGrotesk-Medium",
       }),
       semiBold: Platform.select({
         web: "spaceGroteskSemiBold",
+        ios: "-apple-system",
         default: "SpaceGrotesk-SemiBold",
       }),
       bold: Platform.select({
         web: "spaceGroteskBold",
+        ios: "-apple-system",
         default: "SpaceGrotesk-Bold",
       }),
     },
@@ -434,7 +438,7 @@ export const darkTheme = {
     inputForeground: palette.gray100,
     inputPlaceholder: palette.gray500,
     inputBorder: palette.gray600,
-    inputBorderFocus: palette.primary400,
+    inputBorderFocus: palette.accent500,
 
     // Semantic states
     success: palette.success400,

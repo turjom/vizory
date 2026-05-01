@@ -71,4 +71,5 @@ export { queryKeys } from "./queries/queryKeys"
 export { useSkusQuery } from "./queries/useSkusQuery"
 export { useSkuDetailQuery } from "./queries/useSkuDetailQuery"
 export { useDashboardInventoryQuery } from "./queries/useDashboardInventoryQuery"
+export { useProfileQuery, type ProfileRow } from "./queries/useProfileQuery"
 

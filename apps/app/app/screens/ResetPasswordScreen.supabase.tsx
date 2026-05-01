@@ -49,7 +49,7 @@ export const ResetPasswordScreen = () => {
     formState: { isValid },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       password: "",
       confirmPassword: "",

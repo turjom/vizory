@@ -719,7 +719,9 @@ function useConvexAuthImpl(): UseAuthReturn {
     loading: false,
     isAuthenticated: false,
     provider: "supabase",
-    signUp: async () => ({ error: new Error("Convex not configured") }),
+    signUp: async (_credentials: SignUpCredentials) => ({
+      error: new Error("Convex not configured"),
+    }),
     signIn: async () => ({ error: new Error("Convex not configured") }),
     signOut: async () => ({ error: null }),
     verifyOtp: async () => ({ error: new Error("Convex not configured") }),

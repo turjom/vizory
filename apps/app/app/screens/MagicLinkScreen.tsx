@@ -55,7 +55,7 @@ export const MagicLinkScreen = () => {
     formState: { isValid },
   } = useForm<MagicLinkFormData>({
     resolver: zodResolver(magicLinkSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
     },

@@ -42,7 +42,7 @@ export const OnboardingScreen: FC<OnboardingScreenProps> = function OnboardingSc
       // Mark onboarding as complete BEFORE navigation
       // This ensures the state is saved before the navigator re-evaluates routes
       await completeOnboarding()
-      navigation.replace("Main")
+      navigation.replace("Main", { screen: "Home" })
     }
   }
 

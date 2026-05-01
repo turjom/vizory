@@ -35,7 +35,7 @@ export const ForgotPasswordScreen = () => {
     formState: { isValid },
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
     },

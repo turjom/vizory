@@ -42,7 +42,7 @@ export const LoginScreen = () => {
     formState: { isValid },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       email: "",
       password: "",
@@ -189,17 +189,7 @@ export const LoginScreen = () => {
         style={styles.forgotButton}
         activeOpacity={0.6}
       >
-        <Text size="sm" color="secondary" weight="medium" tx="loginScreen:forgotPassword" />
-      </TouchableOpacity>
-
-      {/* Magic Link / Passwordless Option */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate("MagicLink")}
-        style={styles.magicLinkButton}
-        activeOpacity={0.6}
-      >
-        <Ionicons name="mail-outline" size={18} color={theme.colors.foregroundSecondary} />
-        <Text size="sm" color="secondary" weight="medium" tx="loginScreen:signInWithEmail" />
+        <Text size="sm" weight="medium" tx="loginScreen:forgotPassword" style={styles.linkAccent} />
       </TouchableOpacity>
 
       {/* Social Login Section */}
@@ -242,7 +232,8 @@ export const LoginScreen = () => {
         activeOpacity={0.6}
       >
         <Text color="secondary">
-          <Text tx="loginScreen:noAccount" /> <Text weight="semiBold" tx="loginScreen:signUp" />
+          <Text tx="loginScreen:noAccount" />{" "}
+          <Text weight="semiBold" tx="loginScreen:signUp" style={styles.linkAccent} />
         </Text>
       </TouchableOpacity>
     </AuthScreenLayout>
@@ -268,7 +259,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
     borderRadius: theme.radius.lg,
     marginBottom: theme.spacing.sm,
     marginTop: theme.spacing.xs,
@@ -277,7 +268,7 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.md,
   },
   primaryButtonText: {
-    color: theme.colors.primaryForeground,
+    color: theme.colors.accentForeground,
     fontSize: theme.typography.sizes.lg,
   },
   buttonDisabled: {
@@ -286,15 +277,10 @@ const styles = StyleSheet.create((theme) => ({
   forgotButton: {
     alignItems: "center",
     paddingVertical: theme.spacing.xs,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
-  magicLinkButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: theme.spacing.xs,
-    paddingVertical: theme.spacing.sm,
-    marginBottom: theme.spacing.xs,
+  linkAccent: {
+    color: theme.colors.accent,
   },
   divider: {
     marginVertical: theme.spacing.lg,

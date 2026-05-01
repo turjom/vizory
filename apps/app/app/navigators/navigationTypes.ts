@@ -12,10 +12,26 @@ export type PaywallParams = {
   fromOnboarding?: boolean
 }
 
+/** Params for the Add tab (create / edit SKU form). */
+export type AddSkuTabParams =
+  | {
+      mode?: "create" | "edit"
+      sku?: {
+        id: string
+        name: string
+        sku_code: string | null
+        description: string | null
+        price: number | null
+        uom: string | null
+        safety_stock_threshold: number
+      }
+    }
+  | undefined
+
 export type MainTabParamList = {
   Home: undefined
   Inventory: undefined
-  Search: undefined
+  Add: AddSkuTabParams
   Profile: undefined
 }
 
@@ -44,20 +60,6 @@ export type AppStackParamList = {
   Welcome: undefined
   ComponentShowcase: undefined
   DataDemo: undefined
-  AddSku:
-    | {
-        mode?: "create" | "edit"
-        sku?: {
-          id: string
-          name: string
-          sku_code: string | null
-          description: string | null
-          price: number | null
-          uom: string | null
-          safety_stock_threshold: number
-        }
-      }
-    | undefined
   SkuDetail: {
     skuId: string
   }

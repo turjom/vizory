@@ -10,29 +10,29 @@
  * Copy this pattern for your own profile/settings screens with Supabase.
  */
 
-import { FC, useState } from "react"
+import { FC, useMemo, useState } from "react"
 import {
   ScrollView,
   Switch,
-  Pressable,
   View,
   Platform,
+  Pressable,
   useWindowDimensions,
   RefreshControl,
 } from "react-native"
-import { LinearGradient } from "expo-linear-gradient"
 import { Ionicons } from "@expo/vector-icons"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { UnistylesRuntime } from "react-native-unistyles"
 
-import { Avatar, Button, DeleteAccountModal, Text, LanguageSelector, MenuItem } from "@/components"
+import { Avatar, Button, DeleteAccountModal, Text, MenuItem } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
-import { useAuth } from "@/hooks"
+import { queryKeys, useAuth, useProfileQuery, type ProfileRow } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 import { mockRevenueCat } from "@/services/mocks/revenueCat"
 import { isRevenueCatMock } from "@/services/revenuecat"
@@ -51,54 +51,14 @@ import { EditProfileModalSupabase } from "../components/EditProfileModal.supabas
 const isWeb = Platform.OS === "web"
 const CONTENT_MAX_WIDTH = 600
 
+/** Free-trial length from `profiles.created_at` (calendar days). */
+const FREE_TRIAL_DAYS = 30
+
 // =============================================================================
 // TYPES
 // =============================================================================
 
 interface ProfileScreenProps extends MainTabScreenProps<"Profile"> {}
-
-interface Profile {
-  id: string
-  first_name: string | null
-  last_name: string | null
-  avatar_url: string | null
-  updated_at: string
-}
-
-// =============================================================================
-// DATA FETCHING WITH REACT QUERY + SUPABASE
-// =============================================================================
-
-/**
- * Fetch user profile from Supabase
- * Uses React Query for caching and refetching
- */
-const useProfile = (userId: string | undefined) => {
-  return useQuery({
-    queryKey: ["profile", userId],
-    queryFn: async () => {
-      if (!userId) return null
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name, avatar_url, updated_at")
-        .eq("id", userId)
-        .single()
-
-      if (error) {
-        // Profile might not exist yet for new users
-        if (error.code === "PGRST116") {
-          return null
-        }
-        throw error
-      }
-      // Cast through unknown to handle Supabase type generation mismatch
-      return data as unknown as Profile
-    },
-    enabled: !!userId,
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-  })
-}
 
 /**
  * Update user profile
@@ -129,18 +89,20 @@ const useUpdateProfile = () => {
         .single()
 
       if (error) throw error
-      return data as Profile
+      return data as ProfileRow
     },
     // Optimistic update
     onMutate: async ({ userId, firstName, lastName }) => {
-      await queryClient.cancelQueries({ queryKey: ["profile", userId] })
-      const previousProfile = queryClient.getQueryData<Profile>(["profile", userId])
+      const profileKey = queryKeys.user.profile(userId)
+      await queryClient.cancelQueries({ queryKey: profileKey })
+      const previousProfile = queryClient.getQueryData<ProfileRow>(profileKey)
 
-      queryClient.setQueryData<Profile>(["profile", userId], (old) => ({
+      queryClient.setQueryData<ProfileRow>(profileKey, (old) => ({
         id: userId,
         first_name: firstName,
         last_name: lastName,
         avatar_url: old?.avatar_url ?? null,
+        created_at: old?.created_at ?? null,
         updated_at: new Date().toISOString(),
       }))
 
@@ -148,11 +110,12 @@ const useUpdateProfile = () => {
     },
     onError: (_err, { userId }, context) => {
       // Rollback on error
-      queryClient.setQueryData(["profile", userId], context?.previousProfile)
+      queryClient.setQueryData(queryKeys.user.profile(userId), context?.previousProfile)
     },
     onSettled: (_, __, { userId }) => {
       // Refetch after mutation
-      queryClient.invalidateQueries({ queryKey: ["profile", userId] })
+      queryClient.invalidateQueries({ queryKey: queryKeys.user.profile(userId) })
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
     },
   })
 }
@@ -178,8 +141,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
-  const [languageModalVisible, setLanguageModalVisible] = useState(false)
-
   // ============================================================
   // SUPABASE DATA FETCHING
   // Uses React Query for caching and refetching
@@ -189,7 +150,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     isLoading: _profileLoading,
     refetch: refetchProfile,
     isRefetching,
-  } = useProfile(userId ?? undefined)
+  } = useProfileQuery()
 
   const updateProfile = useUpdateProfile()
 
@@ -207,6 +168,13 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     profile?.first_name && profile?.last_name
       ? `${profile.first_name} ${profile.last_name}`
       : profile?.first_name || user?.email?.split("@")[0] || "User"
+
+  const trialStartIso = profile?.created_at ?? user?.createdAt ?? null
+  const freeTrialDaysRemaining = useMemo(() => {
+    if (!trialStartIso) return FREE_TRIAL_DAYS
+    const trialEnd = addDays(parseISO(trialStartIso), FREE_TRIAL_DAYS)
+    return Math.max(0, differenceInCalendarDays(trialEnd, new Date()))
+  }, [trialStartIso])
 
   const userInitials = displayName.slice(0, 2).toUpperCase()
   const avatarUrl = profile?.avatar_url ?? undefined
@@ -255,12 +223,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[theme.colors.gradientStart, theme.colors.gradientMiddle, theme.colors.gradientEnd]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
+      <View style={styles.gradient}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
@@ -280,9 +243,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           {/* Header */}
           <Animated.View entering={FadeInDown.delay(0).springify()} style={styles.header}>
             <Text style={styles.screenTitle} tx="profileScreen:title" />
-            <Text preset="caption" style={styles.backendBadge}>
-              Supabase + React Query
-            </Text>
           </Animated.View>
 
           {/* Profile Card */}
@@ -305,16 +265,31 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                     <Text style={styles.proText} tx="profileScreen:proBadge" />
                     {isRevenueCatMock && <Text style={styles.mockBadge}> (Mock)</Text>}
                   </View>
-                ) : (
+                ) : freeTrialDaysRemaining === 0 ? (
                   <Pressable
-                    style={styles.upgradeButton}
                     onPress={() => {
                       haptics.buttonPress()
                       navigation.navigate("Paywall")
                     }}
+                    style={({ pressed }) => [
+                      styles.subscribeButton,
+                      pressed && styles.subscribeButtonPressed,
+                    ]}
+                    accessibilityRole="button"
+                    accessibilityLabel={t("profileScreen:subscribe")}
                   >
-                    <Text style={styles.upgradeText} tx="profileScreen:upgradeButton" />
+                    <Text style={styles.subscribeButtonText} tx="profileScreen:subscribe" />
                   </Pressable>
+                ) : (
+                  <Text
+                    style={styles.trialText}
+                    tx={
+                      freeTrialDaysRemaining === 1
+                        ? "profileScreen:trialDayRemaining"
+                        : "profileScreen:trialDaysRemaining"
+                    }
+                    txOptions={{ count: freeTrialDaysRemaining }}
+                  />
                 )}
               </View>
             </View>
@@ -360,13 +335,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                   thumbColor={theme.colors.card}
                 />
               }
-            />
-            <View style={styles.divider} />
-            <MenuItem
-              icon="language-outline"
-              title={t("settings:language")}
-              subtitle={t("profileScreen:languageSubtitle")}
-              onPress={() => setLanguageModalVisible(true)}
             />
             {isWidgetsEnabled && (
               <>
@@ -554,7 +522,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             />
           </Animated.View>
         </ScrollView>
-      </LinearGradient>
+      </View>
 
       {/* Edit Profile Modal - Supabase version with React Query */}
       <EditProfileModalSupabase
@@ -568,10 +536,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         visible={deleteModalVisible}
         onClose={() => setDeleteModalVisible(false)}
       />
-      <LanguageSelector
-        visible={languageModalVisible}
-        onClose={() => setLanguageModalVisible(false)}
-      />
     </View>
   )
 }
@@ -583,13 +547,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create((theme) => ({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: "#FFFFFF",
     ...(isWeb && {
       minHeight: webDimension("100vh"),
     }),
   },
   gradient: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
     ...(isWeb && {
       minHeight: webDimension("100vh"),
     }),
@@ -605,24 +570,19 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.lg,
   },
   header: {
-    alignItems: "center",
+    alignItems: "flex-start",
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: theme.spacing.xl,
   },
   screenTitle: {
+    alignSelf: "stretch",
     color: theme.colors.foreground,
     fontFamily: theme.typography.fonts.bold,
-    fontSize: theme.typography.sizes["3xl"],
-    lineHeight: theme.typography.lineHeights["3xl"],
-  },
-  backendBadge: {
-    color: theme.colors.foregroundTertiary,
-    backgroundColor: theme.colors.backgroundSecondary,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xxs,
-    borderRadius: theme.radius.md,
-    fontSize: theme.typography.sizes.xs,
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 34,
+    textAlign: "left",
   },
   profileCard: {
     backgroundColor: theme.colors.card,
@@ -676,15 +636,27 @@ const styles = StyleSheet.create((theme) => ({
     lineHeight: 14,
     opacity: 0.7,
   } as const,
-  upgradeButton: {
+  trialText: {
+    color: theme.colors.foregroundSecondary,
+    fontFamily: theme.typography.fonts.medium,
+    fontSize: theme.typography.sizes.sm,
+    lineHeight: theme.typography.lineHeights.sm,
+  },
+  subscribeButton: {
     alignSelf: "flex-start",
-    backgroundColor: theme.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.colors.accent,
     borderRadius: theme.radius.lg,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
+    marginTop: theme.spacing.xxs,
   },
-  upgradeText: {
-    color: theme.colors.primaryForeground,
+  subscribeButtonPressed: {
+    opacity: 0.9,
+  },
+  subscribeButtonText: {
+    color: theme.colors.accentForeground,
     fontFamily: theme.typography.fonts.semiBold,
     fontSize: theme.typography.sizes.sm,
     lineHeight: theme.typography.lineHeights.sm,

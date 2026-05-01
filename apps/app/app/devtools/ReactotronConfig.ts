@@ -3,7 +3,7 @@
  * free desktop app for inspecting and debugging your React Native app.
  * @see https://github.com/infinitered/reactotron
  */
-import { Platform, NativeModules } from "react-native"
+import { Platform } from "react-native"
 import { MMKV } from "react-native-mmkv"
 import { ArgType } from "reactotron-core-client"
 import { ReactotronReactNative } from "reactotron-react-native"
@@ -46,16 +46,6 @@ if (Platform.OS !== "web") {
  * NOTE: If you edit this file while running the app, you will need to do a full refresh
  * or else your custom commands won't be registered correctly.
  */
-reactotron.onCustomCommand({
-  title: "Show Dev Menu",
-  description: "Opens the React Native dev menu",
-  command: "showDevMenu",
-  handler: () => {
-    Reactotron.log("Showing React Native dev menu")
-    NativeModules.DevMenu.show()
-  },
-})
-
 reactotron.onCustomCommand({
   title: "Reset Navigation State",
   description: "Resets the navigation state",

@@ -122,6 +122,10 @@ interface EmptyStateProps {
    * Pass any additional props directly to the Button component.
    */
   ButtonProps?: ButtonProps
+  /**
+   * Hides the button even when button props/preset define one.
+   */
+  hideButton?: boolean
 }
 
 interface EmptyStatePresetItem {
@@ -244,6 +248,7 @@ export function EmptyState(props: EmptyStateProps) {
     headingStyle: $headingStyleOverride,
     imageStyle: $imageStyleOverride,
     ButtonProps: buttonProps,
+    hideButton = false,
     ContentTextProps,
     HeadingTextProps,
     ImageProps,
@@ -253,7 +258,7 @@ export function EmptyState(props: EmptyStateProps) {
   const isImagePresent = !!imageSource && !isIconPresent
   const isHeadingPresent = !!(heading || headingTx)
   const isContentPresent = !!(content || contentTx)
-  const isButtonPresent = !!(button || buttonTx)
+  const isButtonPresent = !hideButton && !!(button || buttonTx)
 
   return (
     <View style={[styles.container, $containerStyleOverride]}>

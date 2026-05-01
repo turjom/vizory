@@ -9,9 +9,8 @@ import type {
 } from "react-native"
 import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View } from "react-native"
 import { useScrollToTop } from "@react-navigation/native"
-import { SystemBars, SystemBarsProps, SystemBarStyle } from "react-native-edge-to-edge"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
-import { UnistylesRuntime, useUnistyles } from "react-native-unistyles"
+import { useUnistyles } from "react-native-unistyles"
 
 import { ExtendedEdge, useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 
@@ -39,10 +38,6 @@ interface BaseScreenProps {
    */
   backgroundColor?: string
   /**
-   * System bar setting. Defaults to dark.
-   */
-  systemBarStyle?: SystemBarStyle
-  /**
    * By how much should we offset the keyboard? Defaults to 0.
    */
   keyboardOffset?: number
@@ -50,10 +45,6 @@ interface BaseScreenProps {
    * By how much we scroll up when the keyboard is shown. Defaults to 50.
    */
   keyboardBottomOffset?: number
-  /**
-   * Pass any additional props directly to the SystemBars component.
-   */
-  SystemBarsProps?: SystemBarsProps
   /**
    * Pass any additional props directly to the KeyboardAvoidingView component.
    */
@@ -266,20 +257,13 @@ function ScreenWithScrolling(props: ScreenProps) {
 /**
  * Represents a screen component that provides a consistent layout and behavior for different screen presets.
  * The `Screen` component can be used with different presets such as "fixed", "scroll", or "auto".
- * It handles safe area insets, status bar settings, keyboard avoiding behavior, and scrollability based on the preset.
+ * It handles safe area insets, keyboard avoiding behavior, and scrollability based on the preset.
  * @param {ScreenProps} props - The props for the `Screen` component.
  * @returns {JSX.Element} The rendered `Screen` component.
  */
 export function Screen(props: ScreenProps) {
   const { theme } = useUnistyles()
-  const {
-    backgroundColor,
-    KeyboardAvoidingViewProps,
-    keyboardOffset = 0,
-    safeAreaEdges,
-    SystemBarsProps,
-    systemBarStyle,
-  } = props
+  const { backgroundColor, KeyboardAvoidingViewProps, keyboardOffset = 0, safeAreaEdges } = props
 
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
@@ -291,11 +275,6 @@ export function Screen(props: ScreenProps) {
         $containerInsets,
       ]}
     >
-      <SystemBars
-        style={systemBarStyle || (UnistylesRuntime.themeName === "dark" ? "light" : "dark")}
-        {...SystemBarsProps}
-      />
-
       <KeyboardAvoidingView
         behavior={isIos ? "padding" : "height"}
         keyboardVerticalOffset={keyboardOffset}

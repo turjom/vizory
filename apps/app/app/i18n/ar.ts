@@ -150,6 +150,9 @@ const ar: Translations = {
     title: "الملف الشخصي",
     upgradeButton: "الترقية إلى Pro",
     proBadge: "PRO",
+    trialDayRemaining: "تجربة مجانية — يتبقى {{count}} يوم",
+    trialDaysRemaining: "تجربة مجانية — يتبقى {{count}} أيام",
+    subscribe: "اشترك",
     settingsTitle: "الإعدادات",
     personalInfo: "المعلومات الشخصية",
     personalInfoSubtitle: "تعديل الاسم والبريد الإلكتروني",
@@ -188,6 +191,10 @@ const ar: Translations = {
   registerScreen: {
     title: "إنشاء حساب",
     subtitle: "سجّل للبدء",
+    firstNameLabel: "الاسم الأول",
+    firstNamePlaceholder: "أدخل اسمك الأول",
+    lastNameLabel: "اسم العائلة (اختياري)",
+    lastNamePlaceholder: "أدخل اسم العائلة",
     emailLabel: "البريد الإلكتروني",
     emailPlaceholder: "أدخل بريدك الإلكتروني",
     passwordLabel: "كلمة المرور",
@@ -298,7 +305,7 @@ const ar: Translations = {
     home: "الرئيسية",
     dashboard: "لوحة التحكم",
     inventory: "المخزون",
-    search: "بحث",
+    add: "إضافة",
     components: "المكونات",
     pro: "Pro",
     profile: "الملف الشخصي",
@@ -309,7 +316,6 @@ const ar: Translations = {
   skuDetailScreen: en.skuDetailScreen,
   stockTakeScreen: en.stockTakeScreen,
   inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
-  searchScreen: en.searchScreen,
   onboardingScreenLayout: {},
   // @demo remove-block-start
   errors: {

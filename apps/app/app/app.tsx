@@ -28,7 +28,6 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
-
 import { ToastProvider } from "@/components"
 
 import { logEnvValidation } from "./config/env"
@@ -96,7 +95,7 @@ const config = {
       screens: {
         Home: "home",
         Inventory: "inventory",
-        Search: "search",
+        Add: "add",
         Profile: "profile",
       },
     },
@@ -131,6 +130,9 @@ export function App() {
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
   const [isStoresInitialized, setIsStoresInitialized] = useState(false)
   const hasLoggedReadyRef = useRef(false)
+
+  // Restored nav state can still say "Welcome" after sign-in; ignore it whenever we have a Supabase user.
+  const suppressPersistedNavigation = useAuthStore((s) => !s.loading && !!s.user)
 
   const handleInitialEmailLink = useCallback(async () => {
     // Handle email confirmation code from deep link (non-blocking)
@@ -176,6 +178,10 @@ export function App() {
         const authPromise = (async () => {
           if (__DEV__) {
             logger.debug("initializing auth store...")
+          }
+          const { persist } = useAuthStore
+          if (persist?.rehydrate) {
+            await persist.rehydrate()
           }
           await useAuthStore.getState().initialize()
           if (__DEV__) {
@@ -333,7 +339,7 @@ export function App() {
     content = (
       <AppNavigator
         linking={linking}
-        initialState={initialNavigationState}
+        initialState={suppressPersistedNavigation ? undefined : initialNavigationState}
         onStateChange={onNavigationStateChange}
         onReady={handleNavigatorReady}
       />

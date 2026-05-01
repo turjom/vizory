@@ -51,25 +51,33 @@ export async function fetchUserPreferences(userId: string): Promise<UserPreferen
     return null
   }
 
+  const defaultPreferences: UserPreferences = {
+    dark_mode_enabled: false,
+    notifications_enabled: null,
+    push_notifications_enabled: null,
+    email_notifications_enabled: null,
+  }
+
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select(
-        "dark_mode_enabled, notifications_enabled, push_notifications_enabled, email_notifications_enabled",
-      )
+      .select("notifications_enabled, push_notifications_enabled, email_notifications_enabled")
       .eq("id", userId)
       .single()
 
     if (error) {
       // Table might not exist or user has no profile yet - that's okay
       logger.debug("Failed to fetch user preferences", { error: error.message })
-      return null
+      return defaultPreferences
     }
 
-    return data as UserPreferences
+    return {
+      ...defaultPreferences,
+      ...(data as Partial<UserPreferences>),
+    }
   } catch (error) {
     logger.debug("Error fetching user preferences", { error })
-    return null
+    return defaultPreferences
   }
 }
 

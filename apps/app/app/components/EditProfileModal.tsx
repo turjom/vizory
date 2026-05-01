@@ -84,7 +84,6 @@ export const EditProfileModal: FC<EditProfileModalProps> = ({ visible, onClose }
       transparent
       animationType="fade"
       onRequestClose={handleClose}
-      statusBarTranslucent
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}

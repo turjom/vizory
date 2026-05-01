@@ -63,6 +63,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen(_pro
       subtitleTx="welcomeScreen:subtitle"
       scrollable={false}
       centerContent
+      plainBackground
     >
       {/* Primary Button - Register */}
       <TouchableOpacity
@@ -128,7 +129,7 @@ export const WelcomeScreen: FC<WelcomeScreenProps> = function WelcomeScreen(_pro
 const styles = StyleSheet.create((theme) => ({
   primaryButton: {
     alignItems: "center",
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.accent,
     borderRadius: theme.radius.lg,
     marginBottom: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
@@ -136,19 +137,21 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.md,
   },
   primaryButtonText: {
-    color: theme.colors.primaryForeground,
+    color: theme.colors.accentForeground,
     fontSize: theme.typography.sizes.lg,
   },
   secondaryButton: {
     alignItems: "center",
-    backgroundColor: theme.colors.secondary,
+    backgroundColor: theme.colors.card,
     borderRadius: theme.radius.lg,
     marginBottom: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.lg,
+    borderWidth: 1.5,
+    borderColor: theme.colors.accent,
   },
   secondaryButtonText: {
-    color: theme.colors.secondaryForeground,
+    color: theme.colors.accent,
     fontSize: theme.typography.sizes.lg,
   },
   divider: {
