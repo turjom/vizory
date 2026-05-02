@@ -15,6 +15,7 @@ import {
   View,
   type TextInputKeyPressEventData,
 } from "react-native"
+import { CameraView, useCameraPermissions, type BarcodeScanningResult, type BarcodeType } from "expo-camera"
 import * as ImagePicker from "expo-image-picker"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -66,6 +67,24 @@ const EMPTY_FORM = {
   uom_other: "",
   safety_stock_threshold: "0",
 }
+
+const SKU_BARCODE_TYPES: BarcodeType[] = [
+  "ean13",
+  "ean8",
+  "upc_a",
+  "upc_e",
+  "code128",
+  "code39",
+  "codabar",
+  "itf14",
+  "datamatrix",
+  "pdf417",
+  "code93",
+  "qr",
+  "aztec",
+]
+
+const SKU_BARCODE_SCANNER_SETTINGS = { barcodeTypes: SKU_BARCODE_TYPES }
 
 type SkuPhotoState =
   | { kind: "none" }
@@ -137,6 +156,8 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const [uomModalVisible, setUomModalVisible] = useState(false)
   const [skuPhotoState, setSkuPhotoState] = useState<SkuPhotoState>({ kind: "none" })
   const [skuCodeDuplicateError, setSkuCodeDuplicateError] = useState<string | null>(null)
+  const [skuScannerVisible, setSkuScannerVisible] = useState(false)
+  const [, requestCameraPermission] = useCameraPermissions()
 
   const addSkuSchema = useMemo(
     () =>
@@ -577,6 +598,52 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     [],
   )
 
+  const openSkuBarcodeScanner = useCallback(async () => {
+    if (Platform.OS === "web") {
+      toast.show({
+        title: t("addSkuScreen:barcodeScannerUnavailableWeb"),
+        variant: "error",
+      })
+      return
+    }
+    const result = await requestCameraPermission()
+    if (!result.granted) {
+      Alert.alert(t("addSkuScreen:barcodePermissionTitle"), t("addSkuScreen:barcodePermissionMessage"), [
+        { text: t("common:cancel"), style: "cancel" },
+        { text: t("common:openSettings"), onPress: () => void Linking.openSettings() },
+      ])
+      return
+    }
+    setSkuScannerVisible(true)
+  }, [requestCameraPermission, t, toast])
+
+  const handleBarcodeScanned = useCallback(
+    (scan: BarcodeScanningResult) => {
+      const value = scan.data?.trim() ?? ""
+      if (!value) return
+      setSkuCodeDuplicateError(null)
+      setValue("sku_code", value.slice(0, 64), { shouldValidate: true, shouldDirty: true })
+      setSkuScannerVisible(false)
+    },
+    [setValue],
+  )
+
+  const skuCodeScanAccessory = useCallback(
+    (accessoryProps: TextFieldAccessoryProps) => (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("addSkuScreen:skuCodeScanBarcodeAccessibility")}
+        onPress={openSkuBarcodeScanner}
+        hitSlop={12}
+        style={[accessoryProps.style, styles.skuScanAccessoryHit]}
+        disabled={!accessoryProps.editable}
+      >
+        <Ionicons name="camera-outline" size={22} color={theme.colors.foregroundSecondary} />
+      </Pressable>
+    ),
+    [openSkuBarcodeScanner, t, theme.colors.foregroundSecondary],
+  )
+
   const keyboardScrollBottomSpace =
     (isStackEdit ? 0 : TAB_BAR_CONTENT_HEIGHT) + insets.bottom + theme.spacing.lg
 
@@ -683,6 +750,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               onSubmitEditing={() => descriptionRef.current?.focus()}
               status={fieldState.error || skuCodeDuplicateError ? "error" : "default"}
               helper={skuCodeDuplicateError ?? fieldState.error?.message}
+              RightAccessory={Platform.OS === "web" ? undefined : skuCodeScanAccessory}
             />
           )}
         />
@@ -736,12 +804,9 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               }}
               keyboardType={Platform.OS === "web" ? "default" : "decimal-pad"}
               LeftAccessory={priceCurrencyAccessory}
-              returnKeyType="next"
+              returnKeyType="done"
               blurOnSubmit={false}
-              onSubmitEditing={() => {
-                if (uomPresetWatch === "Other") uomOtherRef.current?.focus()
-                else safetyStockRef.current?.focus()
-              }}
+              onSubmitEditing={() => Keyboard.dismiss()}
               status={fieldState.error ? "error" : "default"}
               helper={fieldState.error?.message}
             />
@@ -890,6 +955,47 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           </View>
         ) : null}
       </KeyboardAwareScrollView>
+
+      <Modal
+        visible={skuScannerVisible}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setSkuScannerVisible(false)}
+      >
+        <View style={styles.skuScannerRoot}>
+          <View style={[styles.skuScannerHeader, { paddingTop: insets.top + theme.spacing.sm }]}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("addSkuScreen:barcodeScannerClose")}
+              onPress={() => setSkuScannerVisible(false)}
+              style={styles.skuScannerCloseTouch}
+              hitSlop={12}
+            >
+              <Ionicons name="close" size={28} color={theme.colors.palette.white} />
+            </Pressable>
+            <Text
+              weight="semiBold"
+              size="lg"
+              tx="addSkuScreen:barcodeScannerTitle"
+              style={styles.skuScannerTitle}
+            />
+            <View style={styles.skuScannerHeaderSpacer} />
+          </View>
+          <CameraView
+            style={styles.skuScannerCamera}
+            facing="back"
+            barcodeScannerSettings={SKU_BARCODE_SCANNER_SETTINGS}
+            onBarcodeScanned={handleBarcodeScanned}
+          />
+          <View style={[styles.skuScannerHintWrap, { paddingBottom: insets.bottom + theme.spacing.md }]}>
+            <Text
+              size="sm"
+              tx="addSkuScreen:barcodeScannerHint"
+              style={styles.skuScannerHintText}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -1007,5 +1113,50 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
+  },
+  skuScanAccessoryHit: {
+    justifyContent: "center",
+    alignItems: "center",
+    minWidth: 36,
+    minHeight: 36,
+  },
+  skuScannerRoot: {
+    flex: 1,
+    backgroundColor: theme.colors.palette.black,
+  },
+  skuScannerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: theme.spacing.sm,
+    paddingBottom: theme.spacing.sm,
+  },
+  skuScannerCloseTouch: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  skuScannerTitle: {
+    flex: 1,
+    textAlign: "center",
+    color: theme.colors.palette.white,
+  },
+  skuScannerHeaderSpacer: {
+    width: 44,
+  },
+  skuScannerCamera: {
+    flex: 1,
+    width: "100%",
+  },
+  skuScannerHintWrap: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
+    backgroundColor: theme.colors.palette.black,
+  },
+  skuScannerHintText: {
+    textAlign: "center",
+    color: theme.colors.palette.white,
+    opacity: 0.85,
   },
 }))

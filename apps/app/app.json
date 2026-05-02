@@ -43,7 +43,7 @@
       ],
       "NSUserTrackingUsageDescription": "This app uses analytics to improve your experience and understand how you use the app. Your data is anonymized and never sold to third parties.",
       "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select images for upload.",
-      "NSCameraUsageDescription": "This app needs access to your camera to let you take photos.",
+      "NSCameraUsageDescription": "Vizory uses your camera to scan product barcodes.",
       "NSMicrophoneUsageDescription": "This app needs access to your microphone when recording videos.",
       "NSFaceIDUsageDescription": "Vizory uses Face ID to sign you in securely."
     }
@@ -72,7 +72,7 @@
       "expo-image-picker",
       {
         "photosPermission": "This app needs access to your photo library to let you select images for upload.",
-        "cameraPermission": "This app needs access to your camera to let you take photos."
+        "cameraPermission": "Vizory uses your camera to scan product barcodes."
       }
     ],
     [

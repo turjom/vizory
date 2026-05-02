@@ -4,7 +4,7 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { useEffect, useRef } from "react"
+import { Suspense, useEffect, useRef } from "react"
 import { Platform } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
@@ -18,6 +18,7 @@ import { useAuthStore } from "@/stores"
 import type { AuthState } from "@/stores/auth/authTypes"
 import { webDimension } from "@/types/webStyles"
 
+import { LazyAddSkuScreen } from "./LazyAddSkuScreen"
 import { MainTabNavigator } from "./MainTabNavigator"
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
 import { navigationRef, resetRoot, useBackButtonHandler } from "./navigationUtilities"
@@ -95,6 +96,7 @@ const AppStack = () => {
   }
 
   return (
+    <Suspense fallback={null}>
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
@@ -192,7 +194,7 @@ const AppStack = () => {
           />
           <Stack.Screen
             name="EditSku"
-            component={Screens.AddSkuScreen}
+            component={LazyAddSkuScreen}
             options={{
               animation: "slide_from_right",
               headerShown: false,
@@ -287,6 +289,7 @@ const AppStack = () => {
         </>
       )}
     </Stack.Navigator>
+    </Suspense>
   )
 }
 

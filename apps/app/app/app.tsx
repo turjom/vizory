@@ -228,7 +228,12 @@ export function App() {
         logMockServicesStatus()
         certificatePinning.initialize()
         securityCheck.log()
-        initPosthog()
+        void initPosthog().catch((error) => {
+          logger.error("PostHog initialization failed", {}, error as Error)
+          sentry.captureException(error as Error, {
+            tags: { context: "initialization", service: "posthog" },
+          })
+        })
         void initRevenueCat().catch((error) => {
           logger.error("RevenueCat initialization failed", {}, error as Error)
           sentry.captureException(error as Error, {
@@ -354,12 +359,12 @@ export function App() {
           <BackendProvider>
             {Platform.OS === "web" ? (
               <ThemeProvider>
-                <ToastProvider>{content}</ToastProvider>
+                <ToastProvider defaultDuration={2000}>{content}</ToastProvider>
               </ThemeProvider>
             ) : (
               <KeyboardProvider>
                 <ThemeProvider>
-                  <ToastProvider>{content}</ToastProvider>
+                  <ToastProvider defaultDuration={2000}>{content}</ToastProvider>
                 </ThemeProvider>
               </KeyboardProvider>
             )}

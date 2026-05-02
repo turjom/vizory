@@ -1,14 +1,15 @@
+import { Suspense } from "react"
 import { Ionicons } from "@expo/vector-icons"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { PlatformPressable } from "@react-navigation/elements"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { AddSkuScreen } from "@/screens/AddSkuScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
 import { SkuListScreen } from "@/screens/SkuListScreen"
 
+import { LazyAddSkuScreen } from "./LazyAddSkuScreen"
 import type { MainTabParamList } from "./navigationTypes"
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
@@ -32,6 +33,7 @@ export function MainTabNavigator() {
   const { theme } = useUnistyles()
 
   return (
+    <Suspense fallback={null}>
     <Tab.Navigator
       screenOptions={({ route }) => {
         const config = TAB_CONFIG[route.name as keyof MainTabParamList]
@@ -79,8 +81,9 @@ export function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Inventory" component={SkuListScreen} />
-      <Tab.Screen name="Add" component={AddSkuScreen} />
+      <Tab.Screen name="Add" component={LazyAddSkuScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
+    </Suspense>
   )
 }

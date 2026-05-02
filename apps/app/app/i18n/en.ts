@@ -184,6 +184,13 @@ const en = {
     validationUomMax: "Unit of measure must be 40 characters or less.",
     validationSafetyStockInteger: "Safety stock threshold must be a whole number.",
     validationSafetyStockMin: "Safety stock threshold cannot be negative.",
+    skuCodeScanBarcodeAccessibility: "Open camera to scan a barcode for SKU code",
+    barcodeScannerTitle: "Scan barcode",
+    barcodeScannerHint: "Point the camera at a product barcode.",
+    barcodeScannerClose: "Close",
+    barcodeScannerUnavailableWeb: "Barcode scanning is not available on web. Enter the SKU code manually.",
+    barcodePermissionTitle: "Camera access needed",
+    barcodePermissionMessage: "Allow camera access to scan barcodes. You can enable it in Settings.",
   },
   skuDetailScreen: {
     title: "SKU Details",
