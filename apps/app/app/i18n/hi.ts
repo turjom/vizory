@@ -345,6 +345,11 @@ const hi: Translations = {
     signUp: "साइन अप करें",
     appleSignInFailed: "Apple से साइन इन विफल रहा",
     googleSignInFailed: "Google से साइन इन विफल रहा",
+    biometricPromptMessage: "अपने खाते में साइन इन करें",
+    biometricSignInFaceId: "Face ID से साइन इन करें",
+    biometricSignInTouchId: "Touch ID से साइन इन करें",
+    biometricSignInFingerprint: "फ़िंगरप्रिंट से साइन इन करें",
+    biometricSignIn: "बायोमेट्रिक से साइन इन करें",
   },
   demoNavigator: {
     componentsTab: "कंपोनेंट्स",

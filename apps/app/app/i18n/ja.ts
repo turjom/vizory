@@ -345,6 +345,11 @@ const ja: Translations = {
     signUp: "サインアップ",
     appleSignInFailed: "Appleでのサインインに失敗しました",
     googleSignInFailed: "Googleでのサインインに失敗しました",
+    biometricPromptMessage: "アカウントにサインイン",
+    biometricSignInFaceId: "Face IDでサインイン",
+    biometricSignInTouchId: "Touch IDでサインイン",
+    biometricSignInFingerprint: "指紋でサインイン",
+    biometricSignIn: "生体認証でサインイン",
   },
   demoNavigator: {
     componentsTab: "コンポーネント",

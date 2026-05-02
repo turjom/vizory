@@ -349,6 +349,11 @@ const ko: Translations = {
     signUp: "가입하기",
     appleSignInFailed: "Apple 로그인에 실패했습니다",
     googleSignInFailed: "Google 로그인에 실패했습니다",
+    biometricPromptMessage: "계정에 로그인",
+    biometricSignInFaceId: "Face ID로 로그인",
+    biometricSignInTouchId: "Touch ID로 로그인",
+    biometricSignInFingerprint: "지문으로 로그인",
+    biometricSignIn: "생체 인증으로 로그인",
   },
   demoNavigator: {
     componentsTab: "컴포넌트",

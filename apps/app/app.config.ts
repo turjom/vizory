@@ -128,6 +128,8 @@ module.exports = ({ config }: ConfigContext): ExpoConfig => {
       infoPlist: {
         ...config.ios?.infoPlist,
         CFBundleURLTypes: urlTypes,
+        // Required for Face ID (LAContext); set here so prebuild never drops it during merges
+        NSFaceIDUsageDescription: "Vizory uses Face ID to sign you in securely.",
       },
       // This privacyManifests is to get you started.
       // See Expo's guide on apple privacy manifests here:

@@ -574,6 +574,11 @@ const en = {
     signUp: "Sign Up",
     appleSignInFailed: "Failed to sign in with Apple",
     googleSignInFailed: "Failed to sign in with Google",
+    biometricPromptMessage: "Sign in to your account",
+    biometricSignInFaceId: "Sign in with Face ID",
+    biometricSignInTouchId: "Sign in with Touch ID",
+    biometricSignInFingerprint: "Sign in with fingerprint",
+    biometricSignIn: "Sign in with biometrics",
   },
   // @demo remove-block-start
   demoNavigator: {

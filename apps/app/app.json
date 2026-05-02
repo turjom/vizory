@@ -44,7 +44,8 @@
       "NSUserTrackingUsageDescription": "This app uses analytics to improve your experience and understand how you use the app. Your data is anonymized and never sold to third parties.",
       "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select images for upload.",
       "NSCameraUsageDescription": "This app needs access to your camera to let you take photos.",
-      "NSMicrophoneUsageDescription": "This app needs access to your microphone when recording videos."
+      "NSMicrophoneUsageDescription": "This app needs access to your microphone when recording videos.",
+      "NSFaceIDUsageDescription": "Vizory uses Face ID to sign you in securely."
     }
   },
   "web": {
@@ -58,6 +59,12 @@
   },
   "_comment": "IMPORTANT: Before submitting to App Store/Play Store: (1) Add your Privacy Policy URL to App Store Connect / Google Play Console. (2) If using external payment processors outside of IAP, ensure compliance with store policies. (3) Test all features thoroughly. (4) Update app name and bundle identifier to your actual app details.",
   "plugins": [
+    [
+      "expo-local-authentication",
+      {
+        "faceIDPermission": "Vizory uses Face ID to sign you in securely."
+      }
+    ],
     "expo-localization",
     "expo-font",
     "@react-native-google-signin/google-signin",

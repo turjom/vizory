@@ -8565,6 +8565,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-local-authentication@npm:~17.0.8":
+  version: 17.0.8
+  resolution: "expo-local-authentication@npm:17.0.8"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/e12bb0b98633cbf7f5203439281d5fbd2f70df71c9ad7a92d2fdadb4fc26378ebfe0a5c7ef6eba6f1674268fc863b18a051d4187f6f785c075c08c1b3133f8cb
+  languageName: node
+  linkType: hard
+
 "expo-localization@npm:~17.0.7":
   version: 17.0.8
   resolution: "expo-localization@npm:17.0.8"
@@ -16405,6 +16416,7 @@ __metadata:
     expo-image-picker: "npm:^17.0.10"
     expo-linear-gradient: "npm:~15.0.7"
     expo-linking: "npm:~8.0.8"
+    expo-local-authentication: "npm:~17.0.8"
     expo-localization: "npm:~17.0.7"
     expo-notifications: "npm:^0.32.13"
     expo-secure-store: "npm:^15.0.7"

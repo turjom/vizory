@@ -351,6 +351,11 @@ const fr: Translations = {
     signUp: "S'inscrire",
     appleSignInFailed: "Échec de la connexion avec Apple",
     googleSignInFailed: "Échec de la connexion avec Google",
+    biometricPromptMessage: "Connectez-vous à votre compte",
+    biometricSignInFaceId: "Se connecter avec Face ID",
+    biometricSignInTouchId: "Se connecter avec Touch ID",
+    biometricSignInFingerprint: "Se connecter avec l'empreinte",
+    biometricSignIn: "Se connecter avec la biométrie",
   },
   demoNavigator: {
     componentsTab: "Composants",

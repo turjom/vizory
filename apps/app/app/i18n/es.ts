@@ -348,6 +348,11 @@ const es: Translations = {
     signUp: "Regístrate",
     appleSignInFailed: "No se pudo iniciar sesión con Apple",
     googleSignInFailed: "No se pudo iniciar sesión con Google",
+    biometricPromptMessage: "Inicia sesión en tu cuenta",
+    biometricSignInFaceId: "Iniciar sesión con Face ID",
+    biometricSignInTouchId: "Iniciar sesión con Touch ID",
+    biometricSignInFingerprint: "Iniciar sesión con huella",
+    biometricSignIn: "Iniciar sesión con biometría",
   },
   demoNavigator: {
     componentsTab: "Componentes",

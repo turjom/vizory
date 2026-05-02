@@ -1,10 +1,11 @@
-import { useState } from "react"
-import { View, TouchableOpacity } from "react-native"
+import { useCallback, useState } from "react"
+import { Platform, View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigation } from "@react-navigation/native"
+import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Controller, useForm } from "react-hook-form"
+import * as LocalAuthentication from "expo-local-authentication"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
@@ -16,8 +17,17 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
 import { useAuth } from "@/hooks"
+import type { TxKeyPath } from "@/i18n"
 import { AppStackParamList } from "@/navigators/navigationTypes"
 import { loginSchema } from "@/schemas/authSchemas"
+import {
+  clearBiometricSessionTokens,
+  getBiometricSessionTokens,
+  hasBiometricSessionTokens,
+  isRevokedOrInvalidStoredRefreshTokenError,
+  saveBiometricSessionTokens,
+} from "@/services/biometricSessionStorage"
+import { supabase } from "@/services/supabase"
 import { formatAuthError } from "@/utils/formatAuthError"
 
 // =============================================================================
@@ -25,6 +35,18 @@ import { formatAuthError } from "@/utils/formatAuthError"
 // =============================================================================
 
 type LoginFormData = z.infer<typeof loginSchema>
+
+function biometricSignInLabelTx(types: LocalAuthentication.AuthenticationType[]): TxKeyPath {
+  if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+    return "loginScreen:biometricSignInFaceId"
+  }
+  if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+    return Platform.OS === "ios"
+      ? "loginScreen:biometricSignInTouchId"
+      : "loginScreen:biometricSignInFingerprint"
+  }
+  return "loginScreen:biometricSignIn"
+}
 
 export const LoginScreen = () => {
   const { theme } = useUnistyles()
@@ -34,7 +56,38 @@ export const LoginScreen = () => {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [showBiometricOption, setShowBiometricOption] = useState(false)
+  const [biometricLabelTx, setBiometricLabelTx] = useState<TxKeyPath>("loginScreen:biometricSignIn")
   const oauthLoading = authLoading
+
+  const refreshBiometricAvailability = useCallback(async () => {
+    if (Platform.OS === "web") {
+      setShowBiometricOption(false)
+      return
+    }
+    try {
+      const [hasCreds, hasHardware, enrolled] = await Promise.all([
+        hasBiometricSessionTokens(),
+        LocalAuthentication.hasHardwareAsync(),
+        LocalAuthentication.isEnrolledAsync(),
+      ])
+      if (!hasCreds || !hasHardware || !enrolled) {
+        setShowBiometricOption(false)
+        return
+      }
+      const types = await LocalAuthentication.supportedAuthenticationTypesAsync()
+      setBiometricLabelTx(biometricSignInLabelTx(types))
+      setShowBiometricOption(true)
+    } catch {
+      setShowBiometricOption(false)
+    }
+  }, [])
+
+  useFocusEffect(
+    useCallback(() => {
+      void refreshBiometricAvailability()
+    }, [refreshBiometricAvailability]),
+  )
 
   const {
     control,
@@ -57,16 +110,62 @@ export const LoginScreen = () => {
 
     if (signInError) {
       const formattedError = formatAuthError(signInError)
-      // Empty string means email not confirmed - AppNavigator will handle navigation
       if (formattedError === "") {
         setError("")
       } else {
         setError(formattedError)
       }
+      return
+    }
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const session = sessionData.session
+      if (session?.access_token && session.refresh_token) {
+        await saveBiometricSessionTokens(session.access_token, session.refresh_token)
+        await refreshBiometricAvailability()
+      }
+    } catch {
+      // Secure Store unavailable — manual sign-in still succeeded
     }
   }
 
   const handleLogin = handleSubmit(onSubmit)
+
+  const handleBiometricLogin = async () => {
+    setError("")
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Sign in to Vizory",
+        cancelLabel: t("common:cancel"),
+        disableDeviceFallback: true,
+      })
+      if (!result.success) return
+
+      const tokens = await getBiometricSessionTokens()
+      if (!tokens) return
+
+      setLoading(true)
+      const { error: sessionError } = await supabase.auth.refreshSession({
+        refresh_token: tokens.refresh_token,
+      })
+      setLoading(false)
+
+      if (sessionError) {
+        if (isRevokedOrInvalidStoredRefreshTokenError(sessionError)) {
+          await clearBiometricSessionTokens()
+        }
+        const formattedError = formatAuthError(sessionError as Error)
+        if (formattedError === "") {
+          setError("")
+        } else {
+          setError(formattedError)
+        }
+      }
+    } catch {
+      setLoading(false)
+    }
+  }
 
   const handleAppleAuth = async () => {
     try {
@@ -183,6 +282,20 @@ export const LoginScreen = () => {
         )}
       </TouchableOpacity>
 
+      {showBiometricOption && (
+        <TouchableOpacity
+          style={[styles.biometricButton, loading && styles.buttonDisabled]}
+          onPress={() => void handleBiometricLogin()}
+          disabled={loading}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={t(biometricLabelTx)}
+        >
+          <Ionicons name="finger-print" size={22} color={theme.colors.foreground} />
+          <Text weight="semiBold" tx={biometricLabelTx} style={styles.biometricButtonText} />
+        </TouchableOpacity>
+      )}
+
       {/* Forgot Password Link */}
       <TouchableOpacity
         onPress={() => navigation.navigate("ForgotPassword")}
@@ -270,6 +383,21 @@ const styles = StyleSheet.create((theme) => ({
   primaryButtonText: {
     color: theme.colors.accentForeground,
     fontSize: theme.typography.sizes.lg,
+  },
+  biometricButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.secondary,
+    borderRadius: theme.radius.lg,
+    marginBottom: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  },
+  biometricButtonText: {
+    color: theme.colors.foreground,
+    fontSize: theme.typography.sizes.base,
   },
   buttonDisabled: {
     opacity: 0.4,

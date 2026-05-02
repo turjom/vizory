@@ -340,6 +340,11 @@ const ar: Translations = {
     signUp: "سجّل",
     appleSignInFailed: "فشل تسجيل الدخول باستخدام Apple",
     googleSignInFailed: "فشل تسجيل الدخول باستخدام Google",
+    biometricPromptMessage: "Sign in to your account",
+    biometricSignInFaceId: "Sign in with Face ID",
+    biometricSignInTouchId: "Sign in with Touch ID",
+    biometricSignInFingerprint: "Sign in with fingerprint",
+    biometricSignIn: "Sign in with biometrics",
   },
   demoNavigator: {
     componentsTab: "عناصر",

@@ -12,6 +12,7 @@ import { GUEST_USER_KEY } from "@/stores/auth"
 import type { AuthState } from "@/stores/auth/authTypes"
 import type { Session } from "@/types/auth"
 
+import { clearBiometricSessionTokens } from "./biometricSessionStorage"
 import { mockSupabaseHelpers } from "./mocks/supabase"
 import { logger } from "../utils/Logger"
 
@@ -247,6 +248,14 @@ export async function deleteAccount(): Promise<{ error?: Error }> {
       await supabase.auth.signOut({ scope: "local" })
     } catch (signOutError) {
       logger.warn("Failed to sign out during account deletion", { error: signOutError })
+    }
+
+    try {
+      await clearBiometricSessionTokens()
+    } catch (clearBiometricError) {
+      logger.warn("Failed to clear biometric session storage during account deletion", {
+        error: clearBiometricError,
+      })
     }
 
     // Reset auth state - this is critical and should always happen
