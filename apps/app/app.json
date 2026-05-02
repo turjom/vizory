@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
-  "icon": "./assets/images/app-icon-all.png",
+  "icon": "./assets/icons/vizory_1024.png",
   "updates": {
     "fallbackToCacheTimeout": 0
   },
@@ -52,9 +52,9 @@
     "bundler": "metro"
   },
   "splash": {
-    "image": "./assets/images/logo.png",
+    "image": "./assets/icons/vizory_1024.png",
     "resizeMode": "contain",
-    "backgroundColor": "#191015"
+    "backgroundColor": "#F97316"
   },
   "_comment": "IMPORTANT: Before submitting to App Store/Play Store: (1) Add your Privacy Policy URL to App Store Connect / Google Play Console. (2) If using external payment processors outside of IAP, ensure compliance with store policies. (3) Test all features thoroughly. (4) Update app name and bundle identifier to your actual app details.",
   "plugins": [
@@ -77,10 +77,10 @@
     [
       "expo-splash-screen",
       {
-        "image": "./assets/images/logo.png",
+        "image": "./assets/icons/vizory_1024.png",
         "imageWidth": 256,
         "resizeMode": "contain",
-        "backgroundColor": "#191015"
+        "backgroundColor": "#F97316"
       }
     ],
     [

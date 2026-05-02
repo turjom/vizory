@@ -45,6 +45,10 @@ export interface ContainerProps {
    */
   ScrollViewProps?: ScrollViewProps
   /**
+   * Applied to the inner `ScrollView` (scroll preset) or `View` (fixed preset) that wraps `children`.
+   */
+  innerStyle?: ViewStyle
+  /**
    * Maximum content width (for responsive layouts)
    * Content will be centered if viewport is wider
    */
@@ -103,9 +107,12 @@ export function Container(props: ContainerProps) {
     style,
     contentContainerStyle,
     ScrollViewProps,
+    innerStyle,
     maxContentWidth = DEFAULT_MAX_WIDTH,
     centerContent = false,
   } = props
+
+  const { style: scrollViewStyleFromProps, ...restScrollViewProps } = ScrollViewProps ?? {}
 
   const insets = useSafeAreaInsets()
   const { width: windowWidth } = useWindowDimensions()
@@ -131,16 +138,18 @@ export function Container(props: ContainerProps) {
   const content =
     preset === "scroll" ? (
       <ScrollView
-        style={styles.scrollView}
+        style={[styles.scrollView, innerStyle, scrollViewStyleFromProps]}
         contentContainerStyle={[styles.scrollContent, responsiveStyle, contentContainerStyle]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        {...ScrollViewProps}
+        {...restScrollViewProps}
       >
         {children}
       </ScrollView>
     ) : (
-      <View style={[styles.fixedContent, responsiveStyle, contentContainerStyle]}>{children}</View>
+      <View style={[styles.fixedContent, responsiveStyle, contentContainerStyle, innerStyle]}>
+        {children}
+      </View>
     )
 
   const wrappedContent = keyboardAvoiding ? (
@@ -176,6 +185,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   fixedContent: {
     flex: 1,
+    flexDirection: "column",
   },
   scrollView: {
     flex: 1,

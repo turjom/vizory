@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <!-- App icon background -->
+  <rect x="0" y="0" width="220" height="220" rx="28" fill="#F97316"/>
+
+  <!-- Horizontal almond eye shape - solid white fill, pointed left and right ends -->
+  <path d="M 20 110 Q 110 40 200 110 Q 110 180 20 110 Z" fill="white"/>
+
+  <!-- Orange pupil circle -->
+  <ellipse cx="110" cy="110" rx="36" ry="36" fill="#F97316"/>
+
+  <!-- 3D isometric box inside pupil - white faces with opacity for depth -->
+  <!-- Top face -->
+  <polygon points="110,90 127,100 110,110 93,100" fill="white" fill-opacity="0.3"/>
+  <!-- Left face -->
+  <polygon points="93,100 110,110 110,129 93,119" fill="white" fill-opacity="0.6"/>
+  <!-- Right face (brightest) -->
+  <polygon points="127,100 110,110 110,129 127,119" fill="white" fill-opacity="0.95"/>
+  <!-- Box outline -->
+  <polygon points="110,90 127,100 127,119 110,129 93,119 93,100" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- Inner edges -->
+  <line x1="110" y1="110" x2="110" y2="129" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="110" y1="110" x2="93" y2="100" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+  <line x1="110" y1="110" x2="127" y2="100" stroke="white" stroke-width="1.5" stroke-opacity="0.5"/>
+</svg>

@@ -5,6 +5,7 @@ const fr: Translations = {
   common: {
     ok: "OK !",
     cancel: "Annuler",
+    openSettings: "Réglages",
     back: "Retour",
     logOut: "Déconnexion", // @demo remove-current-line
   },

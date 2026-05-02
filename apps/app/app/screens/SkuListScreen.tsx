@@ -93,7 +93,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
 
   if (authLoading || awaitingFirstSkuData) {
     return (
-      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+      <Screen preset="fixed">
         <Header titleTypography="tab" titleTx="skuListScreen:title" />
         <View style={styles.centered}>
           <Spinner size="lg" />
@@ -111,7 +111,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           : translate("skuListScreen:loadErrorTitle")
 
     return (
-      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+      <Screen preset="fixed">
         <Header titleTypography="tab" titleTx="skuListScreen:title" />
         <View style={styles.centered}>
           <EmptyState
@@ -127,7 +127,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+    <Screen preset="fixed">
       <Header titleTypography="tab" titleTx="skuListScreen:title" />
       <FlatList
         data={filteredSkus}

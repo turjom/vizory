@@ -5,6 +5,7 @@ const ar: Translations = {
   common: {
     ok: "نعم",
     cancel: "حذف",
+    openSettings: "الإعدادات",
     back: "خلف",
     logOut: "تسجيل خروج", // @demo remove-current-line
   },

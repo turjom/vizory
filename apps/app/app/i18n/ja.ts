@@ -5,6 +5,7 @@ const ja: Translations = {
   common: {
     ok: "OK",
     cancel: "キャンセル",
+    openSettings: "設定",
     back: "戻る",
     logOut: "ログアウト", // @demo remove-current-line
   },

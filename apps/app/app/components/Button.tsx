@@ -295,7 +295,8 @@ const styles = StyleSheet.create((theme) => ({
           borderColor: theme.colors.border,
         },
         danger: {
-          backgroundColor: theme.colors.error,
+          // Explicit destructive red (not theme.colors.error — dark theme uses a lighter token)
+          backgroundColor: "#EF4444",
           borderWidth: 1,
           borderColor: "rgba(255, 255, 255, 0.15)",
           ...theme.shadows.md,

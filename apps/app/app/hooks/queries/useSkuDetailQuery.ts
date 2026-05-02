@@ -13,6 +13,7 @@ interface SkuDetailRow {
   price: number | null
   uom: string | null
   safety_stock_threshold: number
+  photo_url: string | null
 }
 
 interface QuantityRow {
@@ -44,7 +45,7 @@ export const useSkuDetailQuery = (skuId: string) => {
 
       const { data: skuData, error: skuError } = await supabase
         .from("skus")
-        .select("id, name, sku_code, description, price, uom, safety_stock_threshold")
+        .select("id, name, sku_code, description, price, uom, safety_stock_threshold, photo_url")
         .eq("id", skuId)
         .eq("user_id", userId)
         .single()

@@ -1,7 +1,11 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
+  ActionSheetIOS,
+  Alert,
   FlatList,
+  Image,
   Keyboard,
+  Linking,
   Modal,
   type NativeSyntheticEvent,
   Platform,
@@ -11,23 +15,31 @@ import {
   View,
   type TextInputKeyPressEventData,
 } from "react-native"
+import * as ImagePicker from "expo-image-picker"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Controller, useForm, useWatch } from "react-hook-form"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
-import { Header, Text, TextField, useToast, type TextFieldAccessoryProps } from "@/components"
-import { useAuth } from "@/hooks"
+import { Button, Header, Text, TextField, useToast, type TextFieldAccessoryProps } from "@/components"
+import { useAuth, useProfileQuery } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
-import type { MainTabScreenProps } from "@/navigators/navigationTypes"
+import type { AddSkuScreenProps, AppStackParamList, MainTabParamList } from "@/navigators/navigationTypes"
 import { supabase } from "@/services/supabase"
-
-interface AddSkuScreenProps extends MainTabScreenProps<"Add"> {}
+import { uploadSkuPhotoToStorage } from "@/services/skuPhotoUpload"
+import {
+  deviceCurrencyCode,
+  isPreferredCurrencyCode,
+  symbolForCurrencyCode,
+  type PreferredCurrencyCode,
+} from "@/utils/currencyLocale"
 
 const UOM_PRESET_VALUES = [
   "Pieces",
@@ -55,6 +67,11 @@ const EMPTY_FORM = {
   safety_stock_threshold: "0",
 }
 
+type SkuPhotoState =
+  | { kind: "none" }
+  | { kind: "remote"; url: string }
+  | { kind: "local"; uri: string }
+
 function sanitizeDecimalPriceInput(raw: string): string {
   let next = raw.replace(/[^0-9.]/g, "")
   const dot = next.indexOf(".")
@@ -75,15 +92,40 @@ function formatPriceTwoDecimals(raw: string): string {
 /** Approximate bottom tab bar content height (matches MainTabNavigator tabBarStyle). */
 const TAB_BAR_CONTENT_HEIGHT = 72
 
+type AppStackNav = NativeStackNavigationProp<AppStackParamList>
+type MainTabNav = BottomTabNavigationProp<MainTabParamList>
+
+async function persistPreferredCurrencyOnFirstSkuSave(userId: string, queryClient: QueryClient) {
+  const { data: row, error: selectError } = await supabase
+    .from("profiles")
+    .select("preferred_currency_code")
+    .eq("id", userId)
+    .maybeSingle()
+
+  if (selectError || row?.preferred_currency_code) return
+
+  const code = deviceCurrencyCode()
+  const { error: updateError } = await supabase
+    .from("profiles")
+    .update({ preferred_currency_code: code })
+    .eq("id", userId)
+
+  if (!updateError) {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.user.profile(userId) })
+  }
+}
+
 export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navigation, route }) {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const insets = useSafeAreaInsets()
   const toast = useToast()
   const { userId } = useAuth()
+  const { data: profile } = useProfileQuery()
   const queryClient = useQueryClient()
   const [saveError, setSaveError] = useState("")
-  const editingSku = route.params?.mode === "edit" ? route.params?.sku : undefined
+  const isStackEdit = route.name === "EditSku"
+  const editingSku = isStackEdit ? route.params.sku : undefined
   const isEditMode = !!editingSku
 
   const nameRef = useRef<TextInput>(null)
@@ -93,6 +135,8 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const uomOtherRef = useRef<TextInput>(null)
   const safetyStockRef = useRef<TextInput>(null)
   const [uomModalVisible, setUomModalVisible] = useState(false)
+  const [skuPhotoState, setSkuPhotoState] = useState<SkuPhotoState>({ kind: "none" })
+  const [skuCodeDuplicateError, setSkuCodeDuplicateError] = useState<string | null>(null)
 
   const addSkuSchema = useMemo(
     () =>
@@ -172,7 +216,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   })
 
   useEffect(() => {
-    const sku = route.params?.mode === "edit" ? route.params?.sku : undefined
+    const sku = isStackEdit ? route.params.sku : undefined
     const rawUom = sku?.uom ?? ""
     const presetWithoutOther = UOM_PRESET_VALUES.filter((v) => v !== "Other") as readonly string[]
     const matchedPreset = presetWithoutOther.includes(rawUom)
@@ -186,26 +230,38 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
       uom_other: matchedPreset ? "" : rawUom,
       safety_stock_threshold: String(sku?.safety_stock_threshold ?? 0),
     })
-  }, [route.params, reset])
+    setSkuPhotoState(
+      sku?.photo_url ? { kind: "remote", url: sku.photo_url } : { kind: "none" },
+    )
+  }, [isStackEdit, route.params, reset])
 
   const uomPresetWatch = useWatch({ control, name: "uom_preset" })
   const uomOtherWatch = useWatch({ control, name: "uom_other" })
 
-  const priceDollarAccessory = useCallback(
+  const displayCurrencyCode: PreferredCurrencyCode = useMemo(() => {
+    const stored = profile?.preferred_currency_code
+    if (isPreferredCurrencyCode(stored)) return stored
+    return deviceCurrencyCode()
+  }, [profile?.preferred_currency_code])
+
+  const priceSymbol = symbolForCurrencyCode(displayCurrencyCode)
+
+  const priceCurrencyAccessory = useCallback(
     (_props: TextFieldAccessoryProps) => (
       <Text
         weight="semiBold"
         size="md"
         style={{ color: theme.colors.foreground, marginRight: theme.spacing.xs }}
       >
-        $
+        {priceSymbol}
       </Text>
     ),
-    [theme],
+    [priceSymbol, theme.colors.foreground, theme.spacing.xs],
   )
 
   const createSkuMutation = useMutation({
-    mutationFn: async (values: AddSkuFormData) => {
+    mutationFn: async (vars: { values: AddSkuFormData; skuPhoto: SkuPhotoState }) => {
+      const { values, skuPhoto } = vars
       if (!userId) throw new Error(t("addSkuScreen:missingUserError"))
 
       const uomStored =
@@ -213,7 +269,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           ? values.uom_other?.trim() || null
           : values.uom_preset.trim() || null
 
-      const payload = {
+      const basePayload = {
         name: values.name.trim(),
         sku_code: values.sku_code?.trim() ? values.sku_code.trim() : null,
         description: values.description?.trim() ? values.description.trim() : null,
@@ -223,43 +279,86 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
       }
 
       if (isEditMode && editingSku?.id) {
+        let photo_url: string | null = skuPhoto.kind === "remote" ? skuPhoto.url : null
+        if (skuPhoto.kind === "local") {
+          try {
+            photo_url = await uploadSkuPhotoToStorage(supabase, userId, editingSku.id, skuPhoto.uri)
+          } catch {
+            throw new Error("PHOTO_UPLOAD_FAILED")
+          }
+        }
+
         const { error: skuUpdateError } = await supabase
           .from("skus")
-          .update(payload)
+          .update({ ...basePayload, photo_url })
           .eq("id", editingSku.id)
           .eq("user_id", userId)
 
         if (skuUpdateError) throw skuUpdateError
-      } else {
-        const { data: insertedSku, error: skuInsertError } = await supabase
-          .from("skus")
-          .insert({
-            ...payload,
-            user_id: userId,
-          })
-          .select("id")
-          .single()
-
-        if (skuInsertError) throw skuInsertError
-
-        const { error: quantityInsertError } = await supabase.from("inventory_quantity").insert({
-          user_id: userId,
-          sku_id: insertedSku.id,
-          total_quantity: 0,
-        })
-
-        if (quantityInsertError) throw quantityInsertError
+        return { insertedSkuId: undefined as string | undefined }
       }
+
+      const { data: insertedSku, error: skuInsertError } = await supabase
+        .from("skus")
+        .insert({
+          ...basePayload,
+          user_id: userId,
+          photo_url: null,
+        })
+        .select("id")
+        .single()
+
+      if (skuInsertError) throw skuInsertError
+
+      const { error: quantityInsertError } = await supabase.from("inventory_quantity").insert({
+        user_id: userId,
+        sku_id: insertedSku.id,
+        total_quantity: 0,
+      })
+
+      if (quantityInsertError) throw quantityInsertError
+
+      if (skuPhoto.kind === "local") {
+        try {
+          const publicUrl = await uploadSkuPhotoToStorage(
+            supabase,
+            userId,
+            insertedSku.id,
+            skuPhoto.uri,
+          )
+          const { error: photoUpdateError } = await supabase
+            .from("skus")
+            .update({ photo_url: publicUrl })
+            .eq("id", insertedSku.id)
+            .eq("user_id", userId)
+
+          if (photoUpdateError) throw photoUpdateError
+        } catch {
+          throw new Error("PHOTO_UPLOAD_FAILED")
+        }
+      }
+
+      return { insertedSkuId: insertedSku.id }
     },
-    onSuccess: async () => {
+    onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       if (editingSku?.id) {
         await queryClient.invalidateQueries({ queryKey: queryKeys.sku.detail(editingSku.id) })
       }
+      if (result?.insertedSkuId) {
+        await queryClient.invalidateQueries({ queryKey: queryKeys.sku.detail(result.insertedSkuId) })
+      }
+      if (userId) {
+        await persistPreferredCurrencyOnFirstSkuSave(userId, queryClient)
+      }
       reset(EMPTY_FORM)
-      navigation.setParams(undefined)
-      navigation.navigate("Inventory")
+      setSkuPhotoState({ kind: "none" })
+      if (route.name === "EditSku") {
+        ;(navigation as AppStackNav).navigate("Main", { screen: "Inventory" })
+      } else {
+        ;(navigation as MainTabNav).navigate("Inventory")
+      }
       toast.show({
         title: t("addSkuScreen:saveSuccessTitle"),
         variant: "success",
@@ -267,17 +366,200 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     },
   })
 
-  const onSubmit = (values: AddSkuFormData) => {
-    setSaveError("")
-    createSkuMutation.mutate(values, {
-      onError: () => {
-        setSaveError(t("addSkuScreen:saveErrorGeneric"))
+  const deleteSkuMutation = useMutation({
+    mutationFn: async () => {
+      if (!userId || !editingSku?.id) throw new Error("Not signed in")
+      const skuId = editingSku.id
+
+      const { error: adjustmentsError } = await supabase
+        .from("inventory_adjustments")
+        .delete()
+        .eq("sku_id", skuId)
+        .eq("user_id", userId)
+      if (adjustmentsError) throw adjustmentsError
+
+      const { error: stockTakesError } = await supabase
+        .from("stock_takes")
+        .delete()
+        .eq("sku_id", skuId)
+        .eq("user_id", userId)
+      if (stockTakesError) throw stockTakesError
+
+      const { error: quantityError } = await supabase
+        .from("inventory_quantity")
+        .delete()
+        .eq("sku_id", skuId)
+        .eq("user_id", userId)
+      if (quantityError) throw quantityError
+
+      const { error: skuError } = await supabase.from("skus").delete().eq("id", skuId).eq("user_id", userId)
+      if (skuError) throw skuError
+
+      return { deletedId: skuId }
+    },
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+      await queryClient.removeQueries({ queryKey: queryKeys.sku.detail(result.deletedId) })
+      ;(navigation as AppStackNav).navigate("Main", { screen: "Inventory" })
+      toast.show({
+        title: t("skuDetailScreen:deleteSkuSuccessTitle"),
+        variant: "success",
+      })
+    },
+    onError: () => {
+      toast.show({
+        title: t("skuDetailScreen:deleteSkuError"),
+        variant: "error",
+      })
+    },
+  })
+
+  const promptDeleteSku = useCallback(() => {
+    Alert.alert(t("skuDetailScreen:deleteSkuAlertTitle"), t("skuDetailScreen:deleteSkuAlertMessage"), [
+      { text: t("common:cancel"), style: "cancel" },
+      {
+        text: t("skuDetailScreen:deleteSkuConfirm"),
+        style: "destructive",
+        onPress: () => deleteSkuMutation.mutate(),
       },
-    })
+    ])
+  }, [deleteSkuMutation, t])
+
+  const handleBackFromEdit = useCallback(() => {
+    const id = editingSku?.id
+    if (!id) return
+    ;(navigation as AppStackNav).navigate("SkuDetail", { skuId: id })
+  }, [editingSku?.id, navigation])
+
+  const pickSkuImageFromSource = useCallback(
+    async (source: "camera" | "library") => {
+      try {
+        if (source === "camera") {
+          const { status } = await ImagePicker.requestCameraPermissionsAsync()
+          if (status !== "granted") {
+            toast.show({
+              title: t("addSkuScreen:photoPermissionCamera"),
+              description: t("addSkuScreen:photoPermissionHint"),
+              variant: "error",
+              action: {
+                label: t("common:openSettings"),
+                onPress: () => {
+                  void Linking.openSettings()
+                },
+              },
+            })
+            return
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ["images"],
+            quality: 1,
+          })
+          if (result.canceled || !result.assets[0]?.uri) return
+          setSkuPhotoState({ kind: "local", uri: result.assets[0].uri })
+          return
+        }
+
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+        if (status !== "granted") {
+          toast.show({
+            title: t("addSkuScreen:photoPermissionLibrary"),
+            description: t("addSkuScreen:photoPermissionHint"),
+            variant: "error",
+            action: {
+              label: t("common:openSettings"),
+              onPress: () => {
+                void Linking.openSettings()
+              },
+            },
+          })
+          return
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ["images"],
+          allowsMultipleSelection: false,
+          quality: 1,
+        })
+        if (result.canceled || !result.assets[0]?.uri) return
+        setSkuPhotoState({ kind: "local", uri: result.assets[0].uri })
+      } catch {
+        toast.show({
+          title: t("addSkuScreen:photoUploadFailed"),
+          variant: "error",
+        })
+      }
+    },
+    [t, toast],
+  )
+
+  const openSkuPhotoSheet = useCallback(() => {
+    const take = t("addSkuScreen:photoTakePhoto")
+    const library = t("addSkuScreen:photoChooseLibrary")
+    const cancel = t("common:cancel")
+    const title = t("addSkuScreen:photoActionTitle")
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title,
+          options: [cancel, take, library],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) void pickSkuImageFromSource("camera")
+          if (buttonIndex === 2) void pickSkuImageFromSource("library")
+        },
+      )
+      return
+    }
+
+    Alert.alert(title, undefined, [
+      { text: take, onPress: () => void pickSkuImageFromSource("camera") },
+      { text: library, onPress: () => void pickSkuImageFromSource("library") },
+      { text: cancel, style: "cancel" },
+    ])
+  }, [pickSkuImageFromSource, t])
+
+  const onSubmit = async (values: AddSkuFormData) => {
+    setSaveError("")
+    setSkuCodeDuplicateError(null)
+
+    const trimmedSkuCode = values.sku_code?.trim() ?? ""
+    if (!isEditMode && trimmedSkuCode && userId) {
+      const { data: existing, error: dupError } = await supabase
+        .from("skus")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("sku_code", trimmedSkuCode)
+        .maybeSingle()
+
+      if (dupError) {
+        setSaveError(t("addSkuScreen:saveErrorGeneric"))
+        return
+      }
+      if (existing) {
+        setSkuCodeDuplicateError(t("addSkuScreen:validationSkuCodeDuplicate"))
+        return
+      }
+    }
+
+    createSkuMutation.mutate(
+      { values, skuPhoto: skuPhotoState },
+      {
+        onError: (err) => {
+          const message = err instanceof Error ? err.message : ""
+          setSaveError(
+            message === "PHOTO_UPLOAD_FAILED"
+              ? t("addSkuScreen:photoUploadFailed")
+              : t("addSkuScreen:saveErrorGeneric"),
+          )
+        },
+      },
+    )
   }
 
-  const pending = createSkuMutation.isPending
-  const canSave = isValid && !pending
+  const pending = createSkuMutation.isPending || deleteSkuMutation.isPending
+  const canSave = isValid && !pending && !skuCodeDuplicateError
 
   const handleDescriptionKeyPress = useCallback(
     (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -295,7 +577,8 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     [],
   )
 
-  const keyboardScrollBottomSpace = TAB_BAR_CONTENT_HEIGHT + insets.bottom + theme.spacing.lg
+  const keyboardScrollBottomSpace =
+    (isStackEdit ? 0 : TAB_BAR_CONTENT_HEIGHT) + insets.bottom + theme.spacing.lg
 
   return (
     <View style={styles.root}>
@@ -303,6 +586,12 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         titleTypography="stack"
         titleTx={isEditMode ? "addSkuScreen:editTitle" : "addSkuScreen:title"}
         safeAreaEdges={["top"]}
+        {...(isEditMode && editingSku
+          ? {
+              leftIcon: "back" as const,
+              onLeftPress: handleBackFromEdit,
+            }
+          : {})}
         RightActionComponent={
           <TouchableOpacity
             onPress={canSave ? handleSubmit(onSubmit) : undefined}
@@ -329,6 +618,31 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         extraKeyboardSpace={keyboardScrollBottomSpace}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.photoBlock}>
+          <Text preset="label" tx="addSkuScreen:photoLabel" style={styles.photoLabel} />
+          <Pressable
+            onPress={openSkuPhotoSheet}
+            style={styles.photoTouch}
+            accessibilityRole="button"
+            accessibilityLabel={t("addSkuScreen:photoLabel")}
+          >
+            {skuPhotoState.kind === "none" ? (
+              <View style={styles.photoPlaceholder}>
+                <Ionicons name="camera-outline" size={28} color={theme.colors.foregroundSecondary} />
+                <Text size="sm" color="secondary" tx="addSkuScreen:photoPlaceholder" style={styles.photoHint} />
+              </View>
+            ) : (
+              <Image
+                source={{
+                  uri: skuPhotoState.kind === "local" ? skuPhotoState.uri : skuPhotoState.url,
+                }}
+                style={styles.photoThumb}
+                resizeMode="cover"
+              />
+            )}
+          </Pressable>
+        </View>
+
         <Controller
           control={control}
           name="name"
@@ -358,14 +672,17 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               labelTx="addSkuScreen:skuCodeLabel"
               placeholderTx="addSkuScreen:skuCodePlaceholder"
               value={field.value}
-              onChangeText={field.onChange}
+              onChangeText={(text) => {
+                setSkuCodeDuplicateError(null)
+                field.onChange(text)
+              }}
               onBlur={field.onBlur}
               autoCapitalize="characters"
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() => descriptionRef.current?.focus()}
-              status={fieldState.error ? "error" : "default"}
-              helper={fieldState.error?.message}
+              status={fieldState.error || skuCodeDuplicateError ? "error" : "default"}
+              helper={skuCodeDuplicateError ?? fieldState.error?.message}
             />
           )}
         />
@@ -418,7 +735,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                 field.onBlur()
               }}
               keyboardType={Platform.OS === "web" ? "default" : "decimal-pad"}
-              LeftAccessory={priceDollarAccessory}
+              LeftAccessory={priceCurrencyAccessory}
               returnKeyType="next"
               blurOnSubmit={false}
               onSubmitEditing={() => {
@@ -553,6 +870,18 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           )}
         />
 
+        {isEditMode ? (
+          <Button
+            tx="skuDetailScreen:deleteSkuButton"
+            variant="danger"
+            fullWidth
+            style={styles.deleteSkuButton}
+            onPress={promptDeleteSku}
+            loading={deleteSkuMutation.isPending}
+            disabled={deleteSkuMutation.isPending}
+          />
+        ) : null}
+
         {saveError ? (
           <View style={styles.errorContainer}>
             <Text size="sm" color="error">
@@ -590,6 +919,39 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: theme.colors.errorBackground,
     borderRadius: theme.radius.md,
     padding: theme.spacing.sm,
+  },
+  deleteSkuButton: {
+    marginTop: theme.spacing.xs,
+  },
+  photoBlock: {
+    gap: theme.spacing.xs,
+  },
+  photoLabel: {
+    marginBottom: theme.spacing.xxs,
+  },
+  photoTouch: {
+    alignSelf: "flex-start",
+  },
+  photoPlaceholder: {
+    width: 112,
+    height: 112,
+    borderRadius: theme.radius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.inputBorder,
+    backgroundColor: theme.colors.input,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: theme.spacing.xs,
+    padding: theme.spacing.sm,
+  },
+  photoHint: {
+    textAlign: "center",
+  },
+  photoThumb: {
+    width: 112,
+    height: 112,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.input,
   },
   uomFieldLabel: {
     marginBottom: theme.spacing.xs,

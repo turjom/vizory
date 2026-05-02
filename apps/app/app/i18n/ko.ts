@@ -5,6 +5,7 @@ const ko: Translations = {
   common: {
     ok: "확인!",
     cancel: "취소",
+    openSettings: "설정",
     back: "뒤로",
     logOut: "로그아웃", // @demo remove-current-line
   },

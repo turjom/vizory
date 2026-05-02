@@ -5,6 +5,7 @@ const hi: Translations = {
   common: {
     ok: "ठीक है!",
     cancel: "रद्द करें",
+    openSettings: "सेटिंग्स",
     back: "वापस",
     logOut: "लॉग आउट", // @demo remove-current-line
   },

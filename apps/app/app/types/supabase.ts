@@ -12,6 +12,7 @@ export type SupabaseDatabase = {
           notifications_enabled: boolean | null
           push_notifications_enabled: boolean | null
           email_notifications_enabled: boolean | null
+          preferred_currency_code: string | null
           updated_at: string | null
         }
         Insert: {
@@ -24,6 +25,7 @@ export type SupabaseDatabase = {
           notifications_enabled?: boolean | null
           push_notifications_enabled?: boolean | null
           email_notifications_enabled?: boolean | null
+          preferred_currency_code?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -36,6 +38,7 @@ export type SupabaseDatabase = {
           notifications_enabled?: boolean | null
           push_notifications_enabled?: boolean | null
           email_notifications_enabled?: boolean | null
+          preferred_currency_code?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -89,6 +92,7 @@ export type SupabaseDatabase = {
           price: number | null
           uom: string | null
           safety_stock_threshold: number
+          photo_url: string | null
           created_at: string | null
           updated_at: string | null
         }
@@ -101,6 +105,7 @@ export type SupabaseDatabase = {
           price?: number | null
           uom?: string | null
           safety_stock_threshold?: number
+          photo_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -113,6 +118,7 @@ export type SupabaseDatabase = {
           price?: number | null
           uom?: string | null
           safety_stock_threshold?: number
+          photo_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }

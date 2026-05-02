@@ -21,6 +21,12 @@ type AdjustmentTab = "PURCHASE" | "SALE" | "SCRAP"
 
 interface InventoryAdjustmentScreenProps extends AppStackScreenProps<"InventoryAdjustment"> {}
 
+/** Passed to Container `ScrollViewProps` — must include inset flags (also set explicitly below). */
+const STACK_SCROLL_VIEW_PROPS = {
+  contentInsetAdjustmentBehavior: "never" as const,
+  automaticallyAdjustContentInsets: false,
+}
+
 function formatRecentDate(iso: string | null, emptyLabel: string): string {
   if (!iso) return emptyLabel
   try {
@@ -226,15 +232,25 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
 
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="inventoryAdjustmentScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="inventoryAdjustmentScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigation.goBack()}
+          />
+        </View>
 
-        <Container preset="scroll" contentContainerStyle={styles.content}>
+        <Container
+          preset="scroll"
+          contentContainerStyle={styles.content}
+          ScrollViewProps={{
+            ...STACK_SCROLL_VIEW_PROPS,
+            contentInsetAdjustmentBehavior: "never",
+            automaticallyAdjustContentInsets: false,
+          }}
+        >
           <View style={styles.summaryCard}>
             <Text tx="inventoryAdjustmentScreen:skuLabel" size="sm" color="secondary" />
             <Text weight="bold" size="xl" style={styles.skuName}>

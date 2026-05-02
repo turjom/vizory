@@ -89,7 +89,7 @@ const useUpdateProfile = () => {
         .single()
 
       if (error) throw error
-      return data as ProfileRow
+      return data as unknown as ProfileRow
     },
     // Optimistic update
     onMutate: async ({ userId, firstName, lastName }) => {
@@ -104,6 +104,7 @@ const useUpdateProfile = () => {
         avatar_url: old?.avatar_url ?? null,
         created_at: old?.created_at ?? null,
         updated_at: new Date().toISOString(),
+        preferred_currency_code: old?.preferred_currency_code ?? null,
       }))
 
       return { previousProfile }

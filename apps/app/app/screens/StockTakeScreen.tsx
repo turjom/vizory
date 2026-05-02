@@ -18,6 +18,12 @@ import { haptics } from "@/utils/haptics"
 
 interface StockTakeScreenProps extends AppStackScreenProps<"StockTake"> {}
 
+/** Passed to Container `ScrollViewProps` — must include inset flags (also set explicitly below). */
+const STACK_SCROLL_VIEW_PROPS = {
+  contentInsetAdjustmentBehavior: "never" as const,
+  automaticallyAdjustContentInsets: false,
+}
+
 type PostSubmitRow = {
   skuId: string
   skuName: string
@@ -466,14 +472,18 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (isLoading) {
     return (
-      <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="stockTakeScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+      <Container
+        safeAreaEdges={["bottom"]}
+      >
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="stockTakeScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigation.goBack()}
+          />
+        </View>
         <View style={styles.centered}>
           <Spinner size="lg" />
         </View>
@@ -483,14 +493,18 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (error) {
     return (
-      <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="stockTakeScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+      <Container
+        safeAreaEdges={["bottom"]}
+      >
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="stockTakeScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigation.goBack()}
+          />
+        </View>
         <View style={styles.centered}>
           <Text color="error">{error.message}</Text>
           <Button tx="stockTakeScreen:retry" onPress={() => void refetch()} style={styles.retryButton} />
@@ -501,14 +515,18 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (skus.length === 0) {
     return (
-      <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="stockTakeScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+      <Container
+        safeAreaEdges={["bottom"]}
+      >
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="stockTakeScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigation.goBack()}
+          />
+        </View>
         <View style={styles.centered}>
           <Text tx="stockTakeScreen:noSkusTitle" preset="subheading" />
           <Text tx="stockTakeScreen:noSkusDescription" color="secondary" style={styles.emptyHint} />
@@ -523,15 +541,27 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     const showAcceptCancel = !allZero && pendingReview.isPostRecount
 
     return (
-      <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="stockTakeScreen:title"
-          leftIcon="back"
-          onLeftPress={onCancelCount}
-          safeAreaEdges={[]}
-        />
-        <Container preset="scroll" contentContainerStyle={styles.scrollContent}>
+      <Container
+        safeAreaEdges={["bottom"]}
+      >
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="stockTakeScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={onCancelCount}
+          />
+        </View>
+        <Container
+          preset="scroll"
+          contentContainerStyle={styles.scrollContent}
+          ScrollViewProps={{
+            ...STACK_SCROLL_VIEW_PROPS,
+            contentInsetAdjustmentBehavior: "never",
+            automaticallyAdjustContentInsets: false,
+          }}
+        >
           <Text tx="stockTakeScreen:reviewSubtitle" color="secondary" style={styles.subtitle} />
           {pendingReview.rows.map((row) => (
             <Card
@@ -637,15 +667,27 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
   }
 
   return (
-    <Container safeAreaEdges={["bottom"]}>
-      <Header
-        titleTypography="stack"
-        titleTx="stockTakeScreen:title"
-        leftIcon="back"
-        onLeftPress={() => navigation.goBack()}
-        safeAreaEdges={[]}
-      />
-      <Container preset="scroll" contentContainerStyle={styles.scrollContent}>
+    <Container
+      safeAreaEdges={["bottom"]}
+    >
+      <View style={{ flexShrink: 0 }}>
+        <Header
+          titleTypography="stack"
+          titleTx="stockTakeScreen:title"
+          safeAreaEdges={["top"]}
+          leftIcon="back"
+          onLeftPress={() => navigation.goBack()}
+        />
+      </View>
+      <Container
+        preset="scroll"
+        contentContainerStyle={styles.scrollContent}
+        ScrollViewProps={{
+          ...STACK_SCROLL_VIEW_PROPS,
+          contentInsetAdjustmentBehavior: "never",
+          automaticallyAdjustContentInsets: false,
+        }}
+      >
         <View style={styles.stockTakeSegmentOuter}>
           {(
             [
@@ -774,6 +816,7 @@ const styles = StyleSheet.create((theme) => ({
     padding: theme.spacing.lg,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing["2xl"],

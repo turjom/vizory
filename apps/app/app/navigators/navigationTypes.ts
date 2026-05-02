@@ -12,26 +12,24 @@ export type PaywallParams = {
   fromOnboarding?: boolean
 }
 
-/** Params for the Add tab (create / edit SKU form). */
-export type AddSkuTabParams =
-  | {
-      mode?: "create" | "edit"
-      sku?: {
-        id: string
-        name: string
-        sku_code: string | null
-        description: string | null
-        price: number | null
-        uom: string | null
-        safety_stock_threshold: number
-      }
-    }
-  | undefined
+/** Serializable SKU snapshot for stack Edit SKU (same shape as prior Add-tab edit params). */
+export type EditSkuRouteParams = {
+  sku: {
+    id: string
+    name: string
+    sku_code: string | null
+    description: string | null
+    price: number | null
+    uom: string | null
+    safety_stock_threshold: number
+    photo_url?: string | null
+  }
+}
 
 export type MainTabParamList = {
   Home: undefined
   Inventory: undefined
-  Add: AddSkuTabParams
+  Add: undefined
   Profile: undefined
 }
 
@@ -63,6 +61,7 @@ export type AppStackParamList = {
   SkuDetail: {
     skuId: string
   }
+  EditSku: EditSkuRouteParams
   InventoryAdjustment: {
     skuId: string
     skuName: string
@@ -83,6 +82,9 @@ export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScre
   BottomTabScreenProps<MainTabParamList, T>,
   AppStackScreenProps<keyof AppStackParamList>
 >
+
+/** Add tab (create) or stack Edit SKU — same component, different routes. */
+export type AddSkuScreenProps = MainTabScreenProps<"Add"> | NativeStackScreenProps<AppStackParamList, "EditSku">
 
 export interface NavigationProps extends Partial<
   ComponentProps<typeof NavigationContainer<AppStackParamList>>

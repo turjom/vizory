@@ -1,5 +1,5 @@
 import { FC, useMemo } from "react"
-import { Platform, ScrollView, View } from "react-native"
+import { Image, ScrollView, TouchableOpacity, View } from "react-native"
 import { format, parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -8,14 +8,6 @@ import { Button, Container, EmptyState, Header, Spinner, Text } from "@/componen
 import { useSkuDetailQuery } from "@/hooks"
 import type { TxKeyPath } from "@/i18n"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
-
-const SKU_DETAIL_SCROLL_PROPS =
-  Platform.OS === "ios"
-    ? ({
-        contentInsetAdjustmentBehavior: "never",
-        automaticallyAdjustContentInsets: false,
-      } as const)
-    : undefined
 
 interface SkuDetailScreenProps extends AppStackScreenProps<"SkuDetail"> {}
 
@@ -51,6 +43,10 @@ function pillTxForType(adjustmentType: AdjustmentType): TxKeyPath {
   }
 }
 
+function navigateToInventoryRoot(navigation: SkuDetailScreenProps["navigation"]) {
+  navigation.navigate("Main", { screen: "Inventory" })
+}
+
 export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScreen({
   navigation,
   route,
@@ -78,13 +74,15 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
   if (isLoading) {
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="skuDetailScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="skuDetailScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigateToInventoryRoot(navigation)}
+          />
+        </View>
         <View style={styles.centered}>
           <Spinner size="lg" />
         </View>
@@ -95,13 +93,15 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
   if (error || !data) {
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <Header
-          titleTypography="stack"
-          titleTx="skuDetailScreen:title"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-          safeAreaEdges={[]}
-        />
+        <View style={{ flexShrink: 0 }}>
+          <Header
+            titleTypography="stack"
+            titleTx="skuDetailScreen:title"
+            safeAreaEdges={["top"]}
+            leftIcon="back"
+            onLeftPress={() => navigateToInventoryRoot(navigation)}
+          />
+        </View>
         <View style={styles.centered}>
           <EmptyState
             preset="error"
@@ -117,38 +117,56 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
 
   return (
     <Container safeAreaEdges={["bottom"]}>
-      <Header
-        titleTypography="stack"
-        titleTx="skuDetailScreen:title"
-        leftIcon="back"
-        rightTx="skuDetailScreen:editButton"
-        onLeftPress={() => navigation.goBack()}
-        onRightPress={() =>
-          navigation.navigate("Main", {
-            screen: "Add",
-            params: {
-              mode: "edit",
-              sku: {
-                id: sku.id,
-                name: sku.name,
-                sku_code: sku.sku_code,
-                description: sku.description,
-                price: sku.price,
-                uom: sku.uom,
-                safety_stock_threshold: sku.safety_stock_threshold,
-              },
-            },
-          })
-        }
-        safeAreaEdges={[]}
-      />
+      <View style={{ flexShrink: 0 }}>
+        <Header
+          titleTypography="stack"
+          titleTx="skuDetailScreen:title"
+          safeAreaEdges={["top"]}
+          leftIcon="back"
+          onLeftPress={() => navigateToInventoryRoot(navigation)}
+          RightActionComponent={
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("EditSku", {
+                  sku: {
+                    id: sku.id,
+                    name: sku.name,
+                    sku_code: sku.sku_code,
+                    description: sku.description,
+                    price: sku.price,
+                    uom: sku.uom,
+                    safety_stock_threshold: sku.safety_stock_threshold,
+                    photo_url: sku.photo_url,
+                  },
+                })
+              }
+              style={{
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 44,
+                paddingHorizontal: theme.spacing.md,
+              }}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+            >
+              <Text
+                weight="medium"
+                size="md"
+                tx="skuDetailScreen:editButton"
+                style={{ color: theme.colors.tint }}
+              />
+            </TouchableOpacity>
+          }
+        />
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        {...(SKU_DETAIL_SCROLL_PROPS ?? {})}
+        contentInsetAdjustmentBehavior="never"
+        automaticallyAdjustContentInsets={false}
       >
         <View style={styles.titleBlock}>
           <Text style={styles.productName}>{sku.name}</Text>
@@ -161,6 +179,21 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
         </View>
 
         <View style={styles.fieldsSection}>
+          <View style={styles.fieldRow}>
+            <Text tx="skuDetailScreen:photoLabel" style={styles.fieldLabel} />
+            <View style={styles.fieldValuePhotoWrap}>
+              {sku.photo_url ? (
+                <Image
+                  source={{ uri: sku.photo_url }}
+                  style={styles.fieldPhotoThumb}
+                  resizeMode="cover"
+                  accessibilityIgnoresInvertColors
+                />
+              ) : (
+                <Text style={styles.fieldValue}>{emptyValue}</Text>
+              )}
+            </View>
+          </View>
           <View style={styles.fieldRow}>
             <Text tx="skuDetailScreen:nameLabel" style={styles.fieldLabel} />
             <Text style={styles.fieldValue}>{sku.name}</Text>
@@ -204,6 +237,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
             icon="components"
             headingTx="skuDetailScreen:historyEmptyTitle"
             contentTx="skuDetailScreen:historyEmptyDescription"
+            hideButton
           />
         ) : (
           <View style={styles.timeline}>
@@ -291,7 +325,7 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing.md,
     paddingBottom: theme.spacing["2xl"],
     gap: theme.spacing.md,
-    flexGrow: 0,
+    flexGrow: 1,
   },
   titleBlock: {
     gap: theme.spacing.xxs,
@@ -364,6 +398,18 @@ const styles = StyleSheet.create((theme) => ({
     lineHeight: theme.typography.lineHeights.base,
     color: theme.colors.foreground,
     fontFamily: theme.typography.fonts.semiBold,
+  },
+  fieldValuePhotoWrap: {
+    flex: 1,
+    alignItems: "flex-end",
+    justifyContent: "center",
+    minHeight: 56,
+  },
+  fieldPhotoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.input,
   },
   adjustInventoryButton: {
     backgroundColor: theme.colors.accent,

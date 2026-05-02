@@ -16,6 +16,14 @@ import { ExtendedEdge, useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsS
 
 export const DEFAULT_BOTTOM_OFFSET = 50
 
+/**
+ * Safe-area padding applied when `safeAreaEdges` is omitted.
+ * Excludes `top` so stack screens with a custom `Header` (which defaults to top inset)
+ * are not double-padded. Tab roots and other headerless layouts should pass
+ * `safeAreaEdges={["top", "bottom"]}` (or include `"top"` as needed).
+ */
+export const DEFAULT_SCREEN_SAFE_AREA_EDGES: ExtendedEdge[] = ["bottom"]
+
 interface BaseScreenProps {
   /**
    * Children components.
@@ -30,7 +38,10 @@ interface BaseScreenProps {
    */
   contentContainerStyle?: StyleProp<ViewStyle>
   /**
-   * Override the default edges for the safe area.
+   * Safe-area edges to pad on the outer container. Defaults to {@link DEFAULT_SCREEN_SAFE_AREA_EDGES}
+   * (`["bottom"]` only) so the top inset is not stacked with navigators / {@link Header}.
+   * Pass `["top", "bottom"]` for tab roots or any screen without a top-aware header.
+   * Pass `[]` for full-bleed (you handle insets yourself).
    */
   safeAreaEdges?: ExtendedEdge[]
   /**
@@ -258,6 +269,11 @@ function ScreenWithScrolling(props: ScreenProps) {
  * Represents a screen component that provides a consistent layout and behavior for different screen presets.
  * The `Screen` component can be used with different presets such as "fixed", "scroll", or "auto".
  * It handles safe area insets, keyboard avoiding behavior, and scrollability based on the preset.
+ *
+ * **Safe area:** When `safeAreaEdges` is omitted, only the bottom inset is applied by default
+ * (see {@link DEFAULT_SCREEN_SAFE_AREA_EDGES}). Screens that use `Header` get top inset from
+ * the header; omit top on `Screen` to avoid doubling. Screens without that header should set
+ * `safeAreaEdges` to include `"top"` explicitly.
  * @param {ScreenProps} props - The props for the `Screen` component.
  * @returns {JSX.Element} The rendered `Screen` component.
  */
@@ -265,7 +281,8 @@ export function Screen(props: ScreenProps) {
   const { theme } = useUnistyles()
   const { backgroundColor, KeyboardAvoidingViewProps, keyboardOffset = 0, safeAreaEdges } = props
 
-  const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
+  const resolvedSafeAreaEdges = safeAreaEdges ?? DEFAULT_SCREEN_SAFE_AREA_EDGES
+  const $containerInsets = useSafeAreaInsetsStyle(resolvedSafeAreaEdges)
 
   return (
     <View

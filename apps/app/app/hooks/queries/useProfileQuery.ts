@@ -13,6 +13,7 @@ export interface ProfileRow {
   avatar_url: string | null
   created_at: string | null
   updated_at: string | null
+  preferred_currency_code: string | null
 }
 
 export function useProfileQuery() {
@@ -26,7 +27,7 @@ export function useProfileQuery() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, first_name, last_name, avatar_url, created_at, updated_at")
+        .select("id, first_name, last_name, avatar_url, created_at, updated_at, preferred_currency_code")
         .eq("id", userId)
         .single()
 

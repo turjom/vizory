@@ -210,9 +210,7 @@ export function Header(props: HeaderProps) {
   }, [titleTypography, resolvedTitleMode, $titleContainerStyleOverride])
 
   return (
-    <View
-      style={[styles.container, $containerInsets, { backgroundColor }, $containerStyleOverride]}
-    >
+    <View style={[styles.container, $containerInsets, { backgroundColor }, $containerStyleOverride]}>
       <View
         style={[
           styles.row,
@@ -299,7 +297,7 @@ function HeaderAction(props: HeaderActionProps) {
 
 const styles = StyleSheet.create((theme) => ({
   wrapper: {
-    minHeight: 56,
+    height: 56,
     alignItems: "center",
     justifyContent: "space-between",
   },
@@ -310,6 +308,8 @@ const styles = StyleSheet.create((theme) => ({
   },
   container: {
     width: "100%",
+    // Do not grow inside a column parent (e.g. Container fixedContent + flex:1 body); natural height = safe area + toolbar row only
+    flex: 0,
   },
   row: {
     flexDirection: "row",
