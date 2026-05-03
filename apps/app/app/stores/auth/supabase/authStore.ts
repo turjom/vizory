@@ -10,7 +10,6 @@ import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
 import { env } from "../../../config/env"
-import { syncBiometricVaultIfEnabled } from "../../../services/biometricSessionStorage"
 import { fetchAndApplyUserPreferences } from "../../../services/preferencesSync"
 import { supabase, isUsingMockSupabase } from "../../../services/supabase"
 import { isEmailConfirmed, type Session } from "../../../types/auth"
@@ -311,17 +310,6 @@ export const useAuthStore = create<AuthState>()(
               const emailConfirmed = isEmailConfirmed(user)
               // Only authenticate if session exists AND email is confirmed
               const shouldAuthenticate = !!session && emailConfirmed
-
-              if (
-                session &&
-                (event === "TOKEN_REFRESHED" || event === "SIGNED_IN")
-              ) {
-                try {
-                  await syncBiometricVaultIfEnabled(session as Session)
-                } catch (vaultErr) {
-                  logger.debug("Biometric vault sync skipped", { error: String(vaultErr) })
-                }
-              }
 
               const stateUpdate = updateUserState(user, session)
               set({

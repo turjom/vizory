@@ -10,7 +10,7 @@ import * as Linking from "expo-linking"
 import { TIMING } from "../../../config/constants"
 import { env } from "../../../config/env"
 import { queryClient } from "../../../hooks/queries"
-import { hasBiometricSessionTokens } from "../../../services/biometricSessionStorage"
+import { hasBiometricLoginCredentials } from "../../../services/biometricSessionStorage"
 import { supabase, isUsingMockSupabase } from "../../../services/supabase"
 import type { Session } from "../../../types/auth"
 import { isEmailConfirmed } from "../../../types/auth"
@@ -429,12 +429,12 @@ export async function signOutAction(
   if (__DEV__) {
     // eslint-disable-next-line no-console
     console.log(
-      "[BiometricFlow] signOutAction: used scope=local so server does not revoke all user refresh tokens; biometric vault can still refresh after sign-out",
+      "[BiometricFlow] signOutAction: used scope=local; biometric vault (stored password) unchanged after sign-out",
     )
     try {
-      const stillHasVault = await hasBiometricSessionTokens()
+      const stillHasVault = await hasBiometricLoginCredentials()
       // eslint-disable-next-line no-console
-      console.log("[BiometricFlow] signOutAction: hasBiometricSessionTokens after sign-out", {
+      console.log("[BiometricFlow] signOutAction: hasBiometricLoginCredentials after sign-out", {
         stillHasVault,
       })
     } catch (vaultErr) {

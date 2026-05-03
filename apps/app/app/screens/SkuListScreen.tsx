@@ -93,8 +93,8 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
 
   if (authLoading || awaitingFirstSkuData) {
     return (
-      <Screen preset="fixed">
-        <Header titleTypography="tab" titleTx="skuListScreen:title" />
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <Header titleTypography="tab" titleTx="skuListScreen:title" safeAreaEdges={[]} />
         <View style={styles.centered}>
           <Spinner size="lg" />
         </View>
@@ -111,8 +111,8 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           : translate("skuListScreen:loadErrorTitle")
 
     return (
-      <Screen preset="fixed">
-        <Header titleTypography="tab" titleTx="skuListScreen:title" />
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <Header titleTypography="tab" titleTx="skuListScreen:title" safeAreaEdges={[]} />
         <View style={styles.centered}>
           <EmptyState
             preset="error"
@@ -127,8 +127,8 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
   }
 
   return (
-    <Screen preset="fixed">
-      <Header titleTypography="tab" titleTx="skuListScreen:title" />
+    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+      <Header titleTypography="tab" titleTx="skuListScreen:title" safeAreaEdges={[]} />
       <FlatList
         data={filteredSkus}
         keyExtractor={keyExtractor}

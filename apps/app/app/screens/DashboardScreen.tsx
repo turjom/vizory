@@ -82,11 +82,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const greetingTitleTxOptions = hasFirstName ? { firstName: trimmedFirstName } : undefined
 
   return (
-    <Screen preset="scroll">
+    <Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>
       <Header
         titleTypography="tab"
         titleTx={greetingTitleTx}
         titleTxOptions={greetingTitleTxOptions}
+        safeAreaEdges={[]}
       />
       <View style={styles.content}>
         {/* Hero Card */}
