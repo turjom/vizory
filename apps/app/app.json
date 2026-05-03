@@ -34,7 +34,7 @@
     ]
   },
   "ios": {
-    "icon": "./assets/images/app-icon-ios.png",
+    "icon": "./assets/icons/vizory_1024.png",
     "supportsTablet": true,
     "bundleIdentifier": "com.vizory.app",
     "infoPlist": {

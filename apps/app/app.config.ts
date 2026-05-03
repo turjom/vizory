@@ -118,13 +118,13 @@ module.exports = ({ config }: ConfigContext): ExpoConfig => {
       password_reset_redirect_url: process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL,
     },
     // Ensure icon is preserved from app.json
-    icon: config.icon || "./assets/images/app-icon-all.png",
+    icon: config.icon || "./assets/icons/vizory_1024.png",
     ios: {
       ...config.ios,
       // Ensure bundleIdentifier is preserved
       bundleIdentifier,
       // Ensure iOS icon is preserved from app.json
-      icon: config.ios?.icon || "./assets/images/app-icon-ios.png",
+      icon: config.ios?.icon || ".assets/icons/vizory_1024.png",
       infoPlist: {
         ...config.ios?.infoPlist,
         CFBundleURLTypes: urlTypes,
