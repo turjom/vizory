@@ -2,7 +2,7 @@ import type { ComponentType, Ref } from "react"
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
 /* eslint-disable no-restricted-imports -- This is the wrapper component that needs the underlying RN TextInput */
 import type { TextInputProps, ViewStyle } from "react-native"
-import { TextInput as RNTextInput, TouchableOpacity, Pressable, View } from "react-native"
+import { Platform, TextInput as RNTextInput, TouchableOpacity, Pressable, View } from "react-native"
 /* eslint-enable no-restricted-imports */
 import Ionicons from "@expo/vector-icons/Ionicons"
 import { useTranslation } from "react-i18next"
@@ -241,6 +241,9 @@ export const TextField = forwardRef(function TextField(
       style={containerStyle}
       onPress={focusInput}
       accessibilityState={{ disabled: isDisabled }}
+      // Web: do not put the wrapper in the tab order; only the inner <input> should be
+      // a tab stop (otherwise Tab order vs. sibling controls like pickers is unreliable).
+      focusable={Platform.OS === "web" ? false : undefined}
     >
       {/* Label */}
       {!!(label || labelTx) && (

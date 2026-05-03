@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Platform, View, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { SymbolView, type SFSymbol } from "expo-symbols"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -37,7 +38,10 @@ import { formatAuthError } from "@/utils/formatAuthError"
 type LoginFormData = z.infer<typeof loginSchema>
 
 function biometricSignInLabelTx(types: LocalAuthentication.AuthenticationType[]): TxKeyPath {
-  if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+  if (
+    types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION) ||
+    types.includes(LocalAuthentication.AuthenticationType.IRIS)
+  ) {
     return "loginScreen:biometricSignInFaceId"
   }
   if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
@@ -46,6 +50,57 @@ function biometricSignInLabelTx(types: LocalAuthentication.AuthenticationType[])
       : "loginScreen:biometricSignInFingerprint"
   }
   return "loginScreen:biometricSignIn"
+}
+
+function BiometricSignInIcon({
+  types,
+  tintColor,
+}: {
+  types: LocalAuthentication.AuthenticationType[]
+  tintColor: string
+}) {
+  const fallbackPrint = <Ionicons name="finger-print" size={22} color={tintColor} />
+  const fallbackFace = <Ionicons name="scan-outline" size={22} color={tintColor} />
+
+  const hasFace =
+    types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION) ||
+    types.includes(LocalAuthentication.AuthenticationType.IRIS)
+  const hasFingerprint = types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)
+
+  if (hasFace && !hasFingerprint) {
+    return (
+      <SymbolView
+        name={"faceid" as SFSymbol}
+        size={22}
+        tintColor={tintColor}
+        fallback={fallbackFace}
+      />
+    )
+  }
+
+  if (hasFingerprint && !hasFace) {
+    return (
+      <SymbolView
+        name={"touchid" as SFSymbol}
+        size={22}
+        tintColor={tintColor}
+        fallback={fallbackPrint}
+      />
+    )
+  }
+
+  if (hasFace && hasFingerprint) {
+    return (
+      <SymbolView
+        name={"faceid" as SFSymbol}
+        size={22}
+        tintColor={tintColor}
+        fallback={fallbackFace}
+      />
+    )
+  }
+
+  return fallbackPrint
 }
 
 export const LoginScreen = () => {
@@ -58,7 +113,28 @@ export const LoginScreen = () => {
   const [error, setError] = useState("")
   const [showBiometricOption, setShowBiometricOption] = useState(false)
   const [biometricLabelTx, setBiometricLabelTx] = useState<TxKeyPath>("loginScreen:biometricSignIn")
+  const [biometricAuthTypes, setBiometricAuthTypes] = useState<LocalAuthentication.AuthenticationType[]>([])
   const oauthLoading = authLoading
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      return undefined
+    }
+    let cancelled = false
+    void (async () => {
+      try {
+        const types = await LocalAuthentication.supportedAuthenticationTypesAsync()
+        if (!cancelled) {
+          setBiometricAuthTypes(types)
+        }
+      } catch {
+        /* leave default [] */
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const refreshBiometricAvailability = useCallback(async () => {
     if (Platform.OS === "web") {
@@ -76,6 +152,7 @@ export const LoginScreen = () => {
         return
       }
       const types = await LocalAuthentication.supportedAuthenticationTypesAsync()
+      setBiometricAuthTypes(types)
       setBiometricLabelTx(biometricSignInLabelTx(types))
       setShowBiometricOption(true)
     } catch {
@@ -291,7 +368,7 @@ export const LoginScreen = () => {
           accessibilityRole="button"
           accessibilityLabel={t(biometricLabelTx)}
         >
-          <Ionicons name="finger-print" size={22} color={theme.colors.foreground} />
+          <BiometricSignInIcon types={biometricAuthTypes} tintColor={theme.colors.foreground} />
           <Text weight="semiBold" tx={biometricLabelTx} style={styles.biometricButtonText} />
         </TouchableOpacity>
       )}

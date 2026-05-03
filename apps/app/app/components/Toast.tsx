@@ -1,12 +1,11 @@
 import type { ReactNode } from "react"
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, View } from "react-native"
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  runOnJS,
   SlideInUp,
   SlideOutUp,
 } from "react-native-reanimated"
@@ -55,7 +54,8 @@ interface ToastProviderProps {
 }
 
 export interface ToastProps extends ToastData {
-  onHide: () => void
+  /** Stable dismiss handler from provider; pass toast `id` when calling. */
+  onDismiss: (toastId: string) => void
 }
 
 // =============================================================================
@@ -142,7 +142,7 @@ export function ToastProvider(props: ToastProviderProps) {
       {children}
       <View style={[styles.container, { top: insets.top + 8 }]} pointerEvents="box-none">
         {toasts.map((toast) => (
-          <Toast key={toast.id} {...toast} onHide={() => hide(toast.id)} />
+          <Toast key={toast.id} {...toast} onDismiss={hide} />
         ))}
       </View>
     </ToastContext.Provider>
@@ -154,10 +154,16 @@ export function ToastProvider(props: ToastProviderProps) {
 // =============================================================================
 
 function Toast(props: ToastProps) {
-  const { title, description, variant = "default", icon, duration = 4000, action, onHide } = props
+  const { id, title, description, variant = "default", icon, duration = 4000, action, onDismiss } = props
 
   const { theme } = useUnistyles()
   const progress = useSharedValue(1)
+  const onDismissRef = useRef(onDismiss)
+  onDismissRef.current = onDismiss
+
+  const dismiss = useCallback(() => {
+    onDismissRef.current(id)
+  }, [id])
 
   // Get variant styles
   const variantConfig = useMemo(() => {
@@ -195,7 +201,9 @@ function Toast(props: ToastProps) {
     }
   }, [variant, icon, theme])
 
-  // Auto-hide timer
+  // Auto-dismiss on the JS timer. Do not rely on Reanimated's withTiming completion +
+  // runOnJS — that path can fail to fire after navigation or on some platforms, leaving
+  // the toast stuck. Progress bar still animates via withTiming for the same duration.
   useEffect(() => {
     cancelAnimation(progress)
     progress.value = 1
@@ -206,16 +214,17 @@ function Toast(props: ToastProps) {
       }
     }
 
-    progress.value = withTiming(0, { duration }, (finished) => {
-      if (finished) {
-        runOnJS(onHide)()
-      }
-    })
+    progress.value = withTiming(0, { duration })
+
+    const timer = setTimeout(() => {
+      dismiss()
+    }, duration)
 
     return () => {
+      clearTimeout(timer)
       cancelAnimation(progress)
     }
-  }, [duration, onHide, progress])
+  }, [duration, dismiss, progress])
 
   // Progress bar animation
   const progressStyle = useAnimatedStyle(() => ({
@@ -235,7 +244,7 @@ function Toast(props: ToastProps) {
           </View>
         )}
 
-        <Pressable style={styles.textContainer} onPress={onHide}>
+        <Pressable style={styles.textContainer} onPress={dismiss}>
           <Text weight="semiBold" size="sm" numberOfLines={1}>
             {title}
           </Text>
@@ -254,7 +263,7 @@ function Toast(props: ToastProps) {
           </Pressable>
         )}
 
-        <Pressable style={styles.closeButton} onPress={onHide} hitSlop={8}>
+        <Pressable style={styles.closeButton} onPress={dismiss} hitSlop={8}>
           <Icon icon="x" size={16} color={theme.colors.foregroundTertiary} />
         </Pressable>
       </View>

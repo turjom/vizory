@@ -1,9 +1,11 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ActionSheetIOS,
   Alert,
   FlatList,
   Image,
+  InputAccessoryView,
+  InteractionManager,
   Keyboard,
   Linking,
   Modal,
@@ -15,7 +17,6 @@ import {
   View,
   type TextInputKeyPressEventData,
 } from "react-native"
-import { CameraView, useCameraPermissions, type BarcodeScanningResult, type BarcodeType } from "expo-camera"
 import * as ImagePicker from "expo-image-picker"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -68,23 +69,13 @@ const EMPTY_FORM = {
   safety_stock_threshold: "0",
 }
 
-const SKU_BARCODE_TYPES: BarcodeType[] = [
-  "ean13",
-  "ean8",
-  "upc_a",
-  "upc_e",
-  "code128",
-  "code39",
-  "codabar",
-  "itf14",
-  "datamatrix",
-  "pdf417",
-  "code93",
-  "qr",
-  "aztec",
-]
+/** On web, `nativeID` becomes the real `<input id="…">` (RN Web). Used for Tab handling. */
+const ADD_SKU_PRICE_INPUT_WEB_ID = "vizory-add-sku-price"
 
-const SKU_BARCODE_SCANNER_SETTINGS = { barcodeTypes: SKU_BARCODE_TYPES }
+const LazyAddSkuBarcodeScannerModal = lazy(() => import("./AddSkuBarcodeScannerModal"))
+
+/** iOS: empty input accessory so the Price `decimal-pad` field does not show the default Done toolbar. */
+const ADD_SKU_PRICE_INPUT_ACCESSORY_ID = "addSkuPriceInputAccessoryEmpty"
 
 type SkuPhotoState =
   | { kind: "none" }
@@ -157,7 +148,10 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const [skuPhotoState, setSkuPhotoState] = useState<SkuPhotoState>({ kind: "none" })
   const [skuCodeDuplicateError, setSkuCodeDuplicateError] = useState<string | null>(null)
   const [skuScannerVisible, setSkuScannerVisible] = useState(false)
-  const [, requestCameraPermission] = useCameraPermissions()
+
+  const closeSkuScanner = useCallback(() => {
+    setSkuScannerVisible(false)
+  }, [])
 
   const addSkuSchema = useMemo(
     () =>
@@ -229,7 +223,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     handleSubmit,
     reset,
     setValue,
-    formState: { isValid },
+    formState: { isValid: formIsValid },
   } = useForm<AddSkuFormData>({
     resolver: zodResolver(addSkuSchema),
     mode: "onChange",
@@ -580,7 +574,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   }
 
   const pending = createSkuMutation.isPending || deleteSkuMutation.isPending
-  const canSave = isValid && !pending && !skuCodeDuplicateError
+  const canSave = formIsValid && !pending && !skuCodeDuplicateError
 
   const handleDescriptionKeyPress = useCallback(
     (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -598,7 +592,53 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     [],
   )
 
-  const openSkuBarcodeScanner = useCallback(async () => {
+  const openUomPickerFromKeyboard = useCallback(() => {
+    Keyboard.dismiss()
+    setUomModalVisible(true)
+  }, [])
+
+  /**
+   * Web: `priceRef` is not guaranteed to be a DOM node (useImperativeHandle / host refs), so
+   * attaching `addEventListener` on it was unreliable. Intercept Tab in the **capture** phase
+   * on `document` when the event target is our price `<input>` (identified by `nativeID` → `id`).
+   */
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return
+
+    const onDocumentKeyDownCapture = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || e.shiftKey) return
+      const t = e.target
+      if (!t || (t as HTMLElement).nodeName !== "INPUT") return
+      if ((t as HTMLInputElement).id !== ADD_SKU_PRICE_INPUT_WEB_ID) return
+      e.preventDefault()
+      e.stopPropagation()
+      openUomPickerFromKeyboard()
+    }
+
+    document.addEventListener("keydown", onDocumentKeyDownCapture, true)
+    return () => document.removeEventListener("keydown", onDocumentKeyDownCapture, true)
+  }, [openUomPickerFromKeyboard])
+
+  const selectUomPresetAndClose = useCallback(
+    (item: string) => {
+      setValue("uom_preset", item, { shouldValidate: true, shouldDirty: true })
+      if (item !== "Other") {
+        setValue("uom_other", "", { shouldValidate: true, shouldDirty: true })
+      }
+      setUomModalVisible(false)
+
+      InteractionManager.runAfterInteractions(() => {
+        if (item === "Other") {
+          uomOtherRef.current?.focus()
+        } else {
+          safetyStockRef.current?.focus()
+        }
+      })
+    },
+    [setValue],
+  )
+
+  const openSkuBarcodeScanner = useCallback(() => {
     if (Platform.OS === "web") {
       toast.show({
         title: t("addSkuScreen:barcodeScannerUnavailableWeb"),
@@ -606,23 +646,15 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
       })
       return
     }
-    const result = await requestCameraPermission()
-    if (!result.granted) {
-      Alert.alert(t("addSkuScreen:barcodePermissionTitle"), t("addSkuScreen:barcodePermissionMessage"), [
-        { text: t("common:cancel"), style: "cancel" },
-        { text: t("common:openSettings"), onPress: () => void Linking.openSettings() },
-      ])
-      return
-    }
     setSkuScannerVisible(true)
-  }, [requestCameraPermission, t, toast])
+  }, [t, toast])
 
   const handleBarcodeScanned = useCallback(
-    (scan: BarcodeScanningResult) => {
-      const value = scan.data?.trim() ?? ""
-      if (!value) return
+    (value: string) => {
+      const trimmed = value.trim()
+      if (!trimmed) return
       setSkuCodeDuplicateError(null)
-      setValue("sku_code", value.slice(0, 64), { shouldValidate: true, shouldDirty: true })
+      setValue("sku_code", trimmed.slice(0, 64), { shouldValidate: true, shouldDirty: true })
       setSkuScannerVisible(false)
     },
     [setValue],
@@ -649,6 +681,11 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
 
   return (
     <View style={styles.root}>
+      {Platform.OS === "ios" ? (
+        <InputAccessoryView nativeID={ADD_SKU_PRICE_INPUT_ACCESSORY_ID}>
+          <View style={styles.priceInputAccessoryHidden} />
+        </InputAccessoryView>
+      ) : null}
       <Header
         titleTypography="stack"
         titleTx={isEditMode ? "addSkuScreen:editTitle" : "addSkuScreen:title"}
@@ -663,7 +700,10 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           <TouchableOpacity
             onPress={canSave ? handleSubmit(onSubmit) : undefined}
             disabled={!canSave}
-            style={styles.headerSaveTouch}
+            style={[
+              styles.headerSaveTouch,
+              formIsValid ? styles.headerSaveActive : styles.headerSaveInactive,
+            ]}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ disabled: !canSave }}
@@ -672,7 +712,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               weight="semiBold"
               size="md"
               tx="addSkuScreen:headerSave"
-              style={{ color: canSave ? theme.colors.primary : theme.colors.foregroundSecondary }}
+              style={formIsValid ? styles.headerSaveLabelActive : styles.headerSaveLabelInactive}
             />
           </TouchableOpacity>
         }
@@ -766,13 +806,23 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               value={field.value}
               onChangeText={(text) => {
                 const prev = field.value ?? ""
-                const isReturnAtEnd = text === `${prev}\n` || text === `${prev}\r\n`
+                const hadTab = text.includes("\t")
+                const cleaned = text.replace(/\t/g, "")
+
+                const isReturnAtEnd = cleaned === `${prev}\n` || cleaned === `${prev}\r\n`
                 if (isReturnAtEnd) {
                   field.onChange(prev)
                   requestAnimationFrame(() => priceRef.current?.focus())
                   return
                 }
-                field.onChange(text)
+
+                if (hadTab) {
+                  field.onChange(cleaned)
+                  requestAnimationFrame(() => priceRef.current?.focus())
+                  return
+                }
+
+                field.onChange(cleaned)
               }}
               onBlur={field.onBlur}
               multiline
@@ -794,6 +844,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           render={({ field, fieldState }) => (
             <TextField
               ref={priceRef}
+              nativeID={Platform.OS === "web" ? ADD_SKU_PRICE_INPUT_WEB_ID : undefined}
               labelTx="addSkuScreen:priceLabel"
               placeholderTx="addSkuScreen:pricePlaceholder"
               value={field.value}
@@ -803,10 +854,13 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                 field.onBlur()
               }}
               keyboardType={Platform.OS === "web" ? "default" : "decimal-pad"}
+              inputAccessoryViewID={
+                Platform.OS === "ios" ? ADD_SKU_PRICE_INPUT_ACCESSORY_ID : undefined
+              }
               LeftAccessory={priceCurrencyAccessory}
-              returnKeyType="done"
+              returnKeyType="next"
               blurOnSubmit={false}
-              onSubmitEditing={() => Keyboard.dismiss()}
+              onSubmitEditing={openUomPickerFromKeyboard}
               status={fieldState.error ? "error" : "default"}
               helper={fieldState.error?.message}
             />
@@ -828,10 +882,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               <View>
                 <Text preset="label" tx="addSkuScreen:uomLabel" style={styles.uomFieldLabel} />
                 <Pressable
-                  onPress={() => {
-                    Keyboard.dismiss()
-                    setUomModalVisible(true)
-                  }}
+                  onPress={openUomPickerFromKeyboard}
                   style={[
                     styles.uomTrigger,
                     fieldState.error ? styles.uomTriggerError : undefined,
@@ -895,13 +946,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                   <TouchableOpacity
                     style={styles.uomModalRow}
                     activeOpacity={0.7}
-                    onPress={() => {
-                      setValue("uom_preset", item, { shouldValidate: true, shouldDirty: true })
-                      if (item !== "Other") {
-                        setValue("uom_other", "", { shouldValidate: true, shouldDirty: true })
-                      }
-                      setUomModalVisible(false)
-                    }}
+                    onPress={() => selectUomPresetAndClose(item)}
                   >
                     <Text size="md" text={item === "Other" ? t("addSkuScreen:uomOptionOther") : item} />
                   </TouchableOpacity>
@@ -956,46 +1001,15 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         ) : null}
       </KeyboardAwareScrollView>
 
-      <Modal
-        visible={skuScannerVisible}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setSkuScannerVisible(false)}
-      >
-        <View style={styles.skuScannerRoot}>
-          <View style={[styles.skuScannerHeader, { paddingTop: insets.top + theme.spacing.sm }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("addSkuScreen:barcodeScannerClose")}
-              onPress={() => setSkuScannerVisible(false)}
-              style={styles.skuScannerCloseTouch}
-              hitSlop={12}
-            >
-              <Ionicons name="close" size={28} color={theme.colors.palette.white} />
-            </Pressable>
-            <Text
-              weight="semiBold"
-              size="lg"
-              tx="addSkuScreen:barcodeScannerTitle"
-              style={styles.skuScannerTitle}
-            />
-            <View style={styles.skuScannerHeaderSpacer} />
-          </View>
-          <CameraView
-            style={styles.skuScannerCamera}
-            facing="back"
-            barcodeScannerSettings={SKU_BARCODE_SCANNER_SETTINGS}
+      {skuScannerVisible ? (
+        <Suspense fallback={null}>
+          <LazyAddSkuBarcodeScannerModal
+            visible={skuScannerVisible}
+            onClose={closeSkuScanner}
             onBarcodeScanned={handleBarcodeScanned}
           />
-          <View style={[styles.skuScannerHintWrap, { paddingBottom: insets.bottom + theme.spacing.md }]}>
-            <Text
-              size="sm"
-              tx="addSkuScreen:barcodeScannerHint"
-              style={styles.skuScannerHintText}
-            />
-          </View>
-        </View>
-      </Modal>
+        </Suspense>
+      ) : null}
     </View>
   )
 }
@@ -1005,11 +1019,29 @@ const styles = StyleSheet.create((theme) => ({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
+  priceInputAccessoryHidden: {
+    height: 0,
+    width: "100%",
+  },
   headerSaveTouch: {
     alignItems: "center",
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: theme.spacing.md,
+    marginRight: theme.spacing.sm,
+    borderRadius: theme.radius.md,
+  },
+  headerSaveInactive: {
+    backgroundColor: "#D1D5DB",
+  },
+  headerSaveActive: {
+    backgroundColor: "#F97316",
+  },
+  headerSaveLabelInactive: {
+    color: "#9CA3AF",
+  },
+  headerSaveLabelActive: {
+    color: "#FFFFFF",
   },
   scroll: {
     flex: 1,
@@ -1119,44 +1151,5 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     minWidth: 36,
     minHeight: 36,
-  },
-  skuScannerRoot: {
-    flex: 1,
-    backgroundColor: theme.colors.palette.black,
-  },
-  skuScannerHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: theme.spacing.sm,
-    paddingBottom: theme.spacing.sm,
-  },
-  skuScannerCloseTouch: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  skuScannerTitle: {
-    flex: 1,
-    textAlign: "center",
-    color: theme.colors.palette.white,
-  },
-  skuScannerHeaderSpacer: {
-    width: 44,
-  },
-  skuScannerCamera: {
-    flex: 1,
-    width: "100%",
-  },
-  skuScannerHintWrap: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
-    backgroundColor: theme.colors.palette.black,
-  },
-  skuScannerHintText: {
-    textAlign: "center",
-    color: theme.colors.palette.white,
-    opacity: 0.85,
   },
 }))
