@@ -16,6 +16,50 @@ import { logger } from "../../../utils/Logger"
 let hasShownSupabaseSetupMessage = false
 
 /**
+ * Upsert `public.profiles` with registration form fields after `auth.signUp`.
+ * Ensures first_name / last_name / email are set even if the DB trigger ran before
+ * `raw_user_meta_data` was populated, or if a partial client upsert created a sparse row.
+ */
+export async function upsertProfileFromRegistration(params: {
+  userId: string
+  email: string
+  firstName: string
+  lastName?: string
+}): Promise<void> {
+  if (isUsingMockSupabase) {
+    return
+  }
+
+  const first = params.firstName.trim()
+  const last = (params.lastName ?? "").trim()
+
+  const row: SupabaseDatabase["public"]["Tables"]["profiles"]["Insert"] = {
+    id: params.userId,
+    email: params.email.trim(),
+    first_name: first.length > 0 ? first : null,
+    last_name: last.length > 0 ? last : null,
+    updated_at: new Date().toISOString(),
+  }
+
+  try {
+    const { error } = await supabase.from("profiles").upsert(row, { onConflict: "id" })
+
+    if (error) {
+      const supabaseErr = extractSupabaseError(error)
+      logger.warn("upsertProfileFromRegistration failed", {
+        userId: params.userId,
+        message: supabaseErr?.message ?? (error as Error).message,
+      })
+    }
+  } catch (error) {
+    logger.warn("upsertProfileFromRegistration threw", {
+      userId: params.userId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+  }
+}
+
+/**
  * Sync onboarding status to database
  */
 export async function syncOnboardingToDatabase(userId: string, completed: boolean): Promise<void> {
@@ -172,20 +216,14 @@ export async function fetchOnboardingFromDatabase(userId: string): Promise<boole
 
 /**
  * Syncs onboarding status between local storage and database.
+ * The in-app onboarding flow was removed; always treat users as onboarded for navigation.
  */
-export async function syncOnboardingStatus(userId: string, localStatus: boolean): Promise<boolean> {
+export async function syncOnboardingStatus(userId: string, _localStatus: boolean): Promise<boolean> {
   const dbStatus = await fetchOnboardingFromDatabase(userId)
-
-  if (dbStatus === true) {
-    // Database says completed - use that
-    return true
-  } else if (localStatus) {
-    // Local says completed but database doesn't - sync to database
+  if (dbStatus !== true) {
     await syncOnboardingToDatabase(userId, true)
-    return true
   }
-
-  return localStatus
+  return true
 }
 
 /**

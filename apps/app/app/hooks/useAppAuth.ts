@@ -32,6 +32,7 @@
 import { useCallback, useMemo } from "react"
 
 import type { AuthState } from "../stores/auth/authTypes"
+import type { Session } from "../types/auth"
 
 // ============================================================================
 // Types - Unified User Interface
@@ -93,7 +94,10 @@ export interface ProfileUpdateData {
 
 export interface AppAuthActions {
   /** Sign in with email/password */
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: Error | null; session?: Session | null }>
   /**
    * Sign up with email/password. `firstName` / optional `lastName` are sent as Supabase
    * `user_metadata` and picked up by the DB trigger into `public.profiles`.
@@ -150,7 +154,16 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
   const signIn = useCallback(
     async (email: string, password: string) => {
       const result = await storeSignIn(email, password)
-      return { error: result.error ?? null }
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] useAppAuth.signIn passthrough", {
+          hasError: !!result.error,
+          hasSession: !!result.session,
+          hasAccessToken: !!result.session?.access_token,
+          hasRefreshToken: !!result.session?.refresh_token,
+        })
+      }
+      return { error: result.error ?? null, session: result.session ?? null }
     },
     [storeSignIn],
   )
@@ -235,7 +248,6 @@ function useSupabaseAppAuth(): AppAuthState & AppAuthActions {
           }
           if (data.firstName !== undefined) profileData.first_name = data.firstName
           if (data.lastName !== undefined) profileData.last_name = data.lastName
-          if (updatedMetadata.full_name) profileData.full_name = updatedMetadata.full_name
           if (data.avatarUrl !== undefined) profileData.avatar_url = data.avatarUrl
           if (data.bio !== undefined) profileData.bio = data.bio
 

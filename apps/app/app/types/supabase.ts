@@ -4,39 +4,36 @@ export type SupabaseDatabase = {
       profiles: {
         Row: {
           id: string
+          email: string | null
           has_completed_onboarding: boolean | null
           first_name: string | null
           last_name: string | null
-          full_name: string | null
           dark_mode_enabled: boolean | null
           notifications_enabled: boolean | null
-          push_notifications_enabled: boolean | null
           email_notifications_enabled: boolean | null
           preferred_currency_code: string | null
           updated_at: string | null
         }
         Insert: {
           id: string
+          email?: string | null
           has_completed_onboarding?: boolean | null
           first_name?: string | null
           last_name?: string | null
-          full_name?: string | null
           dark_mode_enabled?: boolean | null
           notifications_enabled?: boolean | null
-          push_notifications_enabled?: boolean | null
           email_notifications_enabled?: boolean | null
           preferred_currency_code?: string | null
           updated_at?: string | null
         }
         Update: {
           id?: string
+          email?: string | null
           has_completed_onboarding?: boolean | null
           first_name?: string | null
           last_name?: string | null
-          full_name?: string | null
           dark_mode_enabled?: boolean | null
           notifications_enabled?: boolean | null
-          push_notifications_enabled?: boolean | null
           email_notifications_enabled?: boolean | null
           preferred_currency_code?: string | null
           updated_at?: string | null
@@ -228,6 +225,5 @@ export type SupabaseDatabase = {
 export interface UserPreferences {
   dark_mode_enabled: boolean | null
   notifications_enabled: boolean | null
-  push_notifications_enabled: boolean | null
   email_notifications_enabled: boolean | null
 }

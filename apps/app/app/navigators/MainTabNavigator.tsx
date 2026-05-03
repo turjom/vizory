@@ -33,6 +33,7 @@ export function MainTabNavigator() {
 
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={({ route }) => {
         const config = TAB_CONFIG[route.name as keyof MainTabParamList]
         return {

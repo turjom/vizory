@@ -10,7 +10,9 @@ import * as Linking from "expo-linking"
 import { TIMING } from "../../../config/constants"
 import { env } from "../../../config/env"
 import { queryClient } from "../../../hooks/queries"
+import { hasBiometricSessionTokens } from "../../../services/biometricSessionStorage"
 import { supabase, isUsingMockSupabase } from "../../../services/supabase"
+import type { Session } from "../../../types/auth"
 import { isEmailConfirmed } from "../../../types/auth"
 import {
   extractSupabaseError,
@@ -37,7 +39,7 @@ export async function signInAction(
   email: string,
   password: string,
   set: SetState,
-): Promise<{ error?: Error }> {
+): Promise<{ error?: Error; session?: Session | null }> {
   try {
     // Rate limiting check - only count actual API calls, not button clicks
     const isAllowed = await authRateLimiter.isAllowed(`signin:${email.toLowerCase()}`)
@@ -83,6 +85,16 @@ export async function signInAction(
       return { error }
     }
 
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[BiometricFlow] signInAction: password sign-in succeeded", {
+        userId: data.user?.id,
+        hasSession: !!data.session,
+        hasAccessToken: !!data.session?.access_token,
+        hasRefreshToken: !!data.session?.refresh_token,
+      })
+    }
+
     // Reset rate limit on successful login
     await authRateLimiter.reset(`signin:${email.toLowerCase()}`)
 
@@ -92,7 +104,7 @@ export async function signInAction(
       loading: false,
     })
 
-    return {}
+    return { session: data.session }
   } catch (error) {
     // Enhance network errors with helpful messages
     if (isNetworkError(error)) {
@@ -391,10 +403,11 @@ export async function signOutAction(
   guestUserKey: string,
 ): Promise<void> {
   try {
-    // Use "global" scope to properly revoke the session on the server
-    // "local" only clears local storage but leaves the refresh token valid on the server,
-    // which can cause the session to be restored unexpectedly
-    await supabase.auth.signOut({ scope: "global" })
+    // `global` revokes refresh tokens for the user on the server. The same refresh value is
+    // stored in the biometric vault for Touch ID, so a global sign-out makes that copy
+    // unusable (`refresh_session` → "Refresh Token Not Found").
+    // `local` ends this client session only (Supabase-recommended default for single-device UX).
+    await supabase.auth.signOut({ scope: "local" })
   } catch (error) {
     logger.warn("Sign out request failed, clearing local session anyway", { error })
   }
@@ -412,6 +425,23 @@ export async function signOutAction(
     isEmailConfirmed: false,
     hasCompletedOnboarding: guestOnboarding,
   })
+
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(
+      "[BiometricFlow] signOutAction: used scope=local so server does not revoke all user refresh tokens; biometric vault can still refresh after sign-out",
+    )
+    try {
+      const stillHasVault = await hasBiometricSessionTokens()
+      // eslint-disable-next-line no-console
+      console.log("[BiometricFlow] signOutAction: hasBiometricSessionTokens after sign-out", {
+        stillHasVault,
+      })
+    } catch (vaultErr) {
+      // eslint-disable-next-line no-console
+      console.warn("[BiometricFlow] signOutAction: could not read biometric vault", vaultErr)
+    }
+  }
 }
 
 /**

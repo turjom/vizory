@@ -76,8 +76,6 @@ const logStartup = (label: string) => {
 const prefix = Linking.createURL("/")
 const config = {
   screens: {
-    Onboarding: "onboarding",
-    Welcome: "welcome",
     Login: "login",
     Register: "register",
     ForgotPassword: "forgot-password",
@@ -131,7 +129,7 @@ export function App() {
   const [isStoresInitialized, setIsStoresInitialized] = useState(false)
   const hasLoggedReadyRef = useRef(false)
 
-  // Restored nav state can still say "Welcome" after sign-in; ignore it whenever we have a Supabase user.
+  // Restored nav state can still point at an auth screen after sign-in; ignore it whenever we have a Supabase user.
   const suppressPersistedNavigation = useAuthStore((s) => !s.loading && !!s.user)
 
   const handleInitialEmailLink = useCallback(async () => {

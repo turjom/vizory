@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useRef, useState } from "react"
 import { View, Platform, ActivityIndicator, ScrollView, Pressable } from "react-native"
-import { RouteProp, useRoute } from "@react-navigation/native"
+import { useNavigation } from "@react-navigation/native"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { useTranslation } from "react-i18next"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -56,7 +57,7 @@ const TAB_BAR_HEIGHT = 80
 // =============================================================================
 
 export const PaywallScreen = () => {
-  const route = useRoute<RouteProp<AppStackParamList, "Paywall">>()
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
   const { theme } = useUnistyles()
   const { t } = useTranslation()
   const { bottom } = useSafeAreaInsets()
@@ -87,8 +88,6 @@ export const PaywallScreen = () => {
   // Calculate bottom padding to account for floating tab bar
   const bottomPadding = Math.max(bottom, 20) + TAB_BAR_HEIGHT
 
-  const isFromOnboarding = route.params?.fromOnboarding === true
-
   const scheduleRestoreMessageClear = useCallback(() => {
     if (restoreMessageTimeoutRef.current) {
       clearTimeout(restoreMessageTimeoutRef.current)
@@ -107,15 +106,17 @@ export const PaywallScreen = () => {
     }
   }, [])
 
-  // Navigate to Main after successful purchase or skip
-  const navigateToMain = useCallback(() => {
-    if (!isFromOnboarding) return
-    // Reset root navigation stack to Main screen (Paywall can be mounted under tabs or onboarding)
-    resetRoot({
-      index: 0,
-      routes: [{ name: "Main" }],
-    })
-  }, [isFromOnboarding])
+  /** Leave paywall: back if stacked, otherwise land on Main. */
+  const leavePaywall = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack()
+    } else {
+      resetRoot({
+        index: 0,
+        routes: [{ name: "Main" }],
+      })
+    }
+  }, [navigation])
 
   // Reset mock subscription state (DEV only)
   const handleResetMock = useCallback(() => {
@@ -202,9 +203,8 @@ export const PaywallScreen = () => {
         useSubscriptionStore.getState().setCustomerInfo(subscriptionInfo)
       }
 
-      // If user purchased or restored, navigate to Main (if from onboarding)
-      if ((resultValue === "PURCHASED" || resultValue === "RESTORED") && isFromOnboarding) {
-        navigateToMain()
+      if (resultValue === "PURCHASED" || resultValue === "RESTORED") {
+        leavePaywall()
       }
 
       // Log unexpected results for debugging
@@ -219,11 +219,10 @@ export const PaywallScreen = () => {
     }
   }, [
     fetchPackages,
-    isFromOnboarding,
     isWeb,
     isMockMode,
     loadErrorMessage,
-    navigateToMain,
+    leavePaywall,
     noPackagesMessage,
     noWebOfferingMessage,
     sdkUnavailableMessage,
@@ -242,15 +241,13 @@ export const PaywallScreen = () => {
           throw result.error
         }
 
-        if (isFromOnboarding) {
-          navigateToMain()
-        }
+        leavePaywall()
       } catch (err) {
         logger.error("Purchase failed", { error: err })
         setError(err instanceof Error ? err.message : purchaseErrorMessage)
       }
     },
-    [purchaseErrorMessage, purchasePackage, isFromOnboarding, navigateToMain],
+    [purchaseErrorMessage, purchasePackage, leavePaywall],
   )
 
   // Auto-present paywall when screen loads (if not Pro)
@@ -261,16 +258,16 @@ export const PaywallScreen = () => {
     }
   }, [isPro, isPresenting, presentPaywall, hasAutoPresented])
 
-  // Auto-navigate to Main if user is already Pro
+  // Auto-dismiss if user is already Pro (e.g. restored subscription while screen is open)
   useEffect(() => {
-    if (isPro && isFromOnboarding) {
+    if (isPro) {
       const timer = setTimeout(() => {
-        navigateToMain()
+        leavePaywall()
       }, 500)
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [isPro, isFromOnboarding, navigateToMain])
+  }, [isPro, leavePaywall])
 
   // Handle manual paywall presentation (for retry or if auto-present failed)
   const handlePresentPaywall = useCallback(() => {
@@ -279,8 +276,8 @@ export const PaywallScreen = () => {
 
   // Handle skip/continue (only shown if paywall failed to present)
   const handleSkip = useCallback(() => {
-    navigateToMain()
-  }, [navigateToMain])
+    leavePaywall()
+  }, [leavePaywall])
 
   // Get selected package for purchase
   const getSelectedPkg = () => packages.find((p) => p.identifier === selectedPackage)
@@ -452,16 +449,13 @@ export const PaywallScreen = () => {
             <Text style={styles.trustText} tx="paywallScreen:instantAccess" />
           </View>
 
-          {/* Skip option */}
-          {isFromOnboarding && (
-            <Button
-              text={t("paywallScreen:continueWithFree")}
-              onPress={handleSkip}
-              variant="ghost"
-              style={styles.skipButton}
-              disabled={subscriptionLoading || isPresenting}
-            />
-          )}
+          <Button
+            text={t("paywallScreen:continueWithFree")}
+            onPress={handleSkip}
+            variant="ghost"
+            style={styles.skipButton}
+            disabled={subscriptionLoading || isPresenting}
+          />
 
           {/* Restore purchases */}
           <View style={styles.restoreContainer}>
@@ -508,14 +502,12 @@ export const PaywallScreen = () => {
               variant="filled"
               style={styles.retryButton}
             />
-            {isFromOnboarding && (
-              <Button
-                text={t("paywallScreen:continueWithFree")}
-                onPress={handleSkip}
-                variant="ghost"
-                style={styles.skipButton}
-              />
-            )}
+            <Button
+              text={t("paywallScreen:continueWithFree")}
+              onPress={handleSkip}
+              variant="ghost"
+              style={styles.skipButton}
+            />
           </View>
         </View>
       ) : (
@@ -529,14 +521,12 @@ export const PaywallScreen = () => {
             variant="filled"
             style={styles.presentButton}
           />
-          {isFromOnboarding && (
-            <Button
-              text={t("paywallScreen:continueWithFree")}
-              onPress={handleSkip}
-              variant="ghost"
-              style={styles.skipButton}
-            />
-          )}
+          <Button
+            text={t("paywallScreen:continueWithFree")}
+            onPress={handleSkip}
+            variant="ghost"
+            style={styles.skipButton}
+          />
         </View>
       )}
     </Container>

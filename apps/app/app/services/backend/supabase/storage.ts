@@ -107,12 +107,12 @@ export function createSupabaseStorageService(): StorageService {
 
       const files: StorageFileInfo[] | null = data
         ? data.map((file) => ({
-            id: file.id,
+            id: file.id ?? "",
             name: file.name,
             size: file.metadata?.size ?? 0,
             contentType: file.metadata?.mimetype,
-            createdAt: file.created_at,
-            updatedAt: file.updated_at,
+            createdAt: file.created_at ?? undefined,
+            updatedAt: file.updated_at ?? undefined,
           }))
         : null
 

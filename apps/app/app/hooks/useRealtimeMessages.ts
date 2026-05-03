@@ -131,7 +131,9 @@ export function useRealtimeMessages(
       const backend = getBackend()
 
       // Build select string based on includeUser option
-      const selectFields = includeUser ? "*, user:profiles(id, full_name, avatar_url)" : "*"
+      const selectFields = includeUser
+        ? "*, user:profiles(id, first_name, last_name, avatar_url)"
+        : "*"
 
       const { data, error: fetchError } = await backend.db.query<RealtimeMessage>("messages", {
         filters: [{ column: "channel_id", operator: "eq", value: channelId }],

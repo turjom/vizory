@@ -10,7 +10,7 @@
  * Copy this pattern for your own profile/settings screens with Supabase.
  */
 
-import { FC, useMemo, useState } from "react"
+import { FC, useCallback, useMemo, useState } from "react"
 import {
   ScrollView,
   Switch,
@@ -21,6 +21,7 @@ import {
   RefreshControl,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
@@ -131,6 +132,8 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const isPro = useSubscriptionStore((state) => state.isPro)
   const checkProStatus = useSubscriptionStore((state) => state.checkProStatus)
   const isPushEnabled = useNotificationStore((state) => state.isPushEnabled)
+  const permissionStatus = useNotificationStore((state) => state.permissionStatus)
+  const syncPermissionFromOs = useNotificationStore((state) => state.syncPermissionFromOs)
   const togglePush = useNotificationStore((state) => state.togglePush)
   const isWidgetsEnabled = useWidgetStore((state) => state.isWidgetsEnabled)
   const userWidgetsEnabled = useWidgetStore((state) => state.userWidgetsEnabled)
@@ -155,6 +158,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   const updateProfile = useUpdateProfile()
 
+  useFocusEffect(
+    useCallback(() => {
+      void syncPermissionFromOs()
+    }, [syncPermissionFromOs]),
+  )
+
+  const notificationsSwitchValue = permissionStatus === "granted" && isPushEnabled
+
   const isLargeScreen = windowWidth > 768
   const contentStyle = isLargeScreen
     ? {
@@ -164,11 +175,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
       }
     : {}
 
-  // Derive display name from profile (Supabase) or fallback to auth user
+  // Prefer `profiles.first_name` (and last when present); only then email local-part.
+  const fn = profile?.first_name?.trim() ?? ""
+  const ln = profile?.last_name?.trim() ?? ""
   const displayName =
-    profile?.first_name && profile?.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : profile?.first_name || user?.email?.split("@")[0] || "User"
+    fn.length > 0 ? (ln.length > 0 ? `${fn} ${ln}` : fn) : user?.email?.split("@")[0] || "User"
 
   const trialStartIso = profile?.created_at ?? user?.createdAt ?? null
   const freeTrialDaysRemaining = useMemo(() => {
@@ -223,14 +234,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.gradient}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
             contentStyle,
-            { paddingTop: insets.top + theme.spacing.lg },
+            { paddingTop: theme.spacing.lg },
           ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -317,7 +328,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
               subtitle={t("profileScreen:notificationsSubtitle")}
               rightElement={
                 <Switch
-                  value={isPushEnabled}
+                  value={notificationsSwitchValue}
                   onValueChange={handleTogglePush}
                   trackColor={{ false: theme.colors.borderSecondary, true: theme.colors.primary }}
                   thumbColor={theme.colors.card}

@@ -69,6 +69,7 @@ describe("AuthStore", () => {
       })
 
       expect(signInResult.error).toBeUndefined()
+      expect(signInResult.session).toBe(mockSession)
       await waitFor(
         () => {
           expect(result.current.user?.email).toBe("test@example.com")

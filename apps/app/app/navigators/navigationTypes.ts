@@ -8,10 +8,6 @@ import {
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
 
 // Main Tab Navigator types
-export type PaywallParams = {
-  fromOnboarding?: boolean
-}
-
 /** Serializable SKU snapshot for stack Edit SKU (same shape as prior Add-tab edit params). */
 export type EditSkuRouteParams = {
   sku: {
@@ -35,7 +31,6 @@ export type MainTabParamList = {
 
 // App Stack Navigator types
 export type AppStackParamList = {
-  Onboarding: undefined
   Login: undefined
   Register: undefined
   ForgotPassword: undefined
@@ -53,9 +48,8 @@ export type AppStackParamList = {
       }
     | undefined
   Starter: undefined
-  Paywall: PaywallParams | undefined
+  Paywall: undefined
   Profile: undefined
-  Welcome: undefined
   ComponentShowcase: undefined
   DataDemo: undefined
   SkuDetail: {

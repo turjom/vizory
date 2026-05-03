@@ -1,9 +1,10 @@
 import type * as Notifications from "expo-notifications"
+import { Linking, Platform } from "react-native"
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 
 import {
-  requestPermission,
+  requestPermission as requestOsNotificationPermission,
   fetchNotificationPermissionStatus,
   registerForPushNotifications,
   scheduleNotification,
@@ -57,6 +58,8 @@ export interface NotificationState {
   // Actions
   initialize: () => Promise<void>
   cleanup: () => void
+  /** Refresh OS permission (e.g. after returning from Settings). */
+  syncPermissionFromOs: () => Promise<void>
   togglePush: (userId?: string) => Promise<void>
   requestPermission: () => Promise<boolean>
   registerForPush: () => Promise<void>
@@ -101,7 +104,10 @@ export const useNotificationStore = create<NotificationState>()(
 
         // Read permission only — do not show the system dialog at app launch
         const { status } = await fetchNotificationPermissionStatus()
-        set({ permissionStatus: status })
+        set({
+          permissionStatus: status,
+          ...(status === "denied" ? { isPushEnabled: false } : {}),
+        })
 
         // If granted, register for push
         if (status === "granted") {
@@ -172,34 +178,56 @@ export const useNotificationStore = create<NotificationState>()(
         }
       },
 
+      syncPermissionFromOs: async () => {
+        const { status } = await fetchNotificationPermissionStatus()
+        set({
+          permissionStatus: status,
+          ...(status === "denied" ? { isPushEnabled: false } : {}),
+        })
+      },
+
       togglePush: async (userId?: string) => {
-        const { isPushEnabled, requestPermission: reqPerm } = get()
-        let newValue: boolean
+        const { isPushEnabled } = get()
 
         if (isPushEnabled) {
-          newValue = false
           set({ isPushEnabled: false })
-        } else {
-          const granted = await reqPerm()
-          if (granted) {
-            newValue = true
-            set({ isPushEnabled: true })
-          } else {
-            // Show helpful alert when permission is denied
-            showPermissionDeniedAlert()
-            return // Permission denied, don't sync
-          }
+          if (userId) syncPushNotificationsPreference(userId, false)
+          return
         }
 
-        // Sync to database (fire-and-forget)
-        if (userId) {
-          syncPushNotificationsPreference(userId, newValue)
+        const { status: osStatus } = await fetchNotificationPermissionStatus()
+        set({ permissionStatus: osStatus })
+
+        if (osStatus === "denied") {
+          if (Platform.OS !== "web") {
+            await Linking.openSettings()
+          }
+          return
+        }
+
+        if (osStatus === "granted") {
+          set({ isPushEnabled: true })
+          await get().registerForPush()
+          if (userId) syncPushNotificationsPreference(userId, true)
+          return
+        }
+
+        set({ permissionStatus: "loading" })
+        const { status } = await requestOsNotificationPermission()
+        set({ permissionStatus: status })
+
+        if (status === "granted") {
+          set({ isPushEnabled: true })
+          await get().registerForPush()
+          if (userId) syncPushNotificationsPreference(userId, true)
+        } else if (status === "denied" && Platform.OS !== "web") {
+          await Linking.openSettings()
         }
       },
 
       requestPermission: async () => {
         set({ permissionStatus: "loading" })
-        const { status } = await requestPermission()
+        const { status } = await requestOsNotificationPermission()
         set({ permissionStatus: status })
 
         if (status === "granted") {

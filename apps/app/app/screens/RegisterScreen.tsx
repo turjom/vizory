@@ -138,7 +138,7 @@ export const RegisterScreen = () => {
       return
     }
 
-    navigation.navigate("Welcome" as never)
+    navigation.navigate("Login" as never)
   }
 
   return (

@@ -13,6 +13,7 @@ import type { User as SupabaseUser, Session as SupabaseSession } from "@supabase
 import { env } from "../../config/env"
 import { supabase } from "../../services/supabase"
 import { useAuthStore } from "../../stores/auth"
+import { upsertProfileFromRegistration } from "../../stores/auth/supabase/authHelpers"
 import { createAppUrl } from "../../utils/appScheme"
 import { logger } from "../../utils/Logger"
 import { clearOAuthState, consumeOAuthState, createOAuthState } from "../../utils/oauthState"
@@ -202,21 +203,33 @@ export function useSupabaseAuth(): SupabaseAuthState & SupabaseAuthActions {
     async (email: string, password: string, firstName: string, lastName?: string) => {
       setIsLoading(true)
       try {
+        const emailTrimmed = email.trim()
         const fn = firstName.trim()
-        const ln = lastName?.trim() ?? ""
-        const data: Record<string, string> = {
-          first_name: fn,
-          full_name: ln ? `${fn} ${ln}`.trim() : fn,
-        }
-        if (ln) {
-          data.last_name = ln
-        }
+        const ln = (lastName ?? "").trim()
+        const fullName = ln.length > 0 ? `${fn} ${ln}`.trim() : fn
 
-        const { error } = await supabase.auth.signUp({
-          email,
+        // GoTrue stores `options.data` on raw_user_meta_data; DB trigger reads these keys.
+        const { data: signUpData, error } = await supabase.auth.signUp({
+          email: emailTrimmed,
           password,
-          options: { data },
+          options: {
+            data: {
+              first_name: fn,
+              last_name: ln,
+              full_name: fullName,
+              email: emailTrimmed,
+            },
+          },
         })
+        console.log(signUpData.user?.user_metadata, signUpData.user?.id)
+        if (!error && signUpData.user) {
+          await upsertProfileFromRegistration({
+            userId: signUpData.user.id,
+            email: signUpData.user.email ?? emailTrimmed,
+            firstName: fn,
+            lastName: ln || undefined,
+          })
+        }
         return { error: error as Error | null }
       } finally {
         setIsLoading(false)

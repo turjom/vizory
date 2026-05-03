@@ -15,7 +15,6 @@ import * as Device from "expo-device"
 import { UnistylesRuntime } from "react-native-unistyles"
 
 import { isSupabase } from "../config/env"
-import { useNotificationStore } from "../stores/notificationStore"
 import type { SupabaseDatabase, UserPreferences } from "../types/supabase"
 import { logger } from "../utils/Logger"
 import { storage } from "../utils/storage"
@@ -54,14 +53,13 @@ export async function fetchUserPreferences(userId: string): Promise<UserPreferen
   const defaultPreferences: UserPreferences = {
     dark_mode_enabled: false,
     notifications_enabled: null,
-    push_notifications_enabled: null,
     email_notifications_enabled: null,
   }
 
   try {
     const { data, error } = await supabase
       .from("profiles")
-      .select("notifications_enabled, push_notifications_enabled, email_notifications_enabled")
+      .select("notifications_enabled, email_notifications_enabled")
       .eq("id", userId)
       .single()
 
@@ -128,10 +126,13 @@ export function syncDarkModePreference(userId: string, enabled: boolean): void {
 }
 
 /**
- * Update push notifications preference
+ * Push notification opt-in is not stored on `public.profiles` in this schema;
+ * tokens use `push_tokens`. Local state is updated in the notification store.
  */
-export function syncPushNotificationsPreference(userId: string, enabled: boolean): void {
-  updatePreference(userId, "push_notifications_enabled", enabled)
+export function syncPushNotificationsPreference(_userId: string, _enabled: boolean): void {
+  if (shouldSkipPreferenceSync) {
+    logger.debug("Skipping push notifications preference sync (mock mode)")
+  }
 }
 
 /**
@@ -198,17 +199,6 @@ export function applyUserPreferences(preferences: UserPreferences): void {
     })
   }
 
-  // Apply push notifications preference
-  if (preferences.push_notifications_enabled !== null) {
-    // Get the notification store state and update it
-    const notificationState = useNotificationStore.getState()
-    if (notificationState.isPushEnabled !== preferences.push_notifications_enabled) {
-      useNotificationStore.setState({ isPushEnabled: preferences.push_notifications_enabled })
-      logger.debug("Applied push notification preference from database", {
-        value: preferences.push_notifications_enabled,
-      })
-    }
-  }
 }
 
 /**

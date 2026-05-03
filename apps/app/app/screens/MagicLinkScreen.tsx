@@ -87,7 +87,7 @@ export const MagicLinkScreen = () => {
       navigation.goBack()
       return
     }
-    navigation.navigate("Welcome")
+    navigation.navigate("Login")
   }
 
   const handleBackToLogin = () => {

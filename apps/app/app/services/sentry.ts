@@ -103,8 +103,9 @@ class SentryService implements ErrorTrackingService {
         enableNativeFramesTracking: isWeb ? false : (config.enableNativeFramesTracking ?? true),
         enableStallTracking: isWeb ? false : (config.enableStallTracking ?? true),
 
-        // Error attachments
-        attachScreenshot: config.attachScreenshot ?? true,
+        // Error attachments — default off on RN: screenshot pipeline can hit
+        // FileReader + Blob bridge ("Unable to resolve data for blob"), especially on device.
+        attachScreenshot: config.attachScreenshot ?? false,
         attachViewHierarchy: config.attachViewHierarchy ?? false, // Can be expensive
 
         // Native configuration (ignored on web by SDK, but set conditionally for clarity)

@@ -1,6 +1,8 @@
 import * as SecureStore from "expo-secure-store"
 import { Platform } from "react-native"
 
+import type { Session } from "../types/auth"
+
 const ACCESS_TOKEN_KEY = "vizory_biometric_access_token"
 const REFRESH_TOKEN_KEY = "vizory_biometric_refresh_token"
 
@@ -10,6 +12,41 @@ const LEGACY_PASSWORD_KEY = "vizory_biometric_login_password"
 
 const secureOptions: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+}
+
+function logBiometric(message: string, data?: Record<string, unknown>) {
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log("[BiometricFlow]", message, data ?? "")
+  }
+}
+
+/**
+ * GoTrue session refresh token for `supabase.auth.refreshSession({ refresh_token })`.
+ * This is always `session.refresh_token`, never `provider_refresh_token` (OAuth provider token).
+ *
+ * GoTrue issues opaque refresh strings; on current Supabase projects they are often short (~12
+ * characters) while `access_token` remains a long JWT — that length difference is expected.
+ */
+export function getGoTrueRefreshTokenFromSession(
+  session: Session | null | undefined,
+): string | null {
+  if (!session) return null
+  const rt = session.refresh_token
+  if (typeof rt !== "string" || rt.length === 0) return null
+  return rt
+}
+
+/**
+ * When the user already has tokens in the biometric vault, keep them aligned with the active
+ * Supabase session after rotation (`TOKEN_REFRESHED`) or sign-in.
+ */
+export async function syncBiometricVaultIfEnabled(session: Session): Promise<void> {
+  if (Platform.OS === "web") return
+  if (!(await hasBiometricSessionTokens())) return
+  const refresh = getGoTrueRefreshTokenFromSession(session)
+  if (!session.access_token || !refresh) return
+  await saveBiometricSessionTokens(session.access_token, refresh)
 }
 
 async function deleteLegacyCredentialKeys(): Promise<void> {
@@ -29,18 +66,38 @@ export async function saveBiometricSessionTokens(
   accessToken: string,
   refreshToken: string,
 ): Promise<void> {
-  if (Platform.OS === "web") return
+  // eslint-disable-next-line no-console
+  console.log("[BiometricFlow] saveBiometricSessionTokens: called", {
+    platform: Platform.OS,
+    accessTokenLen: typeof accessToken === "string" ? accessToken.length : -1,
+    refreshTokenLen: typeof refreshToken === "string" ? refreshToken.length : -1,
+  })
+  if (Platform.OS === "web") {
+    logBiometric("saveBiometricSessionTokens: skipped (web)")
+    return
+  }
+  logBiometric("saveBiometricSessionTokens: writing", {
+    accessTokenLen: accessToken.length,
+    refreshTokenLen: refreshToken.length,
+  })
   await deleteLegacyCredentialKeys()
   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken, secureOptions)
   await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken, secureOptions)
+  logBiometric("saveBiometricSessionTokens: done")
 }
 
 export async function hasBiometricSessionTokens(): Promise<boolean> {
-  if (Platform.OS === "web") return false
+  if (Platform.OS === "web") {
+    logBiometric("hasBiometricSessionTokens: false (web)")
+    return false
+  }
   try {
     const access = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
-    return access != null && access.length > 0
-  } catch {
+    const has = access != null && access.length > 0
+    logBiometric("hasBiometricSessionTokens", { has, accessLen: access?.length ?? 0 })
+    return has
+  } catch (e) {
+    logBiometric("hasBiometricSessionTokens: error", { message: String(e) })
     return false
   }
 }
@@ -49,13 +106,27 @@ export async function getBiometricSessionTokens(): Promise<{
   access_token: string
   refresh_token: string
 } | null> {
-  if (Platform.OS === "web") return null
+  if (Platform.OS === "web") {
+    logBiometric("getBiometricSessionTokens: null (web)")
+    return null
+  }
   try {
     const access_token = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
     const refresh_token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY)
-    if (!access_token || !refresh_token) return null
+    if (!access_token || !refresh_token) {
+      logBiometric("getBiometricSessionTokens: missing one or both", {
+        hasAccess: !!access_token,
+        hasRefresh: !!refresh_token,
+      })
+      return null
+    }
+    logBiometric("getBiometricSessionTokens: ok", {
+      accessLen: access_token.length,
+      refreshLen: refresh_token.length,
+    })
     return { access_token, refresh_token }
-  } catch {
+  } catch (e) {
+    logBiometric("getBiometricSessionTokens: error", { message: String(e) })
     return null
   }
 }
@@ -87,7 +158,11 @@ export function isRevokedOrInvalidStoredRefreshTokenError(error: unknown): boole
 }
 
 export async function clearBiometricSessionTokens(): Promise<void> {
-  if (Platform.OS === "web") return
+  if (Platform.OS === "web") {
+    logBiometric("clearBiometricSessionTokens: skipped (web)")
+    return
+  }
+  logBiometric("clearBiometricSessionTokens: clearing vault keys")
   await deleteLegacyCredentialKeys()
   try {
     await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY)
@@ -99,4 +174,5 @@ export async function clearBiometricSessionTokens(): Promise<void> {
   } catch {
     // ignore
   }
+  logBiometric("clearBiometricSessionTokens: done")
 }

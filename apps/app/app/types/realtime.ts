@@ -25,7 +25,8 @@ export interface RealtimeMessage {
 export interface RealtimeMessageWithUser extends RealtimeMessage {
   user: {
     id: string
-    full_name: string | null
+    first_name: string | null
+    last_name: string | null
     avatar_url: string | null
   }
 }

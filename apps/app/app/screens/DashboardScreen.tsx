@@ -26,8 +26,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   if (isLoading) {
     return (
-      <Screen preset="fixed">
-        <Header titleTypography="tab" titleTx="dashboardScreen:title" />
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <Header titleTypography="tab" titleTx="dashboardScreen:title" safeAreaEdges={[]} />
         <View style={styles.centered}>
           <Spinner size="lg" />
         </View>
@@ -37,8 +37,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   if (error) {
     return (
-      <Screen preset="fixed">
-        <Header titleTypography="tab" titleTx="dashboardScreen:title" />
+      <Screen preset="fixed" safeAreaEdges={["top", "bottom"]}>
+        <Header titleTypography="tab" titleTx="dashboardScreen:title" safeAreaEdges={[]} />
         <View style={styles.centered}>
           <EmptyState
             preset="error"

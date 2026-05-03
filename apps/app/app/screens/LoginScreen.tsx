@@ -24,6 +24,7 @@ import { loginSchema } from "@/schemas/authSchemas"
 import {
   clearBiometricSessionTokens,
   getBiometricSessionTokens,
+  getGoTrueRefreshTokenFromSession,
   hasBiometricSessionTokens,
   isRevokedOrInvalidStoredRefreshTokenError,
   saveBiometricSessionTokens,
@@ -141,12 +142,24 @@ export const LoginScreen = () => {
       setShowBiometricOption(false)
       return
     }
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log("[BiometricFlow] refreshBiometricAvailability: start")
+    }
     try {
       const [hasCreds, hasHardware, enrolled] = await Promise.all([
         hasBiometricSessionTokens(),
         LocalAuthentication.hasHardwareAsync(),
         LocalAuthentication.isEnrolledAsync(),
       ])
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] refreshBiometricAvailability: gates", {
+          hasCreds,
+          hasHardware,
+          enrolled,
+        })
+      }
       if (!hasCreds || !hasHardware || !enrolled) {
         setShowBiometricOption(false)
         return
@@ -155,7 +168,17 @@ export const LoginScreen = () => {
       setBiometricAuthTypes(types)
       setBiometricLabelTx(biometricSignInLabelTx(types))
       setShowBiometricOption(true)
-    } catch {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] refreshBiometricAvailability: show biometric row", {
+          types,
+        })
+      }
+    } catch (e) {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn("[BiometricFlow] refreshBiometricAvailability: error", e)
+      }
       setShowBiometricOption(false)
     }
   }, [])
@@ -182,7 +205,7 @@ export const LoginScreen = () => {
   const onSubmit = async (data: LoginFormData) => {
     setLoading(true)
     setError("")
-    const { error: signInError } = await signIn(data.email, data.password)
+    const { error: signInError, session: signInSession } = await signIn(data.email, data.password)
     setLoading(false)
 
     if (signInError) {
@@ -196,13 +219,68 @@ export const LoginScreen = () => {
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const session = sessionData.session
-      if (session?.access_token && session.refresh_token) {
-        await saveBiometricSessionTokens(session.access_token, session.refresh_token)
-        await refreshBiometricAvailability()
+      const signInRefresh = getGoTrueRefreshTokenFromSession(signInSession ?? null)
+      const fromSignIn =
+        signInSession?.access_token && signInRefresh ? signInSession : null
+      let session = fromSignIn
+      let sessionSource: "signInReturn" | "getSessionFallback" = fromSignIn
+        ? "signInReturn"
+        : "getSessionFallback"
+
+      if (!session) {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const fallbackRt = getGoTrueRefreshTokenFromSession(sessionData.session ?? null)
+        session =
+          sessionData.session?.access_token && fallbackRt ? sessionData.session : null
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log("[BiometricFlow] onSubmit: getSession fallback", {
+            hasSession: !!sessionData.session,
+            hasAccess: !!sessionData.session?.access_token,
+            hasGoTrueRefresh: !!fallbackRt,
+            goTrueRefreshLen: fallbackRt?.length ?? 0,
+            providerRefreshLen: sessionData.session?.provider_refresh_token?.length ?? 0,
+          })
+        }
+      } else if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] onSubmit: using session from signIn return (no getSession race)")
       }
-    } catch {
+
+      if (__DEV__ && session) {
+        const goTrueRt = getGoTrueRefreshTokenFromSession(session)
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] onSubmit: session for SecureStore (GoTrue vs provider)", {
+          sessionSource,
+          accessLen: session.access_token?.length ?? 0,
+          goTrueRefreshLen: goTrueRt?.length ?? 0,
+          providerRefreshLen: session.provider_refresh_token?.length ?? 0,
+          willSaveBiometric: !!(session.access_token && goTrueRt),
+        })
+      }
+
+      const refreshToStore = getGoTrueRefreshTokenFromSession(session ?? null)
+      // eslint-disable-next-line no-console
+      console.log("[BiometricFlow] LoginScreen: before saveBiometricSessionTokens", {
+        hasSession: !!session,
+        accessTokenLen: session?.access_token?.length ?? 0,
+        goTrueRefreshLen: refreshToStore?.length ?? 0,
+        willCallSave: !!(session?.access_token && refreshToStore),
+      })
+      if (session?.access_token && refreshToStore) {
+        await saveBiometricSessionTokens(session.access_token, refreshToStore)
+        await refreshBiometricAvailability()
+      } else if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          "[BiometricFlow] onSubmit: skipping biometric save — missing access or refresh token",
+        )
+      }
+    } catch (e) {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn("[BiometricFlow] onSubmit: SecureStore / biometric setup failed", e)
+      }
       // Secure Store unavailable — manual sign-in still succeeded
     }
   }
@@ -212,21 +290,54 @@ export const LoginScreen = () => {
   const handleBiometricLogin = async () => {
     setError("")
     try {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] handleBiometricLogin: showing LocalAuthentication prompt")
+      }
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: "Sign in to Vizory",
         cancelLabel: t("common:cancel"),
         disableDeviceFallback: true,
       })
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(
+          "[BiometricFlow] handleBiometricLogin: LA result",
+          result.success ? { success: true as const } : { success: false as const, error: result.error },
+        )
+      }
       if (!result.success) return
 
       const tokens = await getBiometricSessionTokens()
-      if (!tokens) return
+      if (!tokens) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.warn("[BiometricFlow] handleBiometricLogin: no vault tokens after successful LA")
+        }
+        return
+      }
 
       setLoading(true)
-      const { error: sessionError } = await supabase.auth.refreshSession({
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] handleBiometricLogin: calling supabase.auth.refreshSession", {
+          refreshTokenLen: tokens.refresh_token.length,
+        })
+      }
+      const { data: refreshData, error: sessionError } = await supabase.auth.refreshSession({
         refresh_token: tokens.refresh_token,
       })
       setLoading(false)
+
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log("[BiometricFlow] handleBiometricLogin: refreshSession finished", {
+          hasError: !!sessionError,
+          errorMessage: sessionError?.message,
+          hasSession: !!refreshData?.session,
+          userId: refreshData?.session?.user?.id,
+        })
+      }
 
       if (sessionError) {
         if (isRevokedOrInvalidStoredRefreshTokenError(sessionError)) {
@@ -239,7 +350,11 @@ export const LoginScreen = () => {
           setError(formattedError)
         }
       }
-    } catch {
+    } catch (e) {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn("[BiometricFlow] handleBiometricLogin: unexpected error", e)
+      }
       setLoading(false)
     }
   }
@@ -274,7 +389,7 @@ export const LoginScreen = () => {
       return
     }
 
-    navigation.navigate("Welcome")
+    navigation.navigate("Login")
   }
 
   return (

@@ -36,8 +36,6 @@ const AppStack = () => {
   const loading = useAuthStore((state: AuthState) => state.loading)
   const isAuthenticated = useAuthStore((state: AuthState) => state.isAuthenticated)
   const isEmailConfirmed = useAuthStore((state: AuthState) => state.isEmailConfirmed)
-  const hasCompletedOnboarding = useAuthStore((state: AuthState) => state.hasCompletedOnboarding)
-  const shouldShowOnboarding = !!user && isAuthenticated && !hasCompletedOnboarding
   const needsEmailVerification = !!user && !isEmailConfirmed
   const isWeb = Platform.OS === "web"
   const { theme } = useUnistyles()
@@ -62,7 +60,7 @@ const AppStack = () => {
       })
     }
 
-    // If user signed out (was authenticated, now not), reset to Welcome screen
+    // If user signed out (was authenticated, now not), reset to Login
     if (
       wasAuthenticated &&
       !isAuthenticated &&
@@ -71,7 +69,7 @@ const AppStack = () => {
     ) {
       resetRoot({
         index: 0,
-        routes: [{ name: "Welcome" }],
+        routes: [{ name: "Login" }],
       })
     }
 
@@ -84,13 +82,13 @@ const AppStack = () => {
     return <Spinner fullScreen />
   }
 
-  // Determine initial route
-  let initialRouteName: keyof AppStackParamList = "Welcome"
+  // Determine initial route (unauthenticated default: Login — no Welcome / onboarding)
+  let initialRouteName: keyof AppStackParamList = "Login"
   if (user) {
     if (needsEmailVerification) {
       initialRouteName = "EmailVerification"
     } else if (isAuthenticated) {
-      initialRouteName = hasCompletedOnboarding ? "Main" : "Onboarding"
+      initialRouteName = "Main"
     }
   }
 
@@ -137,20 +135,6 @@ const AppStack = () => {
             component={Screens.LoginScreen}
             options={{
               animation: "slide_from_right",
-            }}
-          />
-        </>
-      ) : shouldShowOnboarding ? (
-        // ------------------------------------------------------------------
-        // ONBOARDING (AUTHENTICATED AND EMAIL CONFIRMED)
-        // ------------------------------------------------------------------
-        <>
-          <Stack.Screen name="Onboarding" component={Screens.OnboardingScreen} />
-          <Stack.Screen
-            name="Paywall"
-            component={Screens.PaywallScreen}
-            options={{
-              gestureEnabled: false,
             }}
           />
         </>
@@ -217,16 +201,9 @@ const AppStack = () => {
         </>
       ) : (
         // ------------------------------------------------------------------
-        // UNAUTHENTICATED STACK (Welcome, Login, Register)
+        // UNAUTHENTICATED STACK (Login, Register, …)
         // ------------------------------------------------------------------
         <>
-          <Stack.Screen
-            name="Welcome"
-            component={Screens.WelcomeScreen}
-            options={{
-              gestureEnabled: false,
-            }}
-          />
           <Stack.Screen
             name="Login"
             component={Screens.LoginScreen}
