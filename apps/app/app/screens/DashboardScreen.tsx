@@ -1,11 +1,17 @@
-import { FC, useCallback } from "react"
-import { Pressable, View } from "react-native"
+import { FC, useCallback, useEffect, useState } from "react"
+import * as LocalAuthentication from "expo-local-authentication"
+import { Platform, Pressable, View } from "react-native"
 import { StyleSheet } from "react-native-unistyles"
 
-import { EmptyState, Header, Screen, Spinner, Text } from "@/components"
-import { useDashboardInventoryQuery } from "@/hooks"
+import { BiometricEnrollmentModal, EmptyState, Header, Screen, Spinner, Text } from "@/components"
+import { useAuth, useDashboardInventoryQuery } from "@/hooks"
 import type { TxKeyPath } from "@/i18n"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
+import {
+  getBiometricEnrollmentPrompted,
+  setBiometricEnabled,
+  setBiometricEnrollmentPrompted,
+} from "@/services/biometricSessionStorage"
 
 interface DashboardScreenProps extends MainTabScreenProps<"Home"> {}
 
@@ -19,10 +25,88 @@ function getGreetingPeriod(): GreetingPeriod {
 }
 
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen({ navigation }) {
-  const { data, isLoading, error, refetch, isRefetching } = useDashboardInventoryQuery()
+  const { user } = useAuth()
+  const { data, isLoading, error, refetch, isRefetching } = useDashboardInventoryQuery(
+    user?.firstName ?? null,
+  )
+  const [enrollmentModalVisible, setEnrollmentModalVisible] = useState(false)
+
   const handleRefresh = useCallback(() => {
     void refetch()
   }, [refetch])
+
+  useEffect(() => {
+    // TEMP: [BiometricDiag] remove after fixing biometric enrollment visibility
+    console.log("[BiometricDiag] Dashboard effect fired", {
+      platform: Platform.OS,
+      userId: user?.id ?? null,
+      isLoading,
+      hasError: !!error,
+    })
+    if (Platform.OS === "web" || !user?.id || isLoading || error) {
+      console.log("[BiometricDiag] Dashboard effect early return (no async check)", {
+        isWeb: Platform.OS === "web",
+        hasUserId: !!user?.id,
+        isLoading,
+        hasError: !!error,
+      })
+      return undefined
+    }
+    const userId = user.id
+    let cancelled = false
+    void (async () => {
+      try {
+        const prompted = await getBiometricEnrollmentPrompted(userId)
+        console.log("[BiometricDiag] Dashboard getBiometricEnrollmentPrompted done", {
+          prompted,
+          cancelled,
+        })
+        if (cancelled || prompted) {
+          console.log("[BiometricDiag] Dashboard skip modal: cancelled or already prompted", {
+            cancelled,
+            prompted,
+          })
+          return
+        }
+        const [hasHardware, enrolled] = await Promise.all([
+          LocalAuthentication.hasHardwareAsync(),
+          LocalAuthentication.isEnrolledAsync(),
+        ])
+        console.log("[BiometricDiag] Dashboard LocalAuthentication", {
+          hasHardware,
+          enrolled,
+          simulatorNote:
+            "iOS Simulator often returns false for isEnrolledAsync unless enrolled in Features > Face ID",
+        })
+        if (!hasHardware) {
+          console.log("[BiometricDiag] Dashboard no biometric hardware — mark prompted, skip modal")
+          await setBiometricEnrollmentPrompted(true, userId)
+          await setBiometricEnabled(false)
+          return
+        }
+        if (!enrolled) {
+          console.log(
+            "[BiometricDiag] Dashboard hardware present but biometrics not enrolled — silent skip (no SecureStore)",
+          )
+          return
+        }
+        if (!cancelled) {
+          console.log("[BiometricDiag] Dashboard setEnrollmentModalVisible(true)")
+          setEnrollmentModalVisible(true)
+        } else {
+          console.log("[BiometricDiag] Dashboard would show modal but effect cancelled")
+        }
+      } catch (e) {
+        console.log("[BiometricDiag] Dashboard biometric effect catch — marking prompted", {
+          error: String(e),
+        })
+        await setBiometricEnrollmentPrompted(true, userId)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, isLoading, error])
 
   if (isLoading) {
     return (
@@ -82,14 +166,15 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const greetingTitleTxOptions = hasFirstName ? { firstName: trimmedFirstName } : undefined
 
   return (
-    <Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>
-      <Header
-        titleTypography="tab"
-        titleTx={greetingTitleTx}
-        titleTxOptions={greetingTitleTxOptions}
-        safeAreaEdges={[]}
-      />
-      <View style={styles.content}>
+    <>
+      <Screen preset="scroll" safeAreaEdges={["top", "bottom"]}>
+        <Header
+          titleTypography="tab"
+          titleTx={greetingTitleTx}
+          titleTxOptions={greetingTitleTxOptions}
+          safeAreaEdges={[]}
+        />
+        <View style={styles.content}>
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <Text style={styles.heroLabel}>TOTAL INVENTORY VALUE</Text>
@@ -155,7 +240,14 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
           </View>
         </View>
       </View>
-    </Screen>
+      </Screen>
+      <BiometricEnrollmentModal
+        visible={enrollmentModalVisible}
+        userId={user?.id ?? ""}
+        userEmail={user?.email ?? null}
+        onClose={() => setEnrollmentModalVisible(false)}
+      />
+    </>
   )
 }
 

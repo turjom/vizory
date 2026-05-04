@@ -147,6 +147,17 @@ const hi: Translations = {
     language: "भाषा",
     languageAutoDetect: "भाषा आपकी डिवाइस सेटिंग्स से स्वचालित रूप से पता लगाई जाती है",
   },
+  biometricEnrollment: {
+    title: "Enable Face ID / Touch ID",
+    subtitle: "Sign in faster without typing your password each time",
+    enable: "Enable",
+    skip: "Skip",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your account password",
+    passwordRequired: "Password is required to enable biometric sign-in",
+    noEmail: "No email on file for this account.",
+    enableFailed: "Could not enable biometric sign-in. Try again.",
+  },
   profileScreen: {
     title: "प्रोफ़ाइल",
     upgradeButton: "Pro में अपग्रेड करें",
@@ -159,6 +170,10 @@ const hi: Translations = {
     personalInfoSubtitle: "नाम, ईमेल संपादित करें",
     notifications: "सूचनाएं",
     notificationsSubtitle: "पुश नोटिफिकेशन प्रबंधित करें",
+    biometricMenuTitle: "Face ID / Touch ID",
+    biometricPasswordTitle: "पासवर्ड की पुष्टि करें",
+    biometricPasswordSubtitle:
+      "लॉगिन स्क्रीन पर बायोमेट्रिक साइन-इन चालू करने के लिए एक बार अपना खाता पासवर्ड दर्ज करें।",
     darkMode: "डार्क मोड",
     languageSubtitle: "ऐप भाषा बदलें",
     widgets: "होम स्क्रीन विजेट्स",

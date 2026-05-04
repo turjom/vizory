@@ -12,6 +12,9 @@
 
 import { FC, useCallback, useMemo, useState } from "react"
 import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
   ScrollView,
   Switch,
   View,
@@ -21,6 +24,7 @@ import {
   RefreshControl,
 } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import * as LocalAuthentication from "expo-local-authentication"
 import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
@@ -30,15 +34,22 @@ import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { UnistylesRuntime } from "react-native-unistyles"
 
-import { Avatar, Button, DeleteAccountModal, Text, MenuItem } from "@/components"
+import { Avatar, Button, DeleteAccountModal, MenuItem, Text, TextField } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
 import { queryKeys, useAuth, useProfileQuery, type ProfileRow } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 import { mockRevenueCat } from "@/services/mocks/revenueCat"
 import { isRevenueCatMock } from "@/services/revenuecat"
+import {
+  clearBiometricLoginCredentials,
+  getBiometricEnabled,
+  hasBiometricLoginCredentials,
+  saveBiometricLoginCredentials,
+  setBiometricEnabled,
+} from "@/services/biometricSessionStorage"
 import { supabase } from "@/services/supabase"
-import { useNotificationStore, useSubscriptionStore, useWidgetStore } from "@/stores"
+import { useSubscriptionStore, useWidgetStore } from "@/stores"
 import { webDimension } from "@/types/webStyles"
 import { haptics } from "@/utils/haptics"
 import { testErrors } from "@/utils/testError"
@@ -131,10 +142,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const { user, signOut, userId } = useAuth()
   const isPro = useSubscriptionStore((state) => state.isPro)
   const checkProStatus = useSubscriptionStore((state) => state.checkProStatus)
-  const isPushEnabled = useNotificationStore((state) => state.isPushEnabled)
-  const permissionStatus = useNotificationStore((state) => state.permissionStatus)
-  const syncPermissionFromOs = useNotificationStore((state) => state.syncPermissionFromOs)
-  const togglePush = useNotificationStore((state) => state.togglePush)
   const isWidgetsEnabled = useWidgetStore((state) => state.isWidgetsEnabled)
   const userWidgetsEnabled = useWidgetStore((state) => state.userWidgetsEnabled)
   const toggleWidgets = useWidgetStore((state) => state.toggleWidgets)
@@ -145,6 +152,12 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [biometricHardwareReady, setBiometricHardwareReady] = useState(false)
+  const [biometricEnabledSwitch, setBiometricEnabledSwitch] = useState(false)
+  const [biometricPasswordModalVisible, setBiometricPasswordModalVisible] = useState(false)
+  const [biometricPassword, setBiometricPassword] = useState("")
+  const [biometricBusy, setBiometricBusy] = useState(false)
+  const [biometricPasswordError, setBiometricPasswordError] = useState("")
   // ============================================================
   // SUPABASE DATA FETCHING
   // Uses React Query for caching and refetching
@@ -160,11 +173,41 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   useFocusEffect(
     useCallback(() => {
-      void syncPermissionFromOs()
-    }, [syncPermissionFromOs]),
+      // TEMP: [BiometricDiag] remove after fixing Profile Face ID row visibility
+      console.log("[BiometricDiag] Profile focus: start", { platform: Platform.OS })
+      if (Platform.OS === "web") {
+        console.log("[BiometricDiag] Profile focus: web — hiding biometric row")
+        setBiometricHardwareReady(false)
+        return undefined
+      }
+      let cancelled = false
+      void (async () => {
+        const [hasHardware, enrolled, enabled] = await Promise.all([
+          LocalAuthentication.hasHardwareAsync(),
+          LocalAuthentication.isEnrolledAsync(),
+          getBiometricEnabled(),
+        ])
+        console.log("[BiometricDiag] Profile focus: LocalAuthentication + enabled flag", {
+          hasHardware,
+          enrolled,
+          biometricEnabledFromStore: enabled,
+          cancelled,
+          willShowMenuRow: !cancelled && hasHardware && enrolled,
+          simulatorNote:
+            "Toggle visibility requires hasHardware && enrolled; Simulator needs Face ID enrolled",
+        })
+        if (cancelled) {
+          console.log("[BiometricDiag] Profile focus: aborted (blur before async finished)")
+          return
+        }
+        setBiometricHardwareReady(hasHardware && enrolled)
+        setBiometricEnabledSwitch(enabled === true)
+      })()
+      return () => {
+        cancelled = true
+      }
+    }, []),
   )
-
-  const notificationsSwitchValue = permissionStatus === "granted" && isPushEnabled
 
   const isLargeScreen = windowWidth > 768
   const contentStyle = isLargeScreen
@@ -176,7 +219,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     : {}
 
   // Prefer `profiles.first_name` (and last when present); only then email local-part.
-  const fn = profile?.first_name?.trim() ?? ""
+  const fn = profile?.first_name?.trim() || user?.firstName?.trim() || ""
   const ln = profile?.last_name?.trim() ?? ""
   const displayName =
     fn.length > 0 ? (ln.length > 0 ? `${fn} ${ln}` : fn) : user?.email?.split("@")[0] || "User"
@@ -197,9 +240,48 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     UnistylesRuntime.setTheme(newTheme)
   }
 
-  const handleTogglePush = () => {
+  const handleBiometricSwitch = async (next: boolean) => {
+    if (Platform.OS === "web" || !biometricHardwareReady) return
     haptics.switchChange()
-    togglePush(userId ?? undefined)
+    if (!next) {
+      await clearBiometricLoginCredentials()
+      await setBiometricEnabled(false)
+      setBiometricEnabledSwitch(false)
+      return
+    }
+    if (await hasBiometricLoginCredentials()) {
+      await setBiometricEnabled(true)
+      setBiometricEnabledSwitch(true)
+      return
+    }
+    setBiometricPassword("")
+    setBiometricPasswordError("")
+    setBiometricPasswordModalVisible(true)
+  }
+
+  const confirmBiometricPassword = async () => {
+    const email = user?.email?.trim()
+    if (!email) {
+      setBiometricPasswordError(t("biometricEnrollment:noEmail"))
+      return
+    }
+    if (!biometricPassword.trim()) {
+      setBiometricPasswordError(t("biometricEnrollment:passwordRequired"))
+      return
+    }
+    setBiometricBusy(true)
+    setBiometricPasswordError("")
+    try {
+      await saveBiometricLoginCredentials(email, biometricPassword)
+      await setBiometricEnabled(true)
+      setBiometricEnabledSwitch(true)
+      setBiometricPasswordModalVisible(false)
+      setBiometricPassword("")
+    } catch {
+      setBiometricPasswordError(t("biometricEnrollment:enableFailed"))
+    } finally {
+      setBiometricBusy(false)
+    }
   }
 
   const handleToggleWidgets = () => {
@@ -321,20 +403,27 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
               subtitle={t("profileScreen:personalInfoSubtitle")}
               onPress={() => setEditModalVisible(true)}
             />
-            <View style={styles.divider} />
-            <MenuItem
-              icon="notifications-outline"
-              title={t("profileScreen:notifications")}
-              subtitle={t("profileScreen:notificationsSubtitle")}
-              rightElement={
-                <Switch
-                  value={notificationsSwitchValue}
-                  onValueChange={handleTogglePush}
-                  trackColor={{ false: theme.colors.borderSecondary, true: theme.colors.primary }}
-                  thumbColor={theme.colors.card}
+            {biometricHardwareReady ? (
+              <>
+                <View style={styles.divider} />
+                <MenuItem
+                  icon="finger-print-outline"
+                  title={t("profileScreen:biometricMenuTitle")}
+                  onPress={() => {}}
+                  rightElement={
+                    <Switch
+                      value={biometricEnabledSwitch}
+                      onValueChange={(v) => void handleBiometricSwitch(v)}
+                      trackColor={{
+                        false: theme.colors.borderSecondary,
+                        true: theme.colors.primary,
+                      }}
+                      thumbColor={theme.colors.card}
+                    />
+                  }
                 />
-              }
-            />
+              </>
+            ) : null}
             <View style={styles.divider} />
             <MenuItem
               icon="moon-outline"
@@ -548,6 +637,67 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         visible={deleteModalVisible}
         onClose={() => setDeleteModalVisible(false)}
       />
+      <Modal
+        visible={biometricPasswordModalVisible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => {
+          if (!biometricBusy) setBiometricPasswordModalVisible(false)
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.biometricPasswordBackdrop}
+        >
+          <View style={[styles.biometricPasswordSheet, { backgroundColor: theme.colors.card }]}>
+            <Text style={styles.biometricPasswordTitle} tx="profileScreen:biometricPasswordTitle" />
+            <Text
+              style={[styles.biometricPasswordSubtitle, { color: theme.colors.foregroundSecondary }]}
+              tx="profileScreen:biometricPasswordSubtitle"
+            />
+            <TextField
+              labelTx="biometricEnrollment:passwordLabel"
+              placeholderTx="biometricEnrollment:passwordPlaceholder"
+              value={biometricPassword}
+              onChangeText={setBiometricPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              containerStyle={styles.biometricPasswordField}
+            />
+            {biometricPasswordError ? (
+              <Text
+                style={[styles.biometricPasswordError, { color: theme.colors.error }]}
+                text={biometricPasswordError}
+              />
+            ) : null}
+            <View style={styles.biometricPasswordActions}>
+              <Pressable
+                onPress={() => {
+                  if (!biometricBusy) {
+                    setBiometricPasswordModalVisible(false)
+                    setBiometricPassword("")
+                    setBiometricPasswordError("")
+                  }
+                }}
+                style={styles.biometricPasswordCancel}
+              >
+                <Text style={{ color: theme.colors.foregroundSecondary }} tx="common:cancel" />
+              </Pressable>
+              <Pressable
+                style={[styles.biometricPasswordConfirm, biometricBusy && { opacity: 0.7 }]}
+                onPress={() => void confirmBiometricPassword()}
+                disabled={biometricBusy}
+              >
+                {biometricBusy ? (
+                  <ActivityIndicator color={theme.colors.primaryForeground} />
+                ) : (
+                  <Text style={styles.biometricPasswordConfirmText} tx="biometricEnrollment:enable" />
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   )
 }
@@ -776,5 +926,57 @@ const styles = StyleSheet.create((theme) => ({
     lineHeight: theme.typography.lineHeights.xs,
     marginBottom: theme.spacing.xl,
     textAlign: "center",
+  },
+  biometricPasswordBackdrop: {
+    flex: 1,
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: theme.spacing.lg,
+  },
+  biometricPasswordSheet: {
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.lg,
+    maxWidth: 400,
+    alignSelf: "center",
+    width: "100%",
+  },
+  biometricPasswordTitle: {
+    fontFamily: theme.typography.fonts.bold,
+    fontSize: theme.typography.sizes.lg,
+    marginBottom: theme.spacing.xs,
+    color: theme.colors.foreground,
+  },
+  biometricPasswordSubtitle: {
+    fontSize: theme.typography.sizes.sm,
+    lineHeight: theme.typography.lineHeights.sm,
+    marginBottom: theme.spacing.md,
+  },
+  biometricPasswordField: {
+    marginBottom: theme.spacing.sm,
+  },
+  biometricPasswordError: {
+    fontSize: theme.typography.sizes.xs,
+    marginBottom: theme.spacing.sm,
+  },
+  biometricPasswordActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: theme.spacing.md,
+    marginTop: theme.spacing.md,
+  },
+  biometricPasswordCancel: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+  },
+  biometricPasswordConfirm: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.lg,
+  },
+  biometricPasswordConfirmText: {
+    color: theme.colors.primaryForeground,
+    fontFamily: theme.typography.fonts.semiBold,
   },
 }))

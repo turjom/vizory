@@ -150,6 +150,17 @@ const ja: Translations = {
     language: "言語",
     languageAutoDetect: "言語はデバイスの設定から自動的に検出されます",
   },
+  biometricEnrollment: {
+    title: "Enable Face ID / Touch ID",
+    subtitle: "Sign in faster without typing your password each time",
+    enable: "Enable",
+    skip: "Skip",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your account password",
+    passwordRequired: "Password is required to enable biometric sign-in",
+    noEmail: "No email on file for this account.",
+    enableFailed: "Could not enable biometric sign-in. Try again.",
+  },
   profileScreen: {
     title: "プロフィール",
     upgradeButton: "Proにアップグレード",
@@ -162,6 +173,10 @@ const ja: Translations = {
     personalInfoSubtitle: "名前、メールを編集",
     notifications: "通知",
     notificationsSubtitle: "プッシュ通知を管理",
+    biometricMenuTitle: "Face ID / Touch ID",
+    biometricPasswordTitle: "パスワードの確認",
+    biometricPasswordSubtitle:
+      "ログイン画面で生体認証サインインを有効にするため、アカウントのパスワードを一度入力してください。",
     darkMode: "ダークモード",
     languageSubtitle: "アプリの言語を変更",
     widgets: "ホーム画面ウィジェット",

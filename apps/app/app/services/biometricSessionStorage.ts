@@ -9,6 +9,12 @@ import { Platform } from "react-native"
 
 const EMAIL_KEY = "vizory_biometric_login_email"
 const PASSWORD_KEY = "vizory_biometric_login_password"
+const BIOMETRIC_ENABLED_KEY = "biometric_enabled"
+const BIOMETRIC_ENROLLMENT_PROMPTED_PREFIX = "biometric_enrollment_prompted_"
+
+export function biometricEnrollmentPromptedStorageKey(userId: string): string {
+  return `${BIOMETRIC_ENROLLMENT_PROMPTED_PREFIX}${userId}`
+}
 
 /** Previous token-based vault keys — removed whenever credentials are saved or cleared. */
 const LEGACY_ACCESS_TOKEN_KEY = "vizory_biometric_access_token"
@@ -112,4 +118,74 @@ export async function clearBiometricLoginCredentials(): Promise<void> {
     // ignore
   }
   logBiometric("clearBiometricLoginCredentials: done")
+}
+
+/** User opt-in for showing biometric sign-in (device-wide SecureStore flag). */
+export async function getBiometricEnabled(): Promise<boolean | null> {
+  if (Platform.OS === "web") {
+    return null
+  }
+  try {
+    const v = await SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)
+    if (v == null) return null
+    return v === "true"
+  } catch (e) {
+    logBiometric("getBiometricEnabled: error", { message: String(e) })
+    return null
+  }
+}
+
+export async function setBiometricEnabled(value: boolean): Promise<void> {
+  if (Platform.OS === "web") {
+    return
+  }
+  await SecureStore.setItemAsync(BIOMETRIC_ENABLED_KEY, value ? "true" : "false", secureOptions)
+  logBiometric("setBiometricEnabled", { value })
+}
+
+/** One-time Dashboard enrollment prompt completed (or skipped / ineligible), scoped per user. */
+export async function getBiometricEnrollmentPrompted(userId: string): Promise<boolean> {
+  const id = userId.trim()
+  if (Platform.OS === "web") {
+    // TEMP: [BiometricDiag]
+    console.log("[BiometricDiag] getBiometricEnrollmentPrompted: web → treated as prompted=true")
+    return true
+  }
+  if (!id) {
+    logBiometric("getBiometricEnrollmentPrompted: empty userId → treated as prompted")
+    return true
+  }
+  const key = biometricEnrollmentPromptedStorageKey(id)
+  try {
+    const v = await SecureStore.getItemAsync(key)
+    const result = v === "true"
+    // TEMP: [BiometricDiag] raw SecureStore value — must be exactly "true" string to count as prompted
+    console.log("[BiometricDiag] getBiometricEnrollmentPrompted", {
+      rawKey: key,
+      rawValue: v,
+      parsedPrompted: result,
+    })
+    return result
+  } catch (e) {
+    logBiometric("getBiometricEnrollmentPrompted: error", { message: String(e) })
+    // TEMP: [BiometricDiag]
+    console.log("[BiometricDiag] getBiometricEnrollmentPrompted: error → returning false", {
+      message: String(e),
+    })
+    return false
+  }
+}
+
+export async function setBiometricEnrollmentPrompted(value: boolean, userId: string): Promise<void> {
+  const id = userId.trim()
+  if (Platform.OS === "web") {
+    return
+  }
+  if (!id) {
+    logBiometric("setBiometricEnrollmentPrompted: skipped (empty userId)", { value })
+    return
+  }
+  const key = biometricEnrollmentPromptedStorageKey(id)
+  await SecureStore.setItemAsync(key, value ? "true" : "false", secureOptions)
+  logBiometric("setBiometricEnrollmentPrompted", { value, userId: id })
 }

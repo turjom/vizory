@@ -23,6 +23,7 @@ import { AppStackParamList } from "@/navigators/navigationTypes"
 import { loginSchema } from "@/schemas/authSchemas"
 import {
   clearBiometricLoginCredentials,
+  getBiometricEnabled,
   getBiometricLoginCredentials,
   hasBiometricLoginCredentials,
   saveBiometricLoginCredentials,
@@ -144,8 +145,9 @@ export const LoginScreen = () => {
       console.log("[BiometricFlow] refreshBiometricAvailability: start")
     }
     try {
-      const [hasCreds, hasHardware, enrolled] = await Promise.all([
+      const [hasCreds, enabledFlag, hasHardware, enrolled] = await Promise.all([
         hasBiometricLoginCredentials(),
+        getBiometricEnabled(),
         LocalAuthentication.hasHardwareAsync(),
         LocalAuthentication.isEnrolledAsync(),
       ])
@@ -153,11 +155,12 @@ export const LoginScreen = () => {
         // eslint-disable-next-line no-console
         console.log("[BiometricFlow] refreshBiometricAvailability: gates", {
           hasCreds,
+          enabledFlag,
           hasHardware,
           enrolled,
         })
       }
-      if (!hasCreds || !hasHardware || !enrolled) {
+      if (!hasCreds || !hasHardware || !enrolled || enabledFlag !== true) {
         setShowBiometricOption(false)
         return
       }
@@ -216,14 +219,17 @@ export const LoginScreen = () => {
     }
 
     try {
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log("[BiometricFlow] onSubmit: saving biometric login credentials to SecureStore", {
-          hasSession: !!signInSession,
-          emailLen: data.email.trim().length,
-        })
+      const enabled = await getBiometricEnabled()
+      if (enabled !== false) {
+        if (__DEV__) {
+          // eslint-disable-next-line no-console
+          console.log("[BiometricFlow] onSubmit: saving biometric login credentials to SecureStore", {
+            hasSession: !!signInSession,
+            emailLen: data.email.trim().length,
+          })
+        }
+        await saveBiometricLoginCredentials(data.email, data.password)
       }
-      await saveBiometricLoginCredentials(data.email, data.password)
       await refreshBiometricAvailability()
     } catch (e) {
       if (__DEV__) {

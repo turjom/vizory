@@ -142,7 +142,11 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
         const nextTotal = currentTotal + signedDelta
 
         if (nextTotal < 0) {
-          throw new Error(t("inventoryAdjustmentScreen:insufficientStockReduceError"))
+          throw new Error(
+            t("inventoryAdjustmentScreen:insufficientStockReduceError", {
+              count: currentTotal,
+            }),
+          )
         }
 
         const { error: insertAdjustmentError } = await supabase.from("inventory_adjustments").insert({

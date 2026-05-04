@@ -431,15 +431,21 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   })
 
   const promptDeleteSku = useCallback(() => {
-    Alert.alert(t("skuDetailScreen:deleteSkuAlertTitle"), t("skuDetailScreen:deleteSkuAlertMessage"), [
-      { text: t("common:cancel"), style: "cancel" },
-      {
-        text: t("skuDetailScreen:deleteSkuConfirm"),
-        style: "destructive",
-        onPress: () => deleteSkuMutation.mutate(),
-      },
-    ])
-  }, [deleteSkuMutation, t])
+    const name =
+      editingSku?.name?.trim() || t("skuDetailScreen:deleteSkuAlertUnnamedName")
+    Alert.alert(
+      t("skuDetailScreen:deleteSkuAlertTitle", { name }),
+      t("skuDetailScreen:deleteSkuAlertMessage"),
+      [
+        { text: t("common:cancel"), style: "cancel" },
+        {
+          text: t("skuDetailScreen:deleteSkuConfirm"),
+          style: "destructive",
+          onPress: () => deleteSkuMutation.mutate(),
+        },
+      ],
+    )
+  }, [deleteSkuMutation, editingSku?.name, t])
 
   const handleBackFromEdit = useCallback(() => {
     const id = editingSku?.id

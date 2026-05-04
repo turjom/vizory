@@ -150,6 +150,17 @@ const es: Translations = {
     languageAutoDetect:
       "El idioma se detecta automáticamente desde la configuración de tu dispositivo",
   },
+  biometricEnrollment: {
+    title: "Enable Face ID / Touch ID",
+    subtitle: "Sign in faster without typing your password each time",
+    enable: "Enable",
+    skip: "Skip",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your account password",
+    passwordRequired: "Password is required to enable biometric sign-in",
+    noEmail: "No email on file for this account.",
+    enableFailed: "Could not enable biometric sign-in. Try again.",
+  },
   profileScreen: {
     title: "Perfil",
     upgradeButton: "Actualizar a Pro",
@@ -162,6 +173,10 @@ const es: Translations = {
     personalInfoSubtitle: "Editar nombre, correo",
     notifications: "Notificaciones",
     notificationsSubtitle: "Administrar notificaciones push",
+    biometricMenuTitle: "Face ID / Touch ID",
+    biometricPasswordTitle: "Confirmar contraseña",
+    biometricPasswordSubtitle:
+      "Introduce la contraseña de tu cuenta una vez para activar el inicio de sesión biométrico.",
     darkMode: "Modo Oscuro",
     languageSubtitle: "Cambiar idioma de la app",
     widgets: "Widgets de Pantalla de Inicio",

@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import { useAuth } from "@/hooks"
@@ -41,7 +42,7 @@ export interface WeeklyMovement {
 }
 
 export interface DashboardInventoryData {
-  /** Trimmed `profiles.first_name` for the current user, if present. */
+  /** Trimmed first name from auth (passed in by the screen), for greetings only. */
   greetingFirstName: string | null
   lowStockSkus: LowStockSku[]
   topSkusByQuantity: TopSkuByQuantity[]
@@ -65,18 +66,22 @@ function mergeQuantities(skus: SkuRow[], quantities: QuantityRow[]) {
   }))
 }
 
-export const useDashboardInventoryQuery = () => {
+type DashboardInventoryMetrics = Omit<DashboardInventoryData, "greetingFirstName">
+
+export const useDashboardInventoryQuery = (firstName: string | null) => {
   const { userId } = useAuth()
 
-  return useQuery({
+  const greetingFirstName =
+    typeof firstName === "string" && firstName.trim().length > 0 ? firstName.trim() : null
+
+  const query = useQuery({
     queryKey: queryKeys.dashboard.inventory(userId ?? null),
     enabled: !!userId,
     staleTime: 0,
     refetchOnMount: "always",
-    queryFn: async (): Promise<DashboardInventoryData> => {
+    queryFn: async (): Promise<DashboardInventoryMetrics> => {
       if (!userId) {
         return {
-          greetingFirstName: null,
           lowStockSkus: [],
           topSkusByQuantity: [],
           weeklyMovement: { received: 0, sold: 0 },
@@ -86,7 +91,7 @@ export const useDashboardInventoryQuery = () => {
 
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-      const [skusResult, quantitiesResult, adjustmentsResult, profileResult] = await Promise.all([
+      const [skusResult, quantitiesResult, adjustmentsResult] = await Promise.all([
         supabase
           .from("skus")
           .select("id, name, safety_stock_threshold, price")
@@ -98,13 +103,11 @@ export const useDashboardInventoryQuery = () => {
           .select("adjustment_type, quantity")
           .eq("user_id", userId)
           .gte("created_at", sevenDaysAgo),
-        supabase.from("profiles").select("first_name").eq("id", userId).maybeSingle(),
       ])
 
       if (skusResult.error) throw skusResult.error
       if (quantitiesResult.error) throw quantitiesResult.error
       if (adjustmentsResult.error) throw adjustmentsResult.error
-      if (profileResult.error) throw profileResult.error
 
       const skus = (skusResult.data ?? []) as SkuRow[]
       const quantities = (quantitiesResult.data ?? []) as QuantityRow[]
@@ -116,10 +119,6 @@ export const useDashboardInventoryQuery = () => {
         return sum + row.price * row.totalQuantity
       }, 0)
       const hasAnyPrice = merged.some((row) => row.price != null)
-
-      const rawFirst = profileResult.data?.first_name
-      const greetingFirstName =
-        typeof rawFirst === "string" && rawFirst.trim().length > 0 ? rawFirst.trim() : null
 
       const lowStockRows = merged.filter((row) => row.totalQuantity <= row.safetyStockThreshold)
       lowStockRows.sort((a, b) => {
@@ -151,7 +150,6 @@ export const useDashboardInventoryQuery = () => {
       })
 
       return {
-        greetingFirstName,
         lowStockSkus,
         topSkusByQuantity,
         weeklyMovement: { received, sold },
@@ -159,4 +157,11 @@ export const useDashboardInventoryQuery = () => {
       }
     },
   })
+
+  const data: DashboardInventoryData | undefined = useMemo(() => {
+    if (!query.data) return undefined
+    return { ...query.data, greetingFirstName }
+  }, [query.data, greetingFirstName])
+
+  return { ...query, data }
 }

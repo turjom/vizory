@@ -250,6 +250,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   useEffect(() => {
     if (pendingReview) return
+    // Recount step: form is narrowed to variance-only rows — do not replace with full SKU list
+    if (nextReviewIsPostRecount) return
     if (skus.length === 0) return
     if (listScope !== "all") return
     reset({
@@ -261,10 +263,11 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
         counted: "",
       })),
     })
-  }, [pendingReview, listScope, skusFingerprint, skus, reset])
+  }, [pendingReview, nextReviewIsPostRecount, listScope, skusFingerprint, skus, reset])
 
   useEffect(() => {
     if (pendingReview) return
+    if (nextReviewIsPostRecount) return
     if (listScope !== "select" || skus.length === 0) return
     const current = getValues("items")
     if (current.length === 0) return
@@ -288,7 +291,7 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
           n.skuCode === current[i].skuCode,
       )
     if (!same) reset({ items: next })
-  }, [pendingReview, listScope, skusFingerprint, skus, getValues, reset])
+  }, [pendingReview, nextReviewIsPostRecount, listScope, skusFingerprint, skus, getValues, reset])
 
   useEffect(() => {
     void trigger()
@@ -386,11 +389,18 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
+      await queryClient.invalidateQueries({ queryKey: queryKeys.sku.lists() })
+      // SKU list observers live under queryKeys.sku.lists(); type "all" refetches inactive queries too.
+      // TanStack Query v5 awaits async onSuccess before settling the mutation, so this await completes before goBack().
+      await queryClient.refetchQueries({ queryKey: queryKeys.sku.lists(), type: "all" })
+
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
       await queryClient.invalidateQueries({ queryKey: queryKeys.sku.lastStockTakeBySku(userId) })
+
       setPendingReview(null)
       setNextReviewIsPostRecount(false)
       setSubmitError("")
+
       navigation.goBack()
     },
   })
@@ -407,8 +417,9 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     const skuCodeById = new Map(skus.map((s) => [s.id, s.skuCode]))
     setPendingReview(null)
     setNextReviewIsPostRecount(true)
+    const rowsWithVariance = current.rows.filter((r) => r.counted !== r.systemQuantity)
     reset({
-      items: current.rows.map((r) => ({
+      items: rowsWithVariance.map((r) => ({
         skuId: r.skuId,
         skuName: r.skuName,
         skuCode: skuCodeById.get(r.skuId) ?? "",

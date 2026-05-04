@@ -34,6 +34,7 @@
     ]
   },
   "ios": {
+    "buildNumber": "1",
     "icon": "./assets/icons/vizory_1024.png",
     "supportsTablet": true,
     "bundleIdentifier": "com.vizory.app",

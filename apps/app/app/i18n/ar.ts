@@ -147,6 +147,17 @@ const ar: Translations = {
     language: "اللغة",
     languageAutoDetect: "يتم اكتشاف اللغة تلقائياً من إعدادات جهازك",
   },
+  biometricEnrollment: {
+    title: "Enable Face ID / Touch ID",
+    subtitle: "Sign in faster without typing your password each time",
+    enable: "Enable",
+    skip: "Skip",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your account password",
+    passwordRequired: "Password is required to enable biometric sign-in",
+    noEmail: "No email on file for this account.",
+    enableFailed: "Could not enable biometric sign-in. Try again.",
+  },
   profileScreen: {
     title: "الملف الشخصي",
     upgradeButton: "الترقية إلى Pro",
@@ -159,6 +170,10 @@ const ar: Translations = {
     personalInfoSubtitle: "تعديل الاسم والبريد الإلكتروني",
     notifications: "الإشعارات",
     notificationsSubtitle: "إدارة الإشعارات",
+    biometricMenuTitle: "Face ID / Touch ID",
+    biometricPasswordTitle: "تأكيد كلمة المرور",
+    biometricPasswordSubtitle:
+      "أدخل كلمة مرور حسابك مرة واحدة لتفعيل تسجيل الدخول البيومتري من شاشة تسجيل الدخول.",
     darkMode: "الوضع الداكن",
     languageSubtitle: "تغيير لغة التطبيق",
     widgets: "أدوات الشاشة الرئيسية",

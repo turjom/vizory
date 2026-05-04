@@ -56,6 +56,7 @@ export * from "./AutoImage"
 export * from "./Modal"
 export * from "./EditProfileModal"
 export * from "./DeleteAccountModal"
+export * from "./BiometricEnrollmentModal"
 export * from "./LanguageSelector"
 
 // Business Components

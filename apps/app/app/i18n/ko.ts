@@ -147,6 +147,17 @@ const ko: Translations = {
     language: "언어",
     languageAutoDetect: "언어는 기기 설정에서 자동으로 감지됩니다",
   },
+  biometricEnrollment: {
+    title: "Enable Face ID / Touch ID",
+    subtitle: "Sign in faster without typing your password each time",
+    enable: "Enable",
+    skip: "Skip",
+    passwordLabel: "Password",
+    passwordPlaceholder: "Enter your account password",
+    passwordRequired: "Password is required to enable biometric sign-in",
+    noEmail: "No email on file for this account.",
+    enableFailed: "Could not enable biometric sign-in. Try again.",
+  },
   badge: {},
   tabs: {
     home: "홈",
@@ -177,6 +188,10 @@ const ko: Translations = {
     personalInfoSubtitle: "이름, 이메일 수정",
     notifications: "알림",
     notificationsSubtitle: "푸시 알림 관리",
+    biometricMenuTitle: "Face ID / Touch ID",
+    biometricPasswordTitle: "비밀번호 확인",
+    biometricPasswordSubtitle:
+      "로그인 화면에서 생체 인증 로그인을 사용하려면 계정 비밀번호를 한 번 입력하세요.",
     darkMode: "다크 모드",
     languageSubtitle: "앱 언어 변경",
     widgets: "홈 화면 위젯",

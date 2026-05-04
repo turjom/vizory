@@ -12,7 +12,11 @@ import { GUEST_USER_KEY } from "@/stores/auth"
 import type { AuthState } from "@/stores/auth/authTypes"
 import type { Session } from "@/types/auth"
 
-import { clearBiometricLoginCredentials } from "./biometricSessionStorage"
+import {
+  clearBiometricLoginCredentials,
+  setBiometricEnabled,
+  setBiometricEnrollmentPrompted,
+} from "./biometricSessionStorage"
 import { mockSupabaseHelpers } from "./mocks/supabase"
 import { logger } from "../utils/Logger"
 
@@ -252,6 +256,8 @@ export async function deleteAccount(): Promise<{ error?: Error }> {
 
     try {
       await clearBiometricLoginCredentials()
+      await setBiometricEnabled(false)
+      await setBiometricEnrollmentPrompted(true, userId)
     } catch (clearBiometricError) {
       logger.warn("Failed to clear biometric login credentials during account deletion", {
         error: clearBiometricError,
