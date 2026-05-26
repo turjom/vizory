@@ -1,8 +1,19 @@
-import { FC, useCallback, useMemo, useState } from "react"
-import { FlatList, Pressable, View } from "react-native"
-import { StyleSheet } from "react-native-unistyles"
+import { FC, lazy, Suspense, useCallback, useMemo, useState } from "react"
+import { FlatList, Platform, Pressable, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Card, EmptyState, Header, Screen, Spinner, Text, TextField } from "@/components"
+import {
+  Card,
+  EmptyState,
+  Header,
+  Screen,
+  Spinner,
+  Text,
+  TextField,
+  useToast,
+  type TextFieldAccessoryProps,
+} from "@/components"
 import { useAuth, useSkusQuery } from "@/hooks"
 import { SKU_LIST_QUERY_TIMEOUT_MESSAGE } from "@/hooks/queries/useSkusQuery"
 import { translate } from "@/i18n"
@@ -10,13 +21,22 @@ import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 
 interface SkuListScreenProps extends MainTabScreenProps<"Inventory"> {}
 
+const LazyAddSkuBarcodeScannerModal = lazy(() => import("./AddSkuBarcodeScannerModal"))
+
 export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ navigation }) {
+  const { theme } = useUnistyles()
+  const toast = useToast()
   const { userId, isLoading: authLoading } = useAuth()
   const { data, isPending, isFetching, isRefetching, isError, error, refetch } = useSkusQuery()
   const skus = data ?? []
   const awaitingFirstSkuData =
     Boolean(userId) && data === undefined && (isPending || isFetching) && !isError
   const [searchQuery, setSearchQuery] = useState("")
+  const [skuScannerVisible, setSkuScannerVisible] = useState(false)
+
+  const closeSkuScanner = useCallback(() => {
+    setSkuScannerVisible(false)
+  }, [])
 
   const handleNavigateToAddSku = useCallback(() => {
     navigation.navigate("Add")
@@ -25,6 +45,40 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
   const handleRefresh = useCallback(() => {
     void refetch()
   }, [refetch])
+
+  const openSkuBarcodeScanner = useCallback(() => {
+    if (Platform.OS === "web") {
+      toast.show({
+        title: translate("addSkuScreen:barcodeScannerUnavailableWeb"),
+        variant: "error",
+      })
+      return
+    }
+    setSkuScannerVisible(true)
+  }, [toast])
+
+  const handleBarcodeScanned = useCallback((value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    setSearchQuery(trimmed)
+    setSkuScannerVisible(false)
+  }, [])
+
+  const searchBarcodeAccessory = useCallback(
+    (accessoryProps: TextFieldAccessoryProps) => (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={translate("addSkuScreen:skuCodeScanBarcodeAccessibility")}
+        onPress={openSkuBarcodeScanner}
+        hitSlop={12}
+        style={[accessoryProps.style, styles.searchBarcodeAccessoryHit]}
+        disabled={!accessoryProps.editable}
+      >
+        <Ionicons name="camera-outline" size={22} color={theme.colors.foregroundSecondary} />
+      </Pressable>
+    ),
+    [openSkuBarcodeScanner, theme.colors.foregroundSecondary],
+  )
 
   const filteredSkus = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -75,6 +129,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"
+          RightAccessory={searchBarcodeAccessory}
           containerStyle={styles.searchField}
         />
         {skus.length > 0 ? (
@@ -88,7 +143,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
         ) : null}
       </View>
     ),
-    [navigation, searchQuery, skus.length],
+    [navigation, searchBarcodeAccessory, searchQuery, skus.length],
   )
 
   if (authLoading || awaitingFirstSkuData) {
@@ -156,6 +211,15 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           )
         }
       />
+      {skuScannerVisible ? (
+        <Suspense fallback={null}>
+          <LazyAddSkuBarcodeScannerModal
+            visible={skuScannerVisible}
+            onClose={closeSkuScanner}
+            onBarcodeScanned={handleBarcodeScanned}
+          />
+        </Suspense>
+      ) : null}
     </Screen>
   )
 }
@@ -178,6 +242,9 @@ const styles = StyleSheet.create((theme) => ({
   },
   searchField: {
     marginBottom: 0,
+  },
+  searchBarcodeAccessoryHit: {
+    padding: theme.spacing.xxs,
   },
   stockTakeButton: {
     alignItems: "center",

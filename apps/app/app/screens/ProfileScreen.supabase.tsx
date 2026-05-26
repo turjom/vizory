@@ -224,7 +224,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const displayName =
     fn.length > 0 ? (ln.length > 0 ? `${fn} ${ln}` : fn) : user?.email?.split("@")[0] || "User"
 
-  const trialStartIso = profile?.created_at ?? user?.createdAt ?? null
+  const trialStartIso = profile?.created_at ?? null
   const freeTrialDaysRemaining = useMemo(() => {
     if (!trialStartIso) return FREE_TRIAL_DAYS
     const trialEnd = addDays(parseISO(trialStartIso), FREE_TRIAL_DAYS)

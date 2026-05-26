@@ -239,17 +239,6 @@ export function App() {
           })
         })
 
-        // Initialize notification store (sets up listeners for push notifications)
-        void useNotificationStore
-          .getState()
-          .initialize()
-          .catch((error) => {
-            logger.error("Notification store initialization failed", {}, error as Error)
-            sentry.captureException(error as Error, {
-              tags: { context: "initialization", service: "notifications" },
-            })
-          })
-
         logStartup("Deferred services initialized")
       } catch (error) {
         logger.error("Deferred initialization failed", {}, error as Error)
@@ -264,8 +253,6 @@ export function App() {
     return () => {
       isMounted = false
       deferredInitialization.cancel()
-      // Clean up notification listeners to prevent memory leaks
-      useNotificationStore.getState().cleanup()
       useSubscriptionStore.getState().cleanup()
     }
   }, [handleInitialEmailLink])

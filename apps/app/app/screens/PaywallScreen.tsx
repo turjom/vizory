@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
-import { Text, Container, Button } from "../components"
+import { Text, Container, Button, Header } from "../components"
 import { env } from "../config/env"
 import type { AppStackParamList } from "../navigators/navigationTypes"
 import { resetRoot } from "../navigators/navigationUtilities"
@@ -274,11 +274,6 @@ export const PaywallScreen = () => {
     presentPaywall()
   }, [presentPaywall])
 
-  // Handle skip/continue (only shown if paywall failed to present)
-  const handleSkip = useCallback(() => {
-    leavePaywall()
-  }, [leavePaywall])
-
   // Get selected package for purchase
   const getSelectedPkg = () => packages.find((p) => p.identifier === selectedPackage)
 
@@ -314,6 +309,7 @@ export const PaywallScreen = () => {
 
   return (
     <Container safeAreaEdges={["top"]}>
+      <Header safeAreaEdges={[]} leftIcon="back" onLeftPress={() => navigation.goBack()} />
       {isPro ? (
         // User is already Pro - show success message
         <View style={[styles.centeredContainer, { paddingBottom: bottomPadding }]}>
@@ -358,78 +354,26 @@ export const PaywallScreen = () => {
 
           {/* Features list */}
           <View style={styles.featuresContainer}>
-            {[
-              { titleKey: "paywallScreen:featureUnlimitedProjects" as const, descKey: "paywallScreen:featureUnlimitedProjectsDesc" as const },
-              { titleKey: "paywallScreen:featurePrioritySupport" as const, descKey: "paywallScreen:featurePrioritySupportDesc" as const },
-              { titleKey: "paywallScreen:featureAdvancedAnalytics" as const, descKey: "paywallScreen:featureAdvancedAnalyticsDesc" as const },
-              { titleKey: "paywallScreen:featureNoWatermarks" as const, descKey: "paywallScreen:featureNoWatermarksDesc" as const },
-            ].map((feature, idx) => (
+            {([
+              "paywallScreen:featureTrackUnlimitedSkus",
+              "paywallScreen:featureLowStockAlerts",
+              "paywallScreen:featureBarcodeScanning",
+              "paywallScreen:featureFullTransactionHistory",
+            ] as const).map((feature, idx) => (
               <View key={idx} style={styles.featureRow}>
                 <View style={styles.featureCheck}>
                   <Text style={styles.featureCheckText}>✓</Text>
                 </View>
                 <View style={styles.featureContent}>
-                  <Text style={styles.featureTitle}>{t(feature.titleKey)}</Text>
-                  <Text style={styles.featureDesc}>{t(feature.descKey)}</Text>
+                  <Text style={styles.featureTitle} tx={feature} />
                 </View>
               </View>
             ))}
           </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          {/* Package selection */}
-          <View style={styles.packageSection}>
-            <Text style={styles.sectionTitle} tx="paywallScreen:choosePlan" />
-
-            {packages.length === 0 ? (
-              <Text style={styles.errorText}>
-                {isWeb ? noWebOfferingMessage : noPackagesMessage}
-              </Text>
-            ) : (
-              <View style={styles.packageList}>
-                {packages.map((pricingPkg) => {
-                  const isAnnual =
-                    pricingPkg.identifier.toLowerCase().includes("annual") ||
-                    pricingPkg.identifier.toLowerCase().includes("year")
-                  const isSelected = selectedPackage === pricingPkg.identifier
-                  const displayPrice = pricingPkg.priceString || `$${pricingPkg.price.toFixed(2)}`
-
-                  return (
-                    <Pressable
-                      key={pricingPkg.identifier}
-                      style={[styles.packageCard, isSelected && styles.packageCardSelected]}
-                      onPress={() => setSelectedPackage(pricingPkg.identifier)}
-                    >
-                      {isAnnual && (
-                        <View style={styles.bestValueBadge}>
-                          <Text style={styles.bestValueText} tx="paywallScreen:bestValue" />
-                        </View>
-                      )}
-                      <View style={styles.packageRadio}>
-                        <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                          {isSelected && <View style={styles.radioInner} />}
-                        </View>
-                      </View>
-                      <View style={styles.packageInfo}>
-                        <Text style={styles.packageName}>{isAnnual ? t("paywallScreen:annual") : t("paywallScreen:monthly")}</Text>
-                        <Text style={styles.packagePrice}>{displayPrice}</Text>
-                        {isAnnual && (
-                          <Text style={styles.packageSavings}>
-                            {t("paywallScreen:savingsPerMonth", { price: (pricingPkg.price / 12).toFixed(2) })}
-                          </Text>
-                        )}
-                      </View>
-                    </Pressable>
-                  )
-                })}
-              </View>
-            )}
-          </View>
-
           {/* CTA Button */}
           <Button
-            tx={isMock ? "paywallScreen:simulatePurchase" : "paywallScreen:continue"}
+            tx="paywallScreen:subscribeNow"
             onPress={() => {
               const pkg = getSelectedPkg()
               if (pkg) handlePackagePurchase(pkg)
@@ -438,23 +382,6 @@ export const PaywallScreen = () => {
             style={styles.ctaButton}
             disabled={subscriptionLoading || isPresenting || !selectedPackage}
             loading={subscriptionLoading}
-          />
-
-          {/* Trust signals */}
-          <View style={styles.trustSignals}>
-            <Text style={styles.trustText} tx="paywallScreen:cancelAnytime" />
-            <Text style={styles.trustDot}>•</Text>
-            <Text style={styles.trustText} tx="paywallScreen:secureCheckout" />
-            <Text style={styles.trustDot}>•</Text>
-            <Text style={styles.trustText} tx="paywallScreen:instantAccess" />
-          </View>
-
-          <Button
-            text={t("paywallScreen:continueWithFree")}
-            onPress={handleSkip}
-            variant="ghost"
-            style={styles.skipButton}
-            disabled={subscriptionLoading || isPresenting}
           />
 
           {/* Restore purchases */}
@@ -502,12 +429,6 @@ export const PaywallScreen = () => {
               variant="filled"
               style={styles.retryButton}
             />
-            <Button
-              text={t("paywallScreen:continueWithFree")}
-              onPress={handleSkip}
-              variant="ghost"
-              style={styles.skipButton}
-            />
           </View>
         </View>
       ) : (
@@ -520,12 +441,6 @@ export const PaywallScreen = () => {
             onPress={handlePresentPaywall}
             variant="filled"
             style={styles.presentButton}
-          />
-          <Button
-            text={t("paywallScreen:continueWithFree")}
-            onPress={handleSkip}
-            variant="ghost"
-            style={styles.skipButton}
           />
         </View>
       )}
@@ -556,7 +471,7 @@ const styles = StyleSheet.create((theme) => ({
   title: {
     color: theme.colors.foreground,
     fontSize: 28,
-    fontWeight: "800",
+    fontWeight: "700",
     lineHeight: 34,
     textAlign: "center",
     letterSpacing: -0.5,
@@ -700,6 +615,8 @@ const styles = StyleSheet.create((theme) => ({
   },
   // CTA
   ctaButton: {
+    backgroundColor: "#F97316",
+    borderColor: "#F97316",
     marginBottom: theme.spacing.md,
   },
   // Trust signals

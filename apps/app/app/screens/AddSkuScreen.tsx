@@ -1,5 +1,6 @@
 import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
+  ActivityIndicator,
   ActionSheetIOS,
   Alert,
   FlatList,
@@ -134,6 +135,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const { data: profile } = useProfileQuery()
   const queryClient = useQueryClient()
   const [saveError, setSaveError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const isStackEdit = route.name === "EditSku"
   const editingSku = isStackEdit ? route.params.sku : undefined
   const isEditMode = !!editingSku
@@ -542,6 +544,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   }, [pickSkuImageFromSource, t])
 
   const onSubmit = async (values: AddSkuFormData) => {
+    setIsSubmitting(true)
     setSaveError("")
     setSkuCodeDuplicateError(null)
 
@@ -556,10 +559,12 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
 
       if (dupError) {
         setSaveError(t("addSkuScreen:saveErrorGeneric"))
+        setIsSubmitting(false)
         return
       }
       if (existing) {
         setSkuCodeDuplicateError(t("addSkuScreen:validationSkuCodeDuplicate"))
+        setIsSubmitting(false)
         return
       }
     }
@@ -575,12 +580,15 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               : t("addSkuScreen:saveErrorGeneric"),
           )
         },
+        onSettled: () => {
+          setIsSubmitting(false)
+        },
       },
     )
   }
 
   const pending = createSkuMutation.isPending || deleteSkuMutation.isPending
-  const canSave = formIsValid && !pending && !skuCodeDuplicateError
+  const canSave = formIsValid && !pending && !isSubmitting && !skuCodeDuplicateError
 
   const handleDescriptionKeyPress = useCallback(
     (e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
@@ -708,18 +716,22 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
             disabled={!canSave}
             style={[
               styles.headerSaveTouch,
-              formIsValid ? styles.headerSaveActive : styles.headerSaveInactive,
+              canSave ? styles.headerSaveActive : styles.headerSaveInactive,
             ]}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityState={{ disabled: !canSave }}
           >
-            <Text
-              weight="semiBold"
-              size="md"
-              tx="addSkuScreen:headerSave"
-              style={formIsValid ? styles.headerSaveLabelActive : styles.headerSaveLabelInactive}
-            />
+            {isSubmitting ? (
+              <ActivityIndicator color="#F97316" />
+            ) : (
+              <Text
+                weight="semiBold"
+                size="md"
+                tx="addSkuScreen:headerSave"
+                style={canSave ? styles.headerSaveLabelActive : styles.headerSaveLabelInactive}
+              />
+            )}
           </TouchableOpacity>
         }
       />
