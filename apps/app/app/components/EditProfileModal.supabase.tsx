@@ -35,6 +35,10 @@ export interface EditProfileModalSupabaseProps {
   visible: boolean
   onClose: () => void
   profile: Profile | null | undefined
+  /** Resolved names from parent (profiles row + auth metadata fallbacks) */
+  initialFirstName: string
+  initialLastName: string
+  email: string
   onUpdate: (firstName: string, lastName: string) => Promise<{ error: Error | null }>
   isUpdating: boolean
 }
@@ -47,23 +51,26 @@ export const EditProfileModalSupabase: FC<EditProfileModalSupabaseProps> = ({
   visible,
   onClose,
   profile,
+  initialFirstName,
+  initialLastName,
+  email,
   onUpdate,
   isUpdating,
 }) => {
   const { theme } = useUnistyles()
   const { t } = useTranslation()
 
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
+  const [firstName, setFirstName] = useState(initialFirstName)
+  const [lastName, setLastName] = useState(initialLastName)
   const [error, setError] = useState("")
 
-  // Initialize form with profile data
+  // Sync when profile query updates or each time the modal opens
   useEffect(() => {
-    if (profile) {
-      setFirstName(profile.first_name ?? "")
-      setLastName(profile.last_name ?? "")
-    }
-  }, [profile])
+    if (!visible) return
+    setFirstName(profile?.first_name?.trim() ?? initialFirstName)
+    setLastName(profile?.last_name?.trim() ?? initialLastName)
+    setError("")
+  }, [visible, profile?.first_name, profile?.last_name, initialFirstName, initialLastName])
 
   const handleSave = async () => {
     setError("")
@@ -139,6 +146,16 @@ export const EditProfileModalSupabase: FC<EditProfileModalSupabaseProps> = ({
                 containerStyle={styles.lastNameField}
               />
 
+              <TextField
+                labelTx="editProfileModal:emailLabel"
+                value={email}
+                editable={false}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="email-address"
+                containerStyle={styles.emailField}
+              />
+
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
             </ScrollView>
 
@@ -156,8 +173,9 @@ export const EditProfileModalSupabase: FC<EditProfileModalSupabaseProps> = ({
                 variant="filled"
                 onPress={handleSave}
                 loading={isUpdating}
-                disabled={isUpdating || !firstName.trim() || !lastName.trim()}
-                style={styles.saveButton}
+                disabled={isUpdating}
+                style={[styles.saveButton, styles.saveButtonOrange]}
+                TextProps={{ style: styles.saveButtonText }}
               />
             </View>
           </View>
@@ -224,6 +242,9 @@ const styles = StyleSheet.create((theme) => ({
   lastNameField: {
     marginTop: theme.spacing.sm,
   },
+  emailField: {
+    marginTop: theme.spacing.sm,
+  },
   errorText: {
     color: theme.colors.error,
     fontSize: theme.typography.sizes.sm,
@@ -242,5 +263,12 @@ const styles = StyleSheet.create((theme) => ({
   },
   saveButton: {
     flex: 1,
+  },
+  saveButtonOrange: {
+    backgroundColor: "#F97316",
+    borderColor: "#F97316",
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
   },
 }))

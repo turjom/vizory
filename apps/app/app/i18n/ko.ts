@@ -50,6 +50,7 @@ const ko: Translations = {
     firstNamePlaceholder: "이름을 입력하세요",
     lastNameLabel: "성",
     lastNamePlaceholder: "성을 입력하세요",
+    emailLabel: "Email",
     cancelButton: "취소",
     saveButton: "저장",
     errorGeneric: "프로필 업데이트 실패",
@@ -201,6 +202,7 @@ const ko: Translations = {
     // Support section
     supportTitle: "지원",
     helpCenter: "고객센터",
+    manageSubscription: "구독 관리",
     privacyPolicy: "개인정보 처리방침",
     // Development section
     developmentTitle: "개발",

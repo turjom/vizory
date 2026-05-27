@@ -58,6 +58,7 @@ const en = {
     firstNamePlaceholder: "Enter your first name",
     lastNameLabel: "Last Name",
     lastNamePlaceholder: "Enter your last name",
+    emailLabel: "Email",
     cancelButton: "Cancel",
     saveButton: "Save",
     errorGeneric: "Failed to update profile",
@@ -329,7 +330,7 @@ const en = {
     restoreSuccess: "Purchases restored successfully!",
     noPurchasesFound: "No previous purchases found.",
     unlockPro: "Subscribe to Continue",
-    unlockProDescription: "Your free trial has ended. $9.99/month, cancel anytime.",
+    unlockProDescription: "$9.99/month, cancel anytime.",
     featureTrackUnlimitedSkus: "Track unlimited SKUs",
     featureLowStockAlerts: "Get alerted before you run out",
     featureBarcodeScanning: "Barcode scanning",
@@ -430,6 +431,7 @@ const en = {
     // Support section
     supportTitle: "Support",
     helpCenter: "Help Center",
+    manageSubscription: "Manage Subscription",
     privacyPolicy: "Privacy Policy",
     // Development section
     developmentTitle: "Development",

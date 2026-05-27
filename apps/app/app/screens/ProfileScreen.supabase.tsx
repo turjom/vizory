@@ -14,6 +14,7 @@ import { FC, useCallback, useMemo, useState } from "react"
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Modal,
   ScrollView,
   Switch,
@@ -32,7 +33,6 @@ import { useTranslation } from "react-i18next"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
-import { UnistylesRuntime } from "react-native-unistyles"
 
 import { Avatar, Button, DeleteAccountModal, MenuItem, Text, TextField } from "@/components"
 import { ANIMATION } from "@/config/constants"
@@ -62,6 +62,9 @@ import { EditProfileModalSupabase } from "../components/EditProfileModal.supabas
 
 const isWeb = Platform.OS === "web"
 const CONTENT_MAX_WIDTH = 600
+const PRIVACY_POLICY_URL =
+  "https://app.termly.io/policy-viewer/policy.html?policyUUID=1f493bab-f99a-4c60-9bf5-e862afc9390e"
+const APPLE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/subscriptions"
 
 /** Free-trial length from `profiles.created_at` (calendar days). */
 const FREE_TRIAL_DAYS = 30
@@ -220,7 +223,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   // Prefer `profiles.first_name` (and last when present); only then email local-part.
   const fn = profile?.first_name?.trim() || user?.firstName?.trim() || ""
-  const ln = profile?.last_name?.trim() ?? ""
+  const ln = profile?.last_name?.trim() || user?.lastName?.trim() || ""
   const displayName =
     fn.length > 0 ? (ln.length > 0 ? `${fn} ${ln}` : fn) : user?.email?.split("@")[0] || "User"
 
@@ -233,12 +236,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
   const userInitials = displayName.slice(0, 2).toUpperCase()
   const avatarUrl = profile?.avatar_url ?? undefined
-
-  const toggleThemeMode = () => {
-    haptics.switchChange()
-    const newTheme = UnistylesRuntime.themeName === "dark" ? "light" : "dark"
-    UnistylesRuntime.setTheme(newTheme)
-  }
 
   const handleBiometricSwitch = async (next: boolean) => {
     if (Platform.OS === "web" || !biometricHardwareReady) return
@@ -315,6 +312,25 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     await refetchProfile()
   }
 
+  const openEditProfileModal = async () => {
+    haptics.buttonPress()
+    try {
+      await refetchProfile()
+    } finally {
+      setEditModalVisible(true)
+    }
+  }
+
+  const openPrivacyPolicy = () => {
+    haptics.buttonPress()
+    void Linking.openURL(PRIVACY_POLICY_URL)
+  }
+
+  const openManageSubscription = () => {
+    haptics.buttonPress()
+    void Linking.openURL(APPLE_SUBSCRIPTIONS_URL)
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.gradient}>
@@ -359,31 +375,34 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                     <Text style={styles.proText} tx="profileScreen:proBadge" />
                     {isRevenueCatMock && <Text style={styles.mockBadge}> (Mock)</Text>}
                   </View>
-                ) : freeTrialDaysRemaining === 0 ? (
-                  <Pressable
-                    onPress={() => {
-                      haptics.buttonPress()
-                      navigation.navigate("Paywall")
-                    }}
-                    style={({ pressed }) => [
-                      styles.subscribeButton,
-                      pressed && styles.subscribeButtonPressed,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityLabel={t("profileScreen:subscribe")}
-                  >
-                    <Text style={styles.subscribeButtonText} tx="profileScreen:subscribe" />
-                  </Pressable>
                 ) : (
-                  <Text
-                    style={styles.trialText}
-                    tx={
-                      freeTrialDaysRemaining === 1
-                        ? "profileScreen:trialDayRemaining"
-                        : "profileScreen:trialDaysRemaining"
-                    }
-                    txOptions={{ count: freeTrialDaysRemaining }}
-                  />
+                  <>
+                    {freeTrialDaysRemaining > 0 ? (
+                      <Text
+                        style={styles.trialText}
+                        tx={
+                          freeTrialDaysRemaining === 1
+                            ? "profileScreen:trialDayRemaining"
+                            : "profileScreen:trialDaysRemaining"
+                        }
+                        txOptions={{ count: freeTrialDaysRemaining }}
+                      />
+                    ) : null}
+                    <Pressable
+                      onPress={() => {
+                        haptics.buttonPress()
+                        navigation.navigate("Paywall")
+                      }}
+                      style={({ pressed }) => [
+                        styles.subscribeButton,
+                        pressed && styles.subscribeButtonPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={t("profileScreen:subscribe")}
+                    >
+                      <Text style={styles.subscribeButtonText} tx="profileScreen:subscribe" />
+                    </Pressable>
+                  </>
                 )}
               </View>
             </View>
@@ -401,7 +420,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
               icon="person-outline"
               title={t("profileScreen:personalInfo")}
               subtitle={t("profileScreen:personalInfoSubtitle")}
-              onPress={() => setEditModalVisible(true)}
+              onPress={() => void openEditProfileModal()}
             />
             {biometricHardwareReady ? (
               <>
@@ -416,7 +435,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                       onValueChange={(v) => void handleBiometricSwitch(v)}
                       trackColor={{
                         false: theme.colors.borderSecondary,
-                        true: theme.colors.primary,
+                        true: "#F97316",
                       }}
                       thumbColor={theme.colors.card}
                     />
@@ -424,19 +443,6 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                 />
               </>
             ) : null}
-            <View style={styles.divider} />
-            <MenuItem
-              icon="moon-outline"
-              title={t("profileScreen:darkMode")}
-              rightElement={
-                <Switch
-                  value={UnistylesRuntime.themeName === "dark"}
-                  onValueChange={toggleThemeMode}
-                  trackColor={{ false: theme.colors.borderSecondary, true: theme.colors.primary }}
-                  thumbColor={theme.colors.card}
-                />
-              }
-            />
             {isWidgetsEnabled && (
               <>
                 <View style={styles.divider} />
@@ -475,13 +481,25 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3.5).springify()}
             style={styles.menuGroup}
           >
-            <MenuItem icon="help-circle-outline" title={t("profileScreen:helpCenter")} />
-            <View style={styles.divider} />
-            <MenuItem icon="shield-checkmark-outline" title={t("profileScreen:privacyPolicy")} />
+            {isPro ? (
+              <>
+                <MenuItem
+                  icon="card-outline"
+                  title={t("profileScreen:manageSubscription")}
+                  onPress={openManageSubscription}
+                />
+                <View style={styles.divider} />
+              </>
+            ) : null}
+            <MenuItem
+              icon="shield-checkmark-outline"
+              title={t("profileScreen:privacyPolicy")}
+              onPress={openPrivacyPolicy}
+            />
           </Animated.View>
 
-          {/* Development Section - Only visible in dev mode */}
-          {features.enableDebugLogging && (
+          {/* Development Section - Only visible in development builds */}
+          {false && features.enableDebugLogging && (
             <>
               <Animated.View entering={FadeInDown.delay(ANIMATION.STAGGER_DELAY * 3.8).springify()}>
                 <Text style={styles.sectionTitle} tx="profileScreen:developmentTitle" />
@@ -626,13 +644,18 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
       </View>
 
       {/* Edit Profile Modal - Supabase version with React Query */}
-      <EditProfileModalSupabase
-        visible={editModalVisible}
-        onClose={() => setEditModalVisible(false)}
-        profile={profile}
-        onUpdate={handleProfileUpdate}
-        isUpdating={updateProfile.isPending}
-      />
+      {editModalVisible ? (
+        <EditProfileModalSupabase
+          visible={editModalVisible}
+          onClose={() => setEditModalVisible(false)}
+          profile={profile}
+          initialFirstName={fn}
+          initialLastName={ln}
+          email={user?.email ?? ""}
+          onUpdate={handleProfileUpdate}
+          isUpdating={updateProfile.isPending}
+        />
+      ) : null}
       <DeleteAccountModal
         visible={deleteModalVisible}
         onClose={() => setDeleteModalVisible(false)}
@@ -778,7 +801,7 @@ const styles = StyleSheet.create((theme) => ({
   proBadge: {
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: theme.colors.foreground,
+    backgroundColor: "#F97316",
     borderRadius: theme.radius.lg,
     flexDirection: "row",
     gap: theme.spacing.xxs,

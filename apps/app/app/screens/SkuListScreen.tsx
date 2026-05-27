@@ -1,5 +1,6 @@
 import { FC, lazy, Suspense, useCallback, useMemo, useState } from "react"
 import { FlatList, Platform, Pressable, View } from "react-native"
+import { useFocusEffect } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
@@ -27,12 +28,20 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
   const { theme } = useUnistyles()
   const toast = useToast()
   const { userId, isLoading: authLoading } = useAuth()
-  const { data, isPending, isFetching, isRefetching, isError, error, refetch } = useSkusQuery()
+  const { data, isLoading: skusLoading, isError, error, refetch } = useSkusQuery()
   const skus = data ?? []
-  const awaitingFirstSkuData =
-    Boolean(userId) && data === undefined && (isPending || isFetching) && !isError
+  const awaitingFirstSkuData = Boolean(userId) && data === undefined && skusLoading && !isError
   const [searchQuery, setSearchQuery] = useState("")
   const [skuScannerVisible, setSkuScannerVisible] = useState(false)
+  const [pullRefreshing, setPullRefreshing] = useState(false)
+
+  // Inventory stays mounted under StockTake; refetch when the tab regains focus so quantities update.
+  useFocusEffect(
+    useCallback(() => {
+      if (data === undefined) return
+      void refetch()
+    }, [refetch, data]),
+  )
 
   const closeSkuScanner = useCallback(() => {
     setSkuScannerVisible(false)
@@ -42,8 +51,13 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
     navigation.navigate("Add")
   }, [navigation])
 
-  const handleRefresh = useCallback(() => {
-    void refetch()
+  const handleRefresh = useCallback(async () => {
+    setPullRefreshing(true)
+    try {
+      await refetch()
+    } finally {
+      setPullRefreshing(false)
+    }
   }, [refetch])
 
   const openSkuBarcodeScanner = useCallback(() => {
@@ -193,7 +207,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           filteredSkus.length === 0 && styles.emptyListContent,
         ]}
         onRefresh={handleRefresh}
-        refreshing={isRefetching}
+        refreshing={pullRefreshing}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
           skus.length === 0 ? (

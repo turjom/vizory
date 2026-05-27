@@ -1,5 +1,6 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Alert, FlatList, Pressable, View } from "react-native"
+import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Alert, FlatList, Platform, Pressable, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -8,15 +9,28 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
-import { Button, Card, Container, Header, Spinner, Text, TextField } from "@/components"
+import {
+  Button,
+  Card,
+  Container,
+  Header,
+  Spinner,
+  Text,
+  TextField,
+  useToast,
+  type TextFieldAccessoryProps,
+} from "@/components"
 import { useAuth } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import { useSkusQuery, type SkuListItem } from "@/hooks/queries/useSkusQuery"
+import { translate } from "@/i18n"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { supabase } from "@/services/supabase"
 import { haptics } from "@/utils/haptics"
 
 interface StockTakeScreenProps extends AppStackScreenProps<"StockTake"> {}
+
+const LazyAddSkuBarcodeScannerModal = lazy(() => import("./AddSkuBarcodeScannerModal"))
 
 /** Passed to Container `ScrollViewProps` — must include inset flags (also set explicitly below). */
 const STACK_SCROLL_VIEW_PROPS = {
@@ -167,11 +181,13 @@ function StockTakeSkuCountRow(props: {
 export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScreen({ navigation }) {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
+  const toast = useToast()
   const { userId } = useAuth()
   const queryClient = useQueryClient()
   const [submitError, setSubmitError] = useState("")
   const [listScope, setListScope] = useState<"all" | "select">("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [skuScannerVisible, setSkuScannerVisible] = useState(false)
   const prevListScopeRef = useRef(listScope)
 
   const [pendingReview, setPendingReview] = useState<PendingReview | null>(null)
@@ -297,6 +313,44 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     void trigger()
   }, [listScope, trigger])
 
+  const closeSkuScanner = useCallback(() => {
+    setSkuScannerVisible(false)
+  }, [])
+
+  const openSkuBarcodeScanner = useCallback(() => {
+    if (Platform.OS === "web") {
+      toast.show({
+        title: translate("addSkuScreen:barcodeScannerUnavailableWeb"),
+        variant: "error",
+      })
+      return
+    }
+    setSkuScannerVisible(true)
+  }, [toast])
+
+  const handleBarcodeScanned = useCallback((value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    setSearchQuery(trimmed)
+    setSkuScannerVisible(false)
+  }, [])
+
+  const searchBarcodeAccessory = useCallback(
+    (accessoryProps: TextFieldAccessoryProps) => (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={translate("addSkuScreen:skuCodeScanBarcodeAccessibility")}
+        onPress={openSkuBarcodeScanner}
+        hitSlop={12}
+        style={[accessoryProps.style, styles.searchBarcodeAccessoryHit]}
+        disabled={!accessoryProps.editable}
+      >
+        <Ionicons name="camera-outline" size={22} color={theme.colors.foregroundSecondary} />
+      </Pressable>
+    ),
+    [openSkuBarcodeScanner, theme.colors.foregroundSecondary],
+  )
+
   const selectedIds = useMemo(() => new Set(fields.map((f) => f.skuId)), [fields])
 
   const searchMatches = useMemo(() => {
@@ -387,15 +441,14 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
         }
       }
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sku.all })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sku.lists() })
-      // SKU list observers live under queryKeys.sku.lists(); type "all" refetches inactive queries too.
-      // TanStack Query v5 awaits async onSuccess before settling the mutation, so this await completes before goBack().
-      await queryClient.refetchQueries({ queryKey: queryKeys.sku.lists(), type: "all" })
-
-      await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
-      await queryClient.invalidateQueries({ queryKey: queryKeys.sku.lastStockTakeBySku(userId) })
+    onSuccess: () => {
+      // Invalidate only — Inventory refetches on focus (SkuList stays mounted under the stack).
+      // Awaiting refetchQueries here leaves isRefetching stuck on Inventory until the list re-renders.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.sku.lists() })
+      void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all })
+      if (userId) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.sku.lastStockTakeBySku(userId) })
+      }
 
       setPendingReview(null)
       setNextReviewIsPostRecount(false)
@@ -741,6 +794,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
               onChangeText={setSearchQuery}
               autoCapitalize="none"
               autoCorrect={false}
+              returnKeyType="search"
+              RightAccessory={searchBarcodeAccessory}
             />
             {searchQuery.trim() === "" ? (
               <Text tx="stockTakeScreen:searchHint" size="sm" color="secondary" />
@@ -815,6 +870,15 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
           TextProps={{ style: styles.primaryCtaText }}
         />
       </Container>
+      {skuScannerVisible ? (
+        <Suspense fallback={null}>
+          <LazyAddSkuBarcodeScannerModal
+            visible={skuScannerVisible}
+            onClose={closeSkuScanner}
+            onBarcodeScanned={handleBarcodeScanned}
+          />
+        </Suspense>
+      ) : null}
     </Container>
   )
 }
@@ -880,6 +944,9 @@ const styles = StyleSheet.create((theme) => ({
   },
   searchSection: {
     gap: theme.spacing.sm,
+  },
+  searchBarcodeAccessoryHit: {
+    padding: theme.spacing.xxs,
   },
   searchResults: {
     borderRadius: theme.radius.lg,

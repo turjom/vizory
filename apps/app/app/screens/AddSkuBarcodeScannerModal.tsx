@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Alert, Linking, Modal, Platform, Pressable, View } from "react-native"
-import { CameraView, useCameraPermissions, type BarcodeScanningResult, type BarcodeType } from "expo-camera"
+import { Camera, CameraView, type BarcodeScanningResult, type BarcodeType } from "expo-camera"
 import { Ionicons } from "@expo/vector-icons"
 import { useTranslation } from "react-i18next"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -45,7 +45,6 @@ export default function AddSkuBarcodeScannerModal({
   const { t } = useTranslation()
   const { theme } = useUnistyles()
   const insets = useSafeAreaInsets()
-  const [, requestCameraPermission] = useCameraPermissions()
   const [cameraAllowed, setCameraAllowed] = useState(false)
 
   const onCloseRef = useRef(onClose)
@@ -61,7 +60,7 @@ export default function AddSkuBarcodeScannerModal({
     setCameraAllowed(false)
 
     void (async () => {
-      const result = await requestCameraPermission()
+      const result = await Camera.requestCameraPermissionsAsync()
       if (cancelled) return
       if (!result.granted) {
         Alert.alert(t("addSkuScreen:barcodePermissionTitle"), t("addSkuScreen:barcodePermissionMessage"), [
@@ -77,7 +76,7 @@ export default function AddSkuBarcodeScannerModal({
     return () => {
       cancelled = true
     }
-  }, [visible, requestCameraPermission, t])
+  }, [visible, t])
 
   const handleNativeScan = useCallback(
     (scan: BarcodeScanningResult) => {
