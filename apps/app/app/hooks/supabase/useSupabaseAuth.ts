@@ -221,8 +221,10 @@ export function useSupabaseAuth(): SupabaseAuthState & SupabaseAuthActions {
             },
           },
         })
-        console.log(signUpData.user?.user_metadata, signUpData.user?.id)
         if (!error && signUpData.user) {
+          setUser(signUpData.user)
+          useAuthStore.getState().setUser(signUpData.user)
+          setIsLoading(false)
           await upsertProfileFromRegistration({
             userId: signUpData.user.id,
             email: signUpData.user.email ?? emailTrimmed,

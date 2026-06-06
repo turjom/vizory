@@ -209,7 +209,7 @@ export const EmailVerificationScreen = () => {
             styles.primaryButton,
             countdown > 0 && styles.primaryButtonDisabled,
             {
-              backgroundColor: countdown > 0 ? theme.colors.secondary : theme.colors.primary,
+              backgroundColor: countdown > 0 ? theme.colors.secondary : theme.colors.accent,
             },
           ]}
           onPress={handleResendEmail}
@@ -230,7 +230,7 @@ export const EmailVerificationScreen = () => {
             </>
           ) : (
             <>
-              <Ionicons name="refresh" size={20} color={theme.colors.primaryForeground} />
+              <Ionicons name="refresh" size={20} color={theme.colors.accentForeground} />
               <Text
                 weight="semiBold"
                 style={styles.primaryButtonText}
@@ -245,14 +245,14 @@ export const EmailVerificationScreen = () => {
           onPress={handleChangeEmail}
           activeOpacity={0.6}
         >
-          <Text color="secondary">
+          <Text style={styles.linkAccent}>
             <Text tx="emailVerificationScreen:wrongEmail" />{" "}
             <Text weight="semiBold" tx="emailVerificationScreen:changeIt" />
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.linkButton} onPress={handleBackToLogin} activeOpacity={0.6}>
-          <Text color="secondary">
+          <Text style={styles.linkAccent}>
             <Text tx="emailVerificationScreen:alreadyConfirmed" />{" "}
             <Text weight="semiBold" tx="emailVerificationScreen:signIn" />
           </Text>
@@ -328,7 +328,7 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.md,
   },
   primaryButtonText: {
-    color: theme.colors.primaryForeground,
+    color: theme.colors.accentForeground,
     fontSize: theme.typography.sizes.lg,
   },
   primaryButtonDisabled: {
@@ -344,5 +344,8 @@ const styles = StyleSheet.create((theme) => ({
   linkButton: {
     alignItems: "center",
     paddingVertical: theme.spacing.xs,
+  },
+  linkAccent: {
+    color: theme.colors.accent,
   },
 }))

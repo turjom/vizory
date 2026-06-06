@@ -257,7 +257,6 @@ export async function signUpAction(
       isAuthenticated: false,
       loading: false,
     })
-
     return {}
   } catch (error) {
     return { error: error as Error }
