@@ -152,6 +152,13 @@ const AppStack = () => {
             }}
           />
           <Stack.Screen
+            name="TrialExpired"
+            component={Screens.TrialExpiredScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
             name="DataDemo"
             component={Screens.DataDemoScreen}
             options={{

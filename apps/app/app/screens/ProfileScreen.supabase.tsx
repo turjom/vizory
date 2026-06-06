@@ -28,7 +28,6 @@ import { Ionicons } from "@expo/vector-icons"
 import * as LocalAuthentication from "expo-local-authentication"
 import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { addDays, differenceInCalendarDays, parseISO } from "date-fns"
 import { useTranslation } from "react-i18next"
 import Animated, { FadeInDown } from "react-native-reanimated"
 import { useSafeAreaInsets } from "react-native-safe-area-context"
@@ -37,7 +36,7 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { Avatar, Button, DeleteAccountModal, MenuItem, Text, TextField } from "@/components"
 import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
-import { queryKeys, useAuth, useProfileQuery, type ProfileRow } from "@/hooks"
+import { queryKeys, useAuth, useProfileQuery, useTrialStatus, type ProfileRow } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
 import { mockRevenueCat } from "@/services/mocks/revenueCat"
 import { isRevenueCatMock } from "@/services/revenuecat"
@@ -64,10 +63,9 @@ const isWeb = Platform.OS === "web"
 const CONTENT_MAX_WIDTH = 600
 const PRIVACY_POLICY_URL =
   "https://app.termly.io/policy-viewer/policy.html?policyUUID=1f493bab-f99a-4c60-9bf5-e862afc9390e"
+const TERMS_OF_USE_URL =
+  "https://app.termly.io/policy-viewer/policy.html?policyUUID=fc785c00-9e37-4994-8d69-293c5a7edcc9"
 const APPLE_SUBSCRIPTIONS_URL = "https://apps.apple.com/account/subscriptions"
-
-/** Free-trial length from `profiles.created_at` (calendar days). */
-const FREE_TRIAL_DAYS = 30
 
 // =============================================================================
 // TYPES
@@ -227,12 +225,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const displayName =
     fn.length > 0 ? (ln.length > 0 ? `${fn} ${ln}` : fn) : user?.email?.split("@")[0] || "User"
 
-  const trialStartIso = profile?.created_at ?? null
-  const freeTrialDaysRemaining = useMemo(() => {
-    if (!trialStartIso) return FREE_TRIAL_DAYS
-    const trialEnd = addDays(parseISO(trialStartIso), FREE_TRIAL_DAYS)
-    return Math.max(0, differenceInCalendarDays(trialEnd, new Date()))
-  }, [trialStartIso])
+  const { daysRemaining: freeTrialDaysRemaining } = useTrialStatus()
 
   const userInitials = displayName.slice(0, 2).toUpperCase()
   const avatarUrl = profile?.avatar_url ?? undefined
@@ -324,6 +317,11 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const openPrivacyPolicy = () => {
     haptics.buttonPress()
     void Linking.openURL(PRIVACY_POLICY_URL)
+  }
+
+  const openTermsOfUse = () => {
+    haptics.buttonPress()
+    void Linking.openURL(TERMS_OF_USE_URL)
   }
 
   const openManageSubscription = () => {
@@ -495,6 +493,12 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
               icon="shield-checkmark-outline"
               title={t("profileScreen:privacyPolicy")}
               onPress={openPrivacyPolicy}
+            />
+            <View style={styles.divider} />
+            <MenuItem
+              icon="document-text-outline"
+              title={t("profileScreen:termsOfUse")}
+              onPress={openTermsOfUse}
             />
           </Animated.View>
 

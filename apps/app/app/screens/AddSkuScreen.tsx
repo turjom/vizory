@@ -32,7 +32,7 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
 import { Button, Header, Text, TextField, useToast, type TextFieldAccessoryProps } from "@/components"
-import { useAuth, useProfileQuery } from "@/hooks"
+import { useAuth, useProfileQuery, useTrialStatus } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import type { AddSkuScreenProps, AppStackParamList, MainTabParamList } from "@/navigators/navigationTypes"
 import { supabase } from "@/services/supabase"
@@ -133,12 +133,19 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const toast = useToast()
   const { userId } = useAuth()
   const { data: profile } = useProfileQuery()
+  const { isTrialExpired } = useTrialStatus()
   const queryClient = useQueryClient()
   const [saveError, setSaveError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isStackEdit = route.name === "EditSku"
   const editingSku = isStackEdit ? route.params.sku : undefined
   const isEditMode = !!editingSku
+
+  useEffect(() => {
+    if (isTrialExpired && !isEditMode) {
+      ;(navigation as AppStackNav).navigate("TrialExpired")
+    }
+  }, [isTrialExpired, isEditMode, navigation])
 
   const nameRef = useRef<TextInput>(null)
   const skuCodeRef = useRef<TextInput>(null)
@@ -693,6 +700,10 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   const keyboardScrollBottomSpace =
     (isStackEdit ? 0 : TAB_BAR_CONTENT_HEIGHT) + insets.bottom + theme.spacing.lg
 
+  if (isTrialExpired && !isEditMode) {
+    return null
+  }
+
   return (
     <View style={styles.root}>
       {Platform.OS === "ios" ? (
@@ -709,7 +720,10 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
               leftIcon: "back" as const,
               onLeftPress: handleBackFromEdit,
             }
-          : {})}
+          : {
+              leftTx: "common:cancel" as const,
+              onLeftPress: () => navigation.goBack(),
+            })}
         RightActionComponent={
           <TouchableOpacity
             onPress={canSave ? handleSubmit(onSubmit) : undefined}

@@ -34,7 +34,7 @@
     ]
   },
   "ios": {
-    "buildNumber": "8",
+    "buildNumber": "9",
     "icon": "./assets/icons/vizory_1024.png",
     "supportsTablet": true,
     "bundleIdentifier": "com.vizory.app",
@@ -42,7 +42,7 @@
       "UIBackgroundModes": [
         "remote-notification"
       ],
-      "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select images for upload.",
+      "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to let you select images for upload for SKU creation",
       "NSCameraUsageDescription": "Vizory uses your camera to scan product barcodes.",
       "NSFaceIDUsageDescription": "Vizory uses Face ID to sign you in securely."
     }

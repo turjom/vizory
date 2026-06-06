@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState } from "react"
-import { View, Platform, ActivityIndicator, ScrollView, Pressable } from "react-native"
+import { View, Platform, ActivityIndicator, ScrollView, Pressable, Linking } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { useTranslation } from "react-i18next"
@@ -51,6 +51,8 @@ if (shouldLoadNativeSDK) {
 
 // Height of floating tab bar + its bottom margin for content padding
 const TAB_BAR_HEIGHT = 80
+const TERMS_OF_USE_URL =
+  "https://app.termly.io/policy-viewer/policy.html?policyUUID=fc785c00-9e37-4994-8d69-293c5a7edcc9"
 
 // =============================================================================
 // COMPONENT
@@ -274,6 +276,10 @@ export const PaywallScreen = () => {
     presentPaywall()
   }, [presentPaywall])
 
+  const openTermsOfUse = useCallback(() => {
+    void Linking.openURL(TERMS_OF_USE_URL)
+  }, [])
+
   // Get selected package for purchase
   const getSelectedPkg = () => packages.find((p) => p.identifier === selectedPackage)
 
@@ -383,6 +389,9 @@ export const PaywallScreen = () => {
             disabled={subscriptionLoading || isPresenting || !selectedPackage}
             loading={subscriptionLoading}
           />
+          <Pressable accessibilityRole="link" onPress={openTermsOfUse} style={styles.termsLink}>
+            <Text style={styles.termsLinkText} tx="paywallScreen:termsOfUse" />
+          </Pressable>
 
           {/* Restore purchases */}
           <View style={styles.restoreContainer}>
@@ -618,6 +627,18 @@ const styles = StyleSheet.create((theme) => ({
     backgroundColor: "#F97316",
     borderColor: "#F97316",
     marginBottom: theme.spacing.md,
+  },
+  termsLink: {
+    alignSelf: "center",
+    marginBottom: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  termsLinkText: {
+    color: theme.colors.tint,
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
   },
   // Trust signals
   trustSignals: {

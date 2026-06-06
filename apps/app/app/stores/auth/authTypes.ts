@@ -27,7 +27,12 @@ export interface AuthState {
     email: string,
     password: string,
   ) => Promise<{ error?: Error; session?: Session | null }>
-  signUp: (email: string, password: string) => Promise<{ error?: Error }>
+  signUp: (
+    email: string,
+    password: string,
+    firstName?: string,
+    lastName?: string,
+  ) => Promise<{ error?: Error }>
   resendConfirmationEmail: (email: string) => Promise<{ error?: Error }>
   verifyEmail: (code: string) => Promise<{ error?: Error }>
   signOut: () => Promise<void>

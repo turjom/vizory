@@ -1,4 +1,4 @@
-import { FC, useMemo, useState } from "react"
+import { FC, useEffect, useMemo, useState } from "react"
 import { Pressable, View } from "react-native"
 import { format, parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,7 +9,7 @@ import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
 import { Button, Container, Header, Text, TextField, useToast } from "@/components"
-import { useAuth, useSkuDetailQuery } from "@/hooks"
+import { useAuth, useSkuDetailQuery, useTrialStatus } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import { SkuListItem } from "@/hooks/queries/useSkusQuery"
 import type { TxKeyPath } from "@/i18n"
@@ -66,9 +66,16 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
     const queryClient = useQueryClient()
     const toast = useToast()
     const { userId } = useAuth()
+    const { isTrialExpired } = useTrialStatus()
     const [saveError, setSaveError] = useState("")
     const [activeTab, setActiveTab] = useState<AdjustmentTab>("PURCHASE")
     const { skuId, skuName, currentQuantity } = route.params
+
+    useEffect(() => {
+      if (isTrialExpired) {
+        navigation.navigate("TrialExpired")
+      }
+    }, [isTrialExpired, navigation])
 
     const { data: skuDetail } = useSkuDetailQuery(skuId)
     const recentAdjustments = useMemo(
@@ -233,6 +240,10 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
     }
 
     const emptyValue = t("skuDetailScreen:valueEmpty")
+
+    if (isTrialExpired) {
+      return null
+    }
 
     return (
       <Container safeAreaEdges={["bottom"]}>

@@ -20,7 +20,7 @@ import {
   useToast,
   type TextFieldAccessoryProps,
 } from "@/components"
-import { useAuth } from "@/hooks"
+import { useAuth, useTrialStatus } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import { useSkusQuery, type SkuListItem } from "@/hooks/queries/useSkusQuery"
 import { translate } from "@/i18n"
@@ -183,6 +183,7 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
   const { theme } = useUnistyles()
   const toast = useToast()
   const { userId } = useAuth()
+  const { isTrialExpired } = useTrialStatus()
   const queryClient = useQueryClient()
   const [submitError, setSubmitError] = useState("")
   const [listScope, setListScope] = useState<"all" | "select">("all")
@@ -195,6 +196,12 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   const { data: skus = [], isLoading, error, refetch } = useSkusQuery()
   const { data: lastCountedBySku = new Map<string, string>() } = useLastStockTakeTimestamps(userId)
+
+  useEffect(() => {
+    if (isTrialExpired) {
+      navigation.navigate("TrialExpired")
+    }
+  }, [isTrialExpired, navigation])
 
   const skusFingerprint = useMemo(
     () => skus.map((s) => `${s.id}:${s.totalQuantity}`).join("|"),
@@ -533,6 +540,10 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
   }
 
   const neverLabel = t("stockTakeScreen:lastCountedNever")
+
+  if (isTrialExpired) {
+    return null
+  }
 
   if (isLoading) {
     return (

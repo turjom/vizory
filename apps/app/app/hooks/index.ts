@@ -61,6 +61,7 @@ export { useDeepLinking } from "./useDeepLinking"
 export { usePressableGesture } from "./usePressableGesture"
 export { useEmailVerificationPolling } from "./useEmailVerificationPolling"
 export { useWidgetData } from "./useWidgetData"
+export { useTrialStatus } from "./useTrialStatus"
 
 // ============================================================================
 // Query Hooks (React Query)

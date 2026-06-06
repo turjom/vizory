@@ -13,7 +13,6 @@ import { queryClient } from "../../../hooks/queries"
 import { hasBiometricLoginCredentials } from "../../../services/biometricSessionStorage"
 import { supabase, isUsingMockSupabase } from "../../../services/supabase"
 import type { Session } from "../../../types/auth"
-import { isEmailConfirmed } from "../../../types/auth"
 import {
   extractSupabaseError,
   isNetworkError,
@@ -125,6 +124,8 @@ export async function signUpAction(
   email: string,
   password: string,
   set: SetState,
+  firstName?: string,
+  lastName?: string,
 ): Promise<{ error?: Error }> {
   try {
     // Check if using real Supabase and validate configuration
@@ -162,14 +163,16 @@ export async function signUpAction(
     // Generate proper redirect URL for email confirmation
     const emailRedirectTo = Platform.OS === "web" ? getEmailRedirectUrl() : undefined
 
-    // Build signUp parameters - pass options only if emailRedirectTo is set
     const signUpParams: Parameters<typeof supabase.auth.signUp>[0] = {
       email,
       password,
-    }
-
-    if (emailRedirectTo) {
-      signUpParams.options = { emailRedirectTo }
+      options: {
+        data: {
+          first_name: firstName ?? "",
+          last_name: lastName ?? "",
+        },
+        ...(emailRedirectTo ? { emailRedirectTo } : {}),
+      },
     }
 
     let data, error
@@ -246,16 +249,12 @@ export async function signUpAction(
       await signUpRateLimiter.reset(`signup:${email.toLowerCase()}`)
     }
 
-    // Check if email is confirmed (may be null if email confirmation is required)
-    const emailConfirmed = isEmailConfirmed(data.user)
-    // Only authenticate if session exists AND email is confirmed
-    // If email confirmation is required, session may be null
-    const shouldAuthenticate = !!data.session && emailConfirmed
-
     const stateUpdate = updateUserState(data.user, data.session)
     set({
       ...stateUpdate,
-      isAuthenticated: shouldAuthenticate,
+      user: data.user,
+      isEmailConfirmed: false,
+      isAuthenticated: false,
       loading: false,
     })
 

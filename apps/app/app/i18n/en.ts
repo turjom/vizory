@@ -348,6 +348,7 @@ const en = {
     instantAccess: "Instant access",
     restoring: "Restoring...",
     restorePurchases: "Restore purchases",
+    termsOfUse: "Terms of Use",
   },
   badge: {
     // Badge text is typically dynamic, but we can add common ones if needed
@@ -405,6 +406,12 @@ const en = {
     noEmail: "No email on file for this account.",
     enableFailed: "Could not enable biometric sign-in. Try again.",
   },
+  trialExpiredScreen: {
+    title: "Trial Ended",
+    message:
+      "Your 30-day free trial has ended. Go to Profile to subscribe and continue using Vizory.",
+    goToProfile: "Go to Profile",
+  },
   profileScreen: {
     title: "Profile",
     upgradeButton: "Upgrade to Pro",
@@ -433,6 +440,7 @@ const en = {
     helpCenter: "Help Center",
     manageSubscription: "Manage Subscription",
     privacyPolicy: "Privacy Policy",
+    termsOfUse: "Terms of Use",
     // Development section
     developmentTitle: "Development",
     testSentryError: "Test Sentry Error",
@@ -581,7 +589,7 @@ const en = {
     invalidEmail: "Invalid email address.",
   },
   loginScreen: {
-    title: "Welcome Back",
+    title: "Welcome",
     subtitle: "Sign in to continue",
     emailLabel: "Email",
     emailPlaceholder: "Enter your email",

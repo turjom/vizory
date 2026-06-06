@@ -95,8 +95,8 @@ export const useAuthStore = create<AuthState>()(
         return signInAction(email, password, set)
       },
 
-      signUp: async (email, password) => {
-        return signUpAction(email, password, set)
+      signUp: async (email, password, firstName, lastName) => {
+        return signUpAction(email, password, set, firstName, lastName)
       },
 
       resendConfirmationEmail: async (email) => {
@@ -238,6 +238,10 @@ export const useAuthStore = create<AuthState>()(
             const {
               data: { subscription },
             } = supabase.auth.onAuthStateChange(async (event, session) => {
+              if ((event as string) === "SIGNED_UP") {
+                return
+              }
+
               // Handle SIGNED_OUT event immediately - don't try to fetch user or preserve state
               if (event === "SIGNED_OUT") {
                 const onboardingStatusByUserId = get().onboardingStatusByUserId

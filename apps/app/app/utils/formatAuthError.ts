@@ -43,6 +43,7 @@ export function formatAuthError(error: Error): string {
     return "" // Empty string - AppNavigator will handle navigation
   }
 
+
   // Network errors
   if (
     errorMessage.includes("network") ||
@@ -76,7 +77,10 @@ export function formatAuthError(error: Error): string {
   ) {
     return "This email is already registered. Please sign in instead."
   }
-
+// Email rate limit
+  if (errorMessage.includes("over_email_send_rate_limit") || errorMessage.includes("email rate limit")) {
+     return "Too many attempts. Please wait a few minutes before trying again."
+  }
   // Email validation
   if (errorMessage.includes("email") && !errorMessage.includes("not found")) {
     return "Please enter a valid email address."

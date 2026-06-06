@@ -49,6 +49,7 @@ export type AppStackParamList = {
     | undefined
   Starter: undefined
   Paywall: undefined
+  TrialExpired: undefined
   Profile: undefined
   ComponentShowcase: undefined
   DataDemo: undefined

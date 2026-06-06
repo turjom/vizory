@@ -162,6 +162,12 @@ const ja: Translations = {
     noEmail: "No email on file for this account.",
     enableFailed: "Could not enable biometric sign-in. Try again.",
   },
+  trialExpiredScreen: {
+    title: "Trial Ended",
+    message:
+      "Your 30-day free trial has ended. Go to Profile to subscribe and continue using Vizory.",
+    goToProfile: "Go to Profile",
+  },
   profileScreen: {
     title: "プロフィール",
     upgradeButton: "Proにアップグレード",
@@ -188,6 +194,7 @@ const ja: Translations = {
     helpCenter: "ヘルプセンター",
     manageSubscription: "サブスクリプションを管理",
     privacyPolicy: "プライバシーポリシー",
+    termsOfUse: "利用規約",
     developmentTitle: "開発",
     testSentryError: "Sentryエラーテスト",
     testSentryErrorSubtitle: "Sentryにテストエラーを送信",

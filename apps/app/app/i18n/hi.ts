@@ -159,6 +159,12 @@ const hi: Translations = {
     noEmail: "No email on file for this account.",
     enableFailed: "Could not enable biometric sign-in. Try again.",
   },
+  trialExpiredScreen: {
+    title: "Trial Ended",
+    message:
+      "Your 30-day free trial has ended. Go to Profile to subscribe and continue using Vizory.",
+    goToProfile: "Go to Profile",
+  },
   profileScreen: {
     title: "प्रोफ़ाइल",
     upgradeButton: "Pro में अपग्रेड करें",
@@ -185,6 +191,7 @@ const hi: Translations = {
     helpCenter: "सहायता केंद्र",
     manageSubscription: "सदस्यता प्रबंधित करें",
     privacyPolicy: "गोपनीयता नीति",
+    termsOfUse: "उपयोग की शर्तें",
     developmentTitle: "विकास",
     testSentryError: "Sentry त्रुटि परीक्षण",
     testSentryErrorSubtitle: "Sentry को एक परीक्षण त्रुटि भेजें",

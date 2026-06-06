@@ -20,4 +20,5 @@ export * from "./AddSkuScreen"
 export * from "./InventoryAdjustmentScreen"
 export * from "./StockTakeScreen"
 export * from "./SkuDetailScreen"
+export * from "./TrialExpiredScreen"
 // export other screens as needed

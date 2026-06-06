@@ -176,6 +176,12 @@ const ko: Translations = {
   stockTakeScreen: en.stockTakeScreen,
   inventoryAdjustmentScreen: en.inventoryAdjustmentScreen,
   onboardingScreenLayout: {},
+  trialExpiredScreen: {
+    title: "Trial Ended",
+    message:
+      "Your 30-day free trial has ended. Go to Profile to subscribe and continue using Vizory.",
+    goToProfile: "Go to Profile",
+  },
   profileScreen: {
     title: "프로필",
     upgradeButton: "Pro로 업그레이드",
@@ -204,6 +210,7 @@ const ko: Translations = {
     helpCenter: "고객센터",
     manageSubscription: "구독 관리",
     privacyPolicy: "개인정보 처리방침",
+    termsOfUse: "이용 약관",
     // Development section
     developmentTitle: "개발",
     testSentryError: "Sentry 오류 테스트",
