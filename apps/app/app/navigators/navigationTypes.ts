@@ -44,6 +44,7 @@ export type AppStackParamList = {
         access_token?: string
         refresh_token?: string
         state?: string
+        token_hash?: string
         type?: string
       }
     | undefined
@@ -79,7 +80,9 @@ export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScre
 >
 
 /** Add tab (create) or stack Edit SKU — same component, different routes. */
-export type AddSkuScreenProps = MainTabScreenProps<"Add"> | NativeStackScreenProps<AppStackParamList, "EditSku">
+export type AddSkuScreenProps =
+  | MainTabScreenProps<"Add">
+  | NativeStackScreenProps<AppStackParamList, "EditSku">
 
 export interface NavigationProps extends Partial<
   ComponentProps<typeof NavigationContainer<AppStackParamList>>

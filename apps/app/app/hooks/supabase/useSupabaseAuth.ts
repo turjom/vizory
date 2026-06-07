@@ -222,17 +222,14 @@ export function useSupabaseAuth(): SupabaseAuthState & SupabaseAuthActions {
           },
         })
         if (!error && signUpData.user) {
-          setUser(signUpData.user)
-          useAuthStore.getState().setUser(signUpData.user)
-          setIsLoading(false)
           await upsertProfileFromRegistration({
             userId: signUpData.user.id,
-            email: signUpData.user.email ?? emailTrimmed,
+            email: emailTrimmed,
             firstName: fn,
             lastName: ln || undefined,
           })
         }
-        return { error: error as Error | null }
+        return { error: error as Error | null, email: emailTrimmed }
       } finally {
         setIsLoading(false)
       }
@@ -305,6 +302,15 @@ export function useSupabaseAuth(): SupabaseAuthState & SupabaseAuthActions {
       if (!error && data?.session) {
         setSession(data.session)
         setUser(data.session.user)
+        const metadata = data.session.user.user_metadata
+        const firstName = typeof metadata?.first_name === "string" ? metadata.first_name : ""
+        const lastName = typeof metadata?.last_name === "string" ? metadata.last_name : undefined
+        await upsertProfileFromRegistration({
+          userId: data.session.user.id,
+          email: data.session.user.email ?? email,
+          firstName,
+          lastName,
+        })
       }
       return { error: error as Error | null }
     } finally {

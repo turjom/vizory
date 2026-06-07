@@ -353,11 +353,11 @@ export function useRealtimeMessages(
 
     tableChannelRef.current = insertChannel
     broadcastChannelRef.current = broadcastChannel
+    const typingTimeouts = typingTimeoutsRef.current
 
     return () => {
-      // Clear typing timeouts - use ref directly to ensure we clear the current timeouts
-      typingTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout))
-      typingTimeoutsRef.current.clear()
+      typingTimeouts.forEach((timeout) => clearTimeout(timeout))
+      typingTimeouts.clear()
 
       // Unsubscribe from all channels
       insertChannel.unsubscribe()

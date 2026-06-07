@@ -154,7 +154,16 @@ export function ToastProvider(props: ToastProviderProps) {
 // =============================================================================
 
 function Toast(props: ToastProps) {
-  const { id, title, description, variant = "default", icon, duration = 4000, action, onDismiss } = props
+  const {
+    id,
+    title,
+    description,
+    variant = "default",
+    icon,
+    duration = 4000,
+    action,
+    onDismiss,
+  } = props
 
   const { theme } = useUnistyles()
   const progress = useSharedValue(1)

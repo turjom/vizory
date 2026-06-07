@@ -1,9 +1,9 @@
 import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Alert, FlatList, Platform, Pressable, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { differenceInCalendarDays, format, parseISO } from "date-fns"
 import { Controller, useFieldArray, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -253,11 +253,12 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     [t],
   )
 
-  const { control, handleSubmit, reset, formState, trigger, getValues } = useForm<StockTakeFormValues>({
-    resolver: zodResolver(formSchema),
-    mode: "onChange",
-    defaultValues: { items: [] },
-  })
+  const { control, handleSubmit, reset, formState, trigger, getValues } =
+    useForm<StockTakeFormValues>({
+      resolver: zodResolver(formSchema),
+      mode: "onChange",
+      defaultValues: { items: [] },
+    })
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" })
 
@@ -511,7 +512,9 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
             counted: changed[0].counted,
           })
         : t("stockTakeScreen:acceptCountConfirmMulti", {
-            details: changed.map((r) => `• ${r.skuName}: ${r.systemQuantity} → ${r.counted}`).join("\n"),
+            details: changed
+              .map((r) => `• ${r.skuName}: ${r.systemQuantity} → ${r.counted}`)
+              .join("\n"),
           })
     Alert.alert(t("stockTakeScreen:acceptCountConfirmTitle"), body, [
       { text: t("stockTakeScreen:acceptCountNo"), style: "cancel" },
@@ -547,10 +550,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (isLoading) {
     return (
-      <Container
-        safeAreaEdges={["bottom"]}
-      >
-        <View style={{ flexShrink: 0 }}>
+      <Container safeAreaEdges={["bottom"]}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="stockTakeScreen:title"
@@ -568,10 +569,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (error) {
     return (
-      <Container
-        safeAreaEdges={["bottom"]}
-      >
-        <View style={{ flexShrink: 0 }}>
+      <Container safeAreaEdges={["bottom"]}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="stockTakeScreen:title"
@@ -582,7 +581,11 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
         </View>
         <View style={styles.centered}>
           <Text color="error">{error.message}</Text>
-          <Button tx="stockTakeScreen:retry" onPress={() => void refetch()} style={styles.retryButton} />
+          <Button
+            tx="stockTakeScreen:retry"
+            onPress={() => void refetch()}
+            style={styles.retryButton}
+          />
         </View>
       </Container>
     )
@@ -590,10 +593,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
 
   if (skus.length === 0) {
     return (
-      <Container
-        safeAreaEdges={["bottom"]}
-      >
-        <View style={{ flexShrink: 0 }}>
+      <Container safeAreaEdges={["bottom"]}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="stockTakeScreen:title"
@@ -616,10 +617,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
     const showAcceptCancel = !allZero && pendingReview.isPostRecount
 
     return (
-      <Container
-        safeAreaEdges={["bottom"]}
-      >
-        <View style={{ flexShrink: 0 }}>
+      <Container safeAreaEdges={["bottom"]}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="stockTakeScreen:title"
@@ -742,10 +741,8 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
   }
 
   return (
-    <Container
-      safeAreaEdges={["bottom"]}
-    >
-      <View style={{ flexShrink: 0 }}>
+    <Container safeAreaEdges={["bottom"]}>
+      <View style={styles.headerWrap}>
         <Header
           titleTypography="stack"
           titleTx="stockTakeScreen:title"
@@ -786,7 +783,9 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
                   tx={tab.tx}
                   weight={isActive ? "semiBold" : "medium"}
                   style={
-                    isActive ? styles.stockTakeSegmentTextActive : styles.stockTakeSegmentTextInactive
+                    isActive
+                      ? styles.stockTakeSegmentTextActive
+                      : styles.stockTakeSegmentTextInactive
                   }
                 />
               </Pressable>
@@ -845,7 +844,12 @@ export const StockTakeScreen: FC<StockTakeScreenProps> = function StockTakeScree
           scrollEnabled={false}
           ListEmptyComponent={
             listScope === "select" ? (
-              <Text tx="stockTakeScreen:selectModeEmpty" size="sm" color="secondary" style={styles.selectEmpty} />
+              <Text
+                tx="stockTakeScreen:selectModeEmpty"
+                size="sm"
+                color="secondary"
+                style={styles.selectEmpty}
+              />
             ) : null
           }
           renderItem={({ item, index }) => (
@@ -900,6 +904,9 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     justifyContent: "center",
     padding: theme.spacing.lg,
+  },
+  headerWrap: {
+    flexShrink: 0,
   },
   scrollContent: {
     flexGrow: 1,

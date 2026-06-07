@@ -360,12 +360,14 @@ export const PaywallScreen = () => {
 
           {/* Features list */}
           <View style={styles.featuresContainer}>
-            {([
-              "paywallScreen:featureTrackUnlimitedSkus",
-              "paywallScreen:featureLowStockAlerts",
-              "paywallScreen:featureBarcodeScanning",
-              "paywallScreen:featureFullTransactionHistory",
-            ] as const).map((feature, idx) => (
+            {(
+              [
+                "paywallScreen:featureTrackUnlimitedSkus",
+                "paywallScreen:featureLowStockAlerts",
+                "paywallScreen:featureBarcodeScanning",
+                "paywallScreen:featureFullTransactionHistory",
+              ] as const
+            ).map((feature, idx) => (
               <View key={idx} style={styles.featureRow}>
                 <View style={styles.featureCheck}>
                   <Text style={styles.featureCheckText}>✓</Text>

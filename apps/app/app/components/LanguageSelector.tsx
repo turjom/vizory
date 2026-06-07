@@ -75,12 +75,7 @@ export const LanguageSelector: FC<LanguageSelectorProps> = ({ visible, onClose }
   const languages = Object.entries(SUPPORTED_LANGUAGES) as [SupportedLanguage, string][]
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
           <View style={styles.modal}>

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react"
 import { Platform, View, TouchableOpacity } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
+import * as LocalAuthentication from "expo-local-authentication"
 import { SymbolView, type SFSymbol } from "expo-symbols"
+import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useFocusEffect, useNavigation } from "@react-navigation/native"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Controller, useForm } from "react-hook-form"
-import * as LocalAuthentication from "expo-local-authentication"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
@@ -112,7 +112,9 @@ export const LoginScreen = () => {
   const [error, setError] = useState("")
   const [showBiometricOption, setShowBiometricOption] = useState(false)
   const [biometricLabelTx, setBiometricLabelTx] = useState<TxKeyPath>("loginScreen:biometricSignIn")
-  const [biometricAuthTypes, setBiometricAuthTypes] = useState<LocalAuthentication.AuthenticationType[]>([])
+  const [biometricAuthTypes, setBiometricAuthTypes] = useState<
+    LocalAuthentication.AuthenticationType[]
+  >([])
   const oauthLoading = authLoading
 
   useEffect(() => {
@@ -223,10 +225,13 @@ export const LoginScreen = () => {
       if (enabled !== false) {
         if (__DEV__) {
           // eslint-disable-next-line no-console
-          console.log("[BiometricFlow] onSubmit: saving biometric login credentials to SecureStore", {
-            hasSession: !!signInSession,
-            emailLen: data.email.trim().length,
-          })
+          console.log(
+            "[BiometricFlow] onSubmit: saving biometric login credentials to SecureStore",
+            {
+              hasSession: !!signInSession,
+              emailLen: data.email.trim().length,
+            },
+          )
         }
         await saveBiometricLoginCredentials(data.email, data.password)
       }
@@ -258,7 +263,9 @@ export const LoginScreen = () => {
         // eslint-disable-next-line no-console
         console.log(
           "[BiometricFlow] handleBiometricLogin: LA result",
-          result.success ? { success: true as const } : { success: false as const, error: result.error },
+          result.success
+            ? { success: true as const }
+            : { success: false as const, error: result.error },
         )
       }
       if (!result.success) return
@@ -267,7 +274,9 @@ export const LoginScreen = () => {
       if (!creds) {
         if (__DEV__) {
           // eslint-disable-next-line no-console
-          console.warn("[BiometricFlow] handleBiometricLogin: no stored credentials after successful LA")
+          console.warn(
+            "[BiometricFlow] handleBiometricLogin: no stored credentials after successful LA",
+          )
         }
         return
       }

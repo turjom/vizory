@@ -74,7 +74,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
   if (isLoading) {
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <View style={{ flexShrink: 0 }}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="skuDetailScreen:title"
@@ -93,7 +93,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
   if (error || !data) {
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <View style={{ flexShrink: 0 }}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="skuDetailScreen:title"
@@ -117,7 +117,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
 
   return (
     <Container safeAreaEdges={["bottom"]}>
-      <View style={{ flexShrink: 0 }}>
+      <View style={styles.headerWrap}>
         <Header
           titleTypography="stack"
           titleTx="skuDetailScreen:title"
@@ -140,12 +140,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
                   },
                 })
               }
-              style={{
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 44,
-                paddingHorizontal: theme.spacing.md,
-              }}
+              style={styles.editButton}
               activeOpacity={0.8}
               accessibilityRole="button"
             >
@@ -153,7 +148,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
                 weight="medium"
                 size="md"
                 tx="skuDetailScreen:editButton"
-                style={{ color: theme.colors.tint }}
+                style={styles.editButtonText}
               />
             </TouchableOpacity>
           }
@@ -161,7 +156,7 @@ export const SkuDetailScreen: FC<SkuDetailScreenProps> = function SkuDetailScree
       </View>
 
       <ScrollView
-        style={{ flex: 1 }}
+        style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -320,6 +315,21 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     justifyContent: "center",
     padding: theme.spacing.lg,
+  },
+  editButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: theme.spacing.md,
+  },
+  editButtonText: {
+    color: theme.colors.tint,
+  },
+  headerWrap: {
+    flexShrink: 0,
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     paddingHorizontal: theme.spacing.md,

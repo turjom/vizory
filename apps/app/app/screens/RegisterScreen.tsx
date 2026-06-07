@@ -3,6 +3,7 @@ import { View, TouchableOpacity, DimensionValue } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useNavigation } from "@react-navigation/native"
+import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -15,6 +16,7 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { features } from "@/config/features"
 import { useAuth } from "@/hooks"
+import { AppStackParamList } from "@/navigators/navigationTypes"
 import { registerSchema } from "@/schemas/authSchemas"
 import { formatAuthError } from "@/utils/formatAuthError"
 import { analyzePasswordStrength } from "@/utils/validation"
@@ -28,7 +30,7 @@ type RegisterFormData = z.infer<typeof registerSchema>
 export const RegisterScreen = () => {
   const { t } = useTranslation()
   const { theme } = useUnistyles()
-  const navigation = useNavigation()
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
   const { signUp, signInWithGoogle, signInWithApple, isLoading: authLoading } = useAuth()
 
   const [loading, setLoading] = useState(false)
@@ -70,7 +72,9 @@ export const RegisterScreen = () => {
     if (signUpError) {
       const formattedError = formatAuthError(signUpError)
       setError(formattedError)
+      return
     }
+    navigation.navigate("OTPVerification", { email: data.email, isConvex: false })
   }
 
   const handleRegister = handleSubmit(onSubmit)
@@ -138,7 +142,7 @@ export const RegisterScreen = () => {
       return
     }
 
-    navigation.navigate("Login" as never)
+    navigation.navigate("Login")
   }
 
   return (
@@ -349,7 +353,7 @@ export const RegisterScreen = () => {
 
       {/* Login Link */}
       <TouchableOpacity
-        onPress={() => navigation.navigate("Login" as never)}
+        onPress={() => navigation.navigate("Login")}
         style={styles.linkButton}
         activeOpacity={0.6}
       >

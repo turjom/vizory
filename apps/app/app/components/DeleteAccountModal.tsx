@@ -14,63 +14,15 @@ import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import { deleteAccount as deleteSupabaseAccount } from "@/services/accountDeletion"
-import { useAuthStore, useSubscriptionStore } from "@/stores"
-import { GUEST_USER_KEY } from "@/stores/auth"
-import type { AuthState } from "@/stores/auth/authTypes"
+import { useAuthStore } from "@/stores"
 import { haptics } from "@/utils/haptics"
-import { logger } from "@/utils/Logger"
 
 import { Button } from "./Button"
 import { Text } from "./Text"
 
-// Convex removed - using Supabase only
-const useMutation = null
-const api = null
-
 export interface DeleteAccountModalProps {
   visible: boolean
   onClose: () => void
-}
-
-/**
- * Helper to clear subscription state during account deletion
- */
-async function clearSubscriptionState() {
-  const subscriptionState = useSubscriptionStore.getState()
-  try {
-    const service = subscriptionState.getActiveService()
-    await service.logOut()
-  } catch (error) {
-    logger.warn("Failed to log out of subscription service", { error })
-  }
-  subscriptionState.setCustomerInfo(null)
-  subscriptionState.setWebSubscriptionInfo(null)
-  subscriptionState.setPackages([])
-  subscriptionState.checkProStatus()
-}
-
-/**
- * Helper to reset auth state after account deletion
- */
-function resetAuthState(userId: string) {
-  useAuthStore.setState((state: AuthState) => {
-    // Remove onboarding entry for the deleted user while preserving guest state
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { [userId]: _removed, ...onboardingStatusByUserId } = state.onboardingStatusByUserId
-    const guestOnboarding =
-      onboardingStatusByUserId[GUEST_USER_KEY] ?? state.onboardingStatusByUserId[GUEST_USER_KEY]
-    return {
-      session: null,
-      user: null,
-      isAuthenticated: false,
-      hasCompletedOnboarding: guestOnboarding ?? true,
-      onboardingStatusByUserId: {
-        ...onboardingStatusByUserId,
-        [GUEST_USER_KEY]: guestOnboarding ?? true,
-      },
-      loading: false,
-    }
-  })
 }
 
 export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClose }) => {
@@ -80,10 +32,6 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
   const [confirmChecked, setConfirmChecked] = useState(false)
   const [error, setError] = useState("")
   const isMountedRef = useRef(true)
-
-  // Convex mutation - only defined when using Convex backend
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const convexDeleteAccount = null // Convex removed
 
   // Track mount state to prevent state updates after unmount
   useEffect(() => {
@@ -151,15 +99,10 @@ export const DeleteAccountModal: FC<DeleteAccountModalProps> = ({ visible, onClo
       haptics.error()
       setLoading(false)
     }
-  }, [onClose, t, convexDeleteAccount])
+  }, [onClose, t])
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.overlay}

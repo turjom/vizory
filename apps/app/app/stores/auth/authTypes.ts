@@ -23,10 +23,7 @@ export interface AuthState {
   setUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
   setHasCompletedOnboarding: (completed: boolean) => Promise<void>
-  signIn: (
-    email: string,
-    password: string,
-  ) => Promise<{ error?: Error; session?: Session | null }>
+  signIn: (email: string, password: string) => Promise<{ error?: Error; session?: Session | null }>
   signUp: (
     email: string,
     password: string,

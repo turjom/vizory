@@ -51,6 +51,8 @@ function getQueryParams(): {
   state?: string
   error?: string
   error_description?: string
+  token_hash?: string
+  type?: string
 } {
   if (Platform.OS !== "web" || typeof window === "undefined") {
     return {}
@@ -65,6 +67,8 @@ function getQueryParams(): {
     state: params.get("state") ?? undefined,
     error: params.get("error") ?? undefined,
     error_description: params.get("error_description") ?? undefined,
+    token_hash: params.get("token_hash") ?? undefined,
+    type: params.get("type") ?? undefined,
   }
 }
 
@@ -83,6 +87,8 @@ export const AuthCallbackScreen = () => {
   const oauthState = route.params?.state ?? hashParams.state ?? queryParams.state
   const oauthError = queryParams.error
   const oauthErrorDescription = queryParams.error_description
+  const tokenHash = route.params?.token_hash ?? queryParams.token_hash
+  const callbackType = route.params?.type ?? queryParams.type
 
   useEffect(() => {
     let isMounted = true
@@ -140,6 +146,19 @@ export const AuthCallbackScreen = () => {
         // Supabase OAuth Callback Handling
         // ================================================================
         if (isSupabase) {
+          if (tokenHash && callbackType === "email") {
+            const { supabase } = await import("@/services/supabase")
+            const { data, error } = await supabase.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: "email",
+            })
+            if (error) throw error
+            if (data.session) {
+              useAuthStore.getState().setSession(data.session)
+            }
+            return
+          }
+
           // consumeOAuthState atomically reads and clears the stored state.
           // If no state was pending, it returns false only when receivedState is also absent.
           if (!oauthState || !consumeOAuthState(oauthState)) {
@@ -221,7 +240,17 @@ export const AuthCallbackScreen = () => {
     return () => {
       isMounted = false
     }
-  }, [code, accessToken, refreshToken, oauthError, oauthErrorDescription, oauthState, t])
+  }, [
+    code,
+    accessToken,
+    refreshToken,
+    oauthError,
+    oauthErrorDescription,
+    oauthState,
+    tokenHash,
+    callbackType,
+    t,
+  ])
 
   if (!errorMessage) {
     return (

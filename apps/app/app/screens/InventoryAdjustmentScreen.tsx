@@ -1,8 +1,8 @@
 import { FC, useEffect, useMemo, useState } from "react"
 import { Pressable, View } from "react-native"
-import { format, parseISO } from "date-fns"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { format, parseISO } from "date-fns"
 import { Controller, useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
@@ -13,9 +13,9 @@ import { useAuth, useSkuDetailQuery, useTrialStatus } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
 import { SkuListItem } from "@/hooks/queries/useSkusQuery"
 import type { TxKeyPath } from "@/i18n"
-import { haptics } from "@/utils/haptics"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { supabase } from "@/services/supabase"
+import { haptics } from "@/utils/haptics"
 
 type AdjustmentTab = "PURCHASE" | "SALE" | "SCRAP"
 
@@ -36,9 +36,7 @@ function formatRecentDate(iso: string | null, emptyLabel: string): string {
   }
 }
 
-function pillStyleKeyForType(
-  adjustmentType: string,
-): "purchase" | "sale" | "neutral" {
+function pillStyleKeyForType(adjustmentType: string): "purchase" | "sale" | "neutral" {
   if (adjustmentType === "PURCHASE") return "purchase"
   if (adjustmentType === "SALE") return "sale"
   return "neutral"
@@ -156,13 +154,15 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
           )
         }
 
-        const { error: insertAdjustmentError } = await supabase.from("inventory_adjustments").insert({
-          user_id: userId,
-          sku_id: skuId,
-          adjustment_type: activeTab,
-          quantity,
-          reference_note: values.reference_note?.trim() ? values.reference_note.trim() : null,
-        })
+        const { error: insertAdjustmentError } = await supabase
+          .from("inventory_adjustments")
+          .insert({
+            user_id: userId,
+            sku_id: skuId,
+            adjustment_type: activeTab,
+            quantity,
+            reference_note: values.reference_note?.trim() ? values.reference_note.trim() : null,
+          })
 
         if (insertAdjustmentError) throw insertAdjustmentError
 
@@ -184,7 +184,8 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
         }
       },
       onMutate: async (values) => {
-        if (!userId) return { previousSkuLists: [] as [readonly unknown[], SkuListItem[] | undefined][] }
+        if (!userId)
+          return { previousSkuLists: [] as [readonly unknown[], SkuListItem[] | undefined][] }
 
         const quantity = Number(values.quantity)
         const signedDelta = activeTab === "PURCHASE" ? quantity : -quantity
@@ -247,7 +248,7 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
 
     return (
       <Container safeAreaEdges={["bottom"]}>
-        <View style={{ flexShrink: 0 }}>
+        <View style={styles.headerWrap}>
           <Header
             titleTypography="stack"
             titleTx="inventoryAdjustmentScreen:title"
@@ -297,12 +298,19 @@ export const InventoryAdjustmentScreen: FC<InventoryAdjustmentScreenProps> =
                     haptics.selection()
                     setActiveTab(tab.key)
                   }}
-                  style={[styles.adjustmentSegmentCell, isActive && styles.adjustmentSegmentCellActive]}
+                  style={[
+                    styles.adjustmentSegmentCell,
+                    isActive && styles.adjustmentSegmentCellActive,
+                  ]}
                 >
                   <Text
                     tx={tab.tx}
                     weight={isActive ? "semiBold" : "medium"}
-                    style={isActive ? styles.adjustmentSegmentTextActive : styles.adjustmentSegmentTextInactive}
+                    style={
+                      isActive
+                        ? styles.adjustmentSegmentTextActive
+                        : styles.adjustmentSegmentTextInactive
+                    }
                   />
                 </Pressable>
               )
@@ -407,6 +415,9 @@ const styles = StyleSheet.create((theme) => ({
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing["2xl"],
     gap: theme.spacing.md,
+  },
+  headerWrap: {
+    flexShrink: 0,
   },
   summaryCard: {
     backgroundColor: theme.colors.card,

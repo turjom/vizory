@@ -1,12 +1,14 @@
-import * as Localization from "expo-localization"
 import { Platform } from "react-native"
+import * as Localization from "expo-localization"
 
 /** Currency codes persisted on `profiles.preferred_currency_code`. */
 export type PreferredCurrencyCode = "USD" | "GBP" | "EUR" | "SGD" | "JPY" | "INR"
 
 const PREFERRED_CODES: readonly PreferredCurrencyCode[] = ["USD", "GBP", "EUR", "SGD", "JPY", "INR"]
 
-export function isPreferredCurrencyCode(value: string | null | undefined): value is PreferredCurrencyCode {
+export function isPreferredCurrencyCode(
+  value: string | null | undefined,
+): value is PreferredCurrencyCode {
   return value != null && (PREFERRED_CODES as readonly string[]).includes(value)
 }
 

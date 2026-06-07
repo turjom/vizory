@@ -1,16 +1,15 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
 import * as ImageManipulator from "expo-image-manipulator"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 import type { SupabaseDatabase } from "@/types/supabase"
 
 export const SKU_PHOTOS_BUCKET = "sku-photos"
 
 async function compressSkuPhoto(localUri: string): Promise<string> {
-  const result = await ImageManipulator.manipulateAsync(
-    localUri,
-    [{ resize: { width: 1600 } }],
-    { compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
-  )
+  const result = await ImageManipulator.manipulateAsync(localUri, [{ resize: { width: 1600 } }], {
+    compress: 0.78,
+    format: ImageManipulator.SaveFormat.JPEG,
+  })
   return result.uri
 }
 

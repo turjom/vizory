@@ -1,6 +1,6 @@
 import { FC, useCallback, useEffect, useState } from "react"
+import { Platform, View } from "react-native"
 import * as LocalAuthentication from "expo-local-authentication"
-import { Platform, Pressable, View } from "react-native"
 import { StyleSheet } from "react-native-unistyles"
 
 import { BiometricEnrollmentModal, EmptyState, Header, Screen, Spinner, Text } from "@/components"
@@ -24,11 +24,9 @@ function getGreetingPeriod(): GreetingPeriod {
   return "Evening"
 }
 
-export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen({ navigation }) {
+export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen() {
   const { user } = useAuth()
-  const { data, isLoading, error, refetch, isRefetching } = useDashboardInventoryQuery(
-    user?.firstName ?? null,
-  )
+  const { data, isLoading, error, refetch } = useDashboardInventoryQuery(user?.firstName ?? null)
   const [enrollmentModalVisible, setEnrollmentModalVisible] = useState(false)
 
   const handleRefresh = useCallback(() => {
@@ -136,14 +134,19 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     )
   }
 
-  const { greetingFirstName, lowStockSkus, topSkusByQuantity, weeklyMovement, totalInventoryValue } =
-    data ?? {
-      greetingFirstName: null,
-      lowStockSkus: [],
-      topSkusByQuantity: [],
-      weeklyMovement: { received: 0, sold: 0 },
-      totalInventoryValue: null,
-    }
+  const {
+    greetingFirstName,
+    lowStockSkus,
+    topSkusByQuantity,
+    weeklyMovement,
+    totalInventoryValue,
+  } = data ?? {
+    greetingFirstName: null,
+    lowStockSkus: [],
+    topSkusByQuantity: [],
+    weeklyMovement: { received: 0, sold: 0 },
+    totalInventoryValue: null,
+  }
 
   const period = getGreetingPeriod()
   const trimmedFirstName = greetingFirstName ?? ""
@@ -175,71 +178,71 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
           safeAreaEdges={[]}
         />
         <View style={styles.content}>
-        {/* Hero Card */}
-        <View style={styles.heroCard}>
-          <Text style={styles.heroLabel}>TOTAL INVENTORY VALUE</Text>
-          <Text style={styles.heroValue}>
-            {totalInventoryValue != null ? `$${totalInventoryValue.toFixed(2)}` : "N/A"}
-          </Text>
-          <Text style={styles.heroSub}>
-            {totalInventoryValue != null
-              ? "Total value of current stock"
-              : "Add prices to SKUs to calculate"}
-          </Text>
-        </View>
-        <View style={{ height: 1, backgroundColor: "#F3F4F6", marginVertical: 4 }} />
-        {/* Low Stock Alerts */}
-        <Text style={styles.sectionHeader}>Low Stock Alerts</Text>
-        {lowStockSkus.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>All items are well stocked</Text>
+          {/* Hero Card */}
+          <View style={styles.heroCard}>
+            <Text style={styles.heroLabel}>TOTAL INVENTORY VALUE</Text>
+            <Text style={styles.heroValue}>
+              {totalInventoryValue != null ? `$${totalInventoryValue.toFixed(2)}` : "N/A"}
+            </Text>
+            <Text style={styles.heroSub}>
+              {totalInventoryValue != null
+                ? "Total value of current stock"
+                : "Add prices to SKUs to calculate"}
+            </Text>
           </View>
-        ) : (
-          lowStockSkus.map((sku) => (
-            <View key={sku.id} style={styles.alertCard}>
-              <View style={styles.alertLeft}>
+          <View style={styles.divider} />
+          {/* Low Stock Alerts */}
+          <Text style={styles.sectionHeader}>Low Stock Alerts</Text>
+          {lowStockSkus.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>All items are well stocked</Text>
+            </View>
+          ) : (
+            lowStockSkus.map((sku) => (
+              <View key={sku.id} style={styles.alertCard}>
+                <View style={styles.alertLeft}>
+                  <Text style={styles.itemName} numberOfLines={1}>
+                    {sku.name}
+                  </Text>
+                  <Text style={styles.itemMeta}>Min: {sku.safetyStockThreshold}</Text>
+                </View>
+                <Text style={styles.alertQty}>{sku.totalQuantity}</Text>
+              </View>
+            ))
+          )}
+          <View style={styles.divider} />
+
+          {/* Top SKUs */}
+          <Text style={styles.sectionHeader}>Top SKUs by Stock</Text>
+          <View style={styles.flatCard}>
+            {topSkusByQuantity.map((sku, index) => (
+              <View key={sku.id} style={[styles.skuRow, index > 0 && styles.skuRowBorder]}>
+                <Text style={styles.rankText}>#{index + 1}</Text>
                 <Text style={styles.itemName} numberOfLines={1}>
                   {sku.name}
                 </Text>
-                <Text style={styles.itemMeta}>Min: {sku.safetyStockThreshold}</Text>
+                <Text style={styles.skuQty}>{sku.totalQuantity}</Text>
               </View>
-              <Text style={styles.alertQty}>{sku.totalQuantity}</Text>
-            </View>
-          ))
-        )}
-        <View style={{ height: 1, backgroundColor: "#F3F4F6", marginVertical: 4 }} />
+            ))}
+          </View>
+          <View style={styles.divider} />
 
-        {/* Top SKUs */}
-        <Text style={styles.sectionHeader}>Top SKUs by Stock</Text>
-        <View style={styles.flatCard}>
-          {topSkusByQuantity.map((sku, index) => (
-            <View key={sku.id} style={[styles.skuRow, index > 0 && styles.skuRowBorder]}>
-              <Text style={styles.rankText}>#{index + 1}</Text>
-              <Text style={styles.itemName} numberOfLines={1}>
-                {sku.name}
-              </Text>
-              <Text style={styles.skuQty}>{sku.totalQuantity}</Text>
-            </View>
-          ))}
-        </View>
-        <View style={{ height: 1, backgroundColor: "#F3F4F6", marginVertical: 4 }} />
-
-        {/* Weekly Movement */}
-        <Text style={styles.sectionHeader}>Weekly Movement</Text>
-        <View style={styles.flatCard}>
-          <View style={styles.weeklyRow}>
-            <View style={styles.weeklyCell}>
-              <Text style={styles.weeklyLabel}>RECEIVED</Text>
-              <Text style={styles.weeklyValue}>{weeklyMovement.received}</Text>
-            </View>
-            <View style={styles.weeklySeparator} />
-            <View style={styles.weeklyCell}>
-              <Text style={styles.weeklyLabel}>SOLD</Text>
-              <Text style={styles.weeklyValue}>{weeklyMovement.sold}</Text>
+          {/* Weekly Movement */}
+          <Text style={styles.sectionHeader}>Weekly Movement</Text>
+          <View style={styles.flatCard}>
+            <View style={styles.weeklyRow}>
+              <View style={styles.weeklyCell}>
+                <Text style={styles.weeklyLabel}>RECEIVED</Text>
+                <Text style={styles.weeklyValue}>{weeklyMovement.received}</Text>
+              </View>
+              <View style={styles.weeklySeparator} />
+              <View style={styles.weeklyCell}>
+                <Text style={styles.weeklyLabel}>SOLD</Text>
+                <Text style={styles.weeklyValue}>{weeklyMovement.sold}</Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
       </Screen>
       <BiometricEnrollmentModal
         visible={enrollmentModalVisible}
@@ -258,7 +261,7 @@ const styles = StyleSheet.create((theme) => ({
     gap: 8,
   },
   heroCard: {
-    backgroundColor: "#F97316",
+    backgroundColor: theme.colors.accent,
     borderRadius: 16,
     padding: 20,
     marginBottom: 8,
@@ -266,46 +269,46 @@ const styles = StyleSheet.create((theme) => ({
   heroLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: "rgba(255,255,255,0.8)",
+    color: theme.colors.accentForeground,
     letterSpacing: 0.8,
   },
   heroValue: {
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 36,
-    color: "#FFFFFF",
+    color: theme.colors.accentForeground,
     marginTop: 4,
   },
   heroSub: {
     fontSize: 12,
-    color: "rgba(255,255,255,0.7)",
+    color: theme.colors.accentForeground,
     marginTop: 4,
   },
   sectionHeader: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111827",
+    color: theme.colors.foreground,
     marginTop: 12,
     marginBottom: 4,
   },
   emptyCard: {
-    backgroundColor: "#F9FAFB",
+    backgroundColor: theme.colors.backgroundSecondary,
     borderRadius: 12,
     padding: 16,
     alignItems: "center",
   },
   emptyText: {
     fontSize: 12,
-    color: "#6B7280",
+    color: theme.colors.foregroundSecondary,
   },
   alertCard: {
-    backgroundColor: "#FEF2F2",
+    backgroundColor: theme.colors.errorBackground,
     borderRadius: 12,
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
     borderLeftWidth: 4,
-    borderLeftColor: "#EF4444",
+    borderLeftColor: theme.colors.error,
     marginBottom: 6,
   },
   alertLeft: {
@@ -316,14 +319,14 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 36,
-    color: "#EF4444",
+    color: theme.colors.error,
     flexShrink: 0,
   },
   flatCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: theme.colors.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#F3F4F6",
+    borderColor: theme.colors.border,
   },
   skuRow: {
     flexDirection: "row",
@@ -335,11 +338,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   skuRowBorder: {
     borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
+    borderTopColor: theme.colors.border,
   },
   rankText: {
     fontSize: 14,
-    color: "#6B7280",
+    color: theme.colors.foregroundSecondary,
     fontWeight: "600",
     width: 24,
     flexShrink: 0,
@@ -347,19 +350,19 @@ const styles = StyleSheet.create((theme) => ({
   itemName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111827",
+    color: theme.colors.foreground,
     flex: 1,
   },
   itemMeta: {
     fontSize: 12,
-    color: "#6B7280",
+    color: theme.colors.foregroundSecondary,
     marginTop: 2,
   },
   skuQty: {
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 36,
-    color: "#111827",
+    color: theme.colors.foreground,
     flexShrink: 0,
   },
   weeklyRow: {
@@ -375,13 +378,13 @@ const styles = StyleSheet.create((theme) => ({
   },
   weeklySeparator: {
     width: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: theme.colors.border,
     marginVertical: 4,
   },
   weeklyLabel: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#6B7280",
+    color: theme.colors.foregroundSecondary,
     letterSpacing: 0.5,
     marginBottom: 4,
   },
@@ -389,12 +392,17 @@ const styles = StyleSheet.create((theme) => ({
     fontSize: 28,
     fontWeight: "700",
     lineHeight: 36,
-    color: "#111827",
+    color: theme.colors.foreground,
   },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
+  },
+  divider: {
+    backgroundColor: theme.colors.border,
+    height: 1,
+    marginVertical: 4,
   },
 }))

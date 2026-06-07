@@ -1,5 +1,5 @@
-import type * as Notifications from "expo-notifications"
 import { Linking, Platform } from "react-native"
+import type * as Notifications from "expo-notifications"
 import { create } from "zustand"
 import { persist, createJSONStorage } from "zustand/middleware"
 

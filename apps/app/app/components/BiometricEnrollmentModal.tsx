@@ -134,9 +134,12 @@ export const BiometricEnrollmentModal: FC<BiometricEnrollmentModalProps> = ({
       >
         <View style={[styles.sheet, { backgroundColor: theme.colors.card }]}>
           <View style={styles.iconWrap}>
-            <Ionicons name="finger-print-outline" size={48} color="#F97316" />
+            <Ionicons name="finger-print-outline" size={48} color={theme.colors.accent} />
           </View>
-          <Text style={[styles.title, { color: theme.colors.foreground }]} tx="biometricEnrollment:title" />
+          <Text
+            style={[styles.title, { color: theme.colors.foreground }]}
+            tx="biometricEnrollment:title"
+          />
           <Text
             style={[styles.subtitle, { color: theme.colors.foregroundSecondary }]}
             tx="biometricEnrollment:subtitle"
@@ -164,14 +167,17 @@ export const BiometricEnrollmentModal: FC<BiometricEnrollmentModalProps> = ({
             disabled={busy}
           >
             {busy ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={theme.colors.accentForeground} />
             ) : (
               <Text style={styles.enableButtonText} tx="biometricEnrollment:enable" />
             )}
           </Pressable>
 
           <Pressable style={styles.skipPressable} onPress={() => void handleSkip()} disabled={busy}>
-            <Text style={[styles.skipText, { color: theme.colors.foregroundTertiary }]} tx="biometricEnrollment:skip" />
+            <Text
+              style={[styles.skipText, { color: theme.colors.foregroundTertiary }]}
+              tx="biometricEnrollment:skip"
+            />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -179,68 +185,65 @@ export const BiometricEnrollmentModal: FC<BiometricEnrollmentModalProps> = ({
   )
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create((theme) => ({
   backdrop: {
+    backgroundColor: theme.colors.overlay,
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.45)",
     paddingHorizontal: 24,
   },
-  backdropPressable: {
-    ...StyleSheet.absoluteFillObject,
+  buttonDisabled: {
+    opacity: 0.7,
   },
-  sheet: {
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-    alignSelf: "center",
-  },
-  iconWrap: {
+  enableButton: {
     alignItems: "center",
-    marginBottom: 16,
+    backgroundColor: theme.colors.accent,
+    borderRadius: 12,
+    marginTop: 8,
+    paddingVertical: 14,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  passwordField: {
-    marginBottom: 8,
+  enableButtonText: {
+    color: theme.colors.accentForeground,
+    fontSize: 16,
+    fontWeight: "600",
   },
   error: {
     fontSize: 13,
     marginBottom: 8,
     textAlign: "center",
   },
-  enableButton: {
-    backgroundColor: "#F97316",
-    borderRadius: 12,
-    paddingVertical: 14,
+  iconWrap: {
     alignItems: "center",
-    marginTop: 8,
+    marginBottom: 16,
   },
-  enableButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
+  passwordField: {
+    marginBottom: 8,
   },
-  buttonDisabled: {
-    opacity: 0.7,
+  sheet: {
+    alignSelf: "center",
+    borderRadius: 16,
+    maxWidth: 400,
+    padding: 24,
+    width: "100%",
   },
   skipPressable: {
-    paddingVertical: 14,
     alignItems: "center",
+    paddingVertical: 14,
   },
   skipText: {
     fontSize: 16,
     fontWeight: "500",
   },
-})
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+}))

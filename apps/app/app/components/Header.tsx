@@ -198,8 +198,7 @@ export function Header(props: HeaderProps) {
   }, [titleTypography, $titleStyleOverride])
 
   const mergedTitleContainerStyle = useMemo((): StyleProp<ViewStyle> => {
-    const preset: ViewStyle =
-      titleTypography === "tab" ? { alignItems: "flex-start" as const } : {}
+    const preset: ViewStyle = titleTypography === "tab" ? { alignItems: "flex-start" as const } : {}
     return [
       styles.titleWrapperPointerEvents,
       resolvedTitleMode === "center" && styles.titleWrapperCenter,
@@ -210,7 +209,9 @@ export function Header(props: HeaderProps) {
   }, [titleTypography, resolvedTitleMode, $titleContainerStyleOverride])
 
   return (
-    <View style={[styles.container, $containerInsets, { backgroundColor }, $containerStyleOverride]}>
+    <View
+      style={[styles.container, $containerInsets, { backgroundColor }, $containerStyleOverride]}
+    >
       <View
         style={[
           styles.row,

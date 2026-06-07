@@ -1,7 +1,7 @@
 import { FC, lazy, Suspense, useCallback, useMemo, useState } from "react"
 import { FlatList, Platform, Pressable, View } from "react-native"
-import { useFocusEffect } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 
 import {
@@ -29,7 +29,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
   const toast = useToast()
   const { userId, isLoading: authLoading } = useAuth()
   const { data, isLoading: skusLoading, isError, error, refetch } = useSkusQuery()
-  const skus = data ?? []
+  const skus = useMemo(() => data ?? [], [data])
   const awaitingFirstSkuData = Boolean(userId) && data === undefined && skusLoading && !isError
   const [searchQuery, setSearchQuery] = useState("")
   const [skuScannerVisible, setSkuScannerVisible] = useState(false)
@@ -98,8 +98,7 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
     const q = searchQuery.trim().toLowerCase()
     if (!q) return skus
     return skus.filter(
-      (sku) =>
-        sku.name.toLowerCase().includes(q) || sku.skuCode.toLowerCase().includes(q),
+      (sku) => sku.name.toLowerCase().includes(q) || sku.skuCode.toLowerCase().includes(q),
     )
   }, [skus, searchQuery])
 
@@ -150,9 +149,16 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
           <Pressable
             accessibilityRole="button"
             onPress={() => navigation.navigate("StockTake")}
-            style={({ pressed }) => [styles.stockTakeButton, pressed && styles.stockTakeButtonPressed]}
+            style={({ pressed }) => [
+              styles.stockTakeButton,
+              pressed && styles.stockTakeButtonPressed,
+            ]}
           >
-            <Text weight="semiBold" tx="skuListScreen:stockTakeButton" style={styles.stockTakeButtonText} />
+            <Text
+              weight="semiBold"
+              tx="skuListScreen:stockTakeButton"
+              style={styles.stockTakeButtonText}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -217,6 +223,8 @@ export const SkuListScreen: FC<SkuListScreenProps> = function SkuListScreen({ na
               contentTx="skuListScreen:emptyDescription"
               buttonTx="skuListScreen:addFirstSku"
               buttonOnPress={handleNavigateToAddSku}
+              buttonStyle={styles.emptyStateButton}
+              ButtonProps={{ TextProps: { style: styles.emptyStateButtonText } }}
             />
           ) : (
             <View style={styles.noSearchResults}>
@@ -280,6 +288,12 @@ const styles = StyleSheet.create((theme) => ({
   emptyListContent: {
     flexGrow: 1,
     justifyContent: "center",
+  },
+  emptyStateButton: {
+    backgroundColor: theme.colors.accent,
+  },
+  emptyStateButtonText: {
+    color: theme.colors.accentForeground,
   },
   noSearchResults: {
     paddingVertical: theme.spacing.xl,

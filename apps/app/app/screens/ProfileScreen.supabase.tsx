@@ -10,7 +10,7 @@
  * Copy this pattern for your own profile/settings screens with Supabase.
  */
 
-import { FC, useCallback, useMemo, useState } from "react"
+import { FC, useCallback, useState } from "react"
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -24,8 +24,8 @@ import {
   useWindowDimensions,
   RefreshControl,
 } from "react-native"
-import { Ionicons } from "@expo/vector-icons"
 import * as LocalAuthentication from "expo-local-authentication"
+import { Ionicons } from "@expo/vector-icons"
 import { useFocusEffect } from "@react-navigation/native"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
@@ -38,8 +38,6 @@ import { ANIMATION } from "@/config/constants"
 import { features } from "@/config/features"
 import { queryKeys, useAuth, useProfileQuery, useTrialStatus, type ProfileRow } from "@/hooks"
 import type { MainTabScreenProps } from "@/navigators/navigationTypes"
-import { mockRevenueCat } from "@/services/mocks/revenueCat"
-import { isRevenueCatMock } from "@/services/revenuecat"
 import {
   clearBiometricLoginCredentials,
   getBiometricEnabled,
@@ -47,6 +45,8 @@ import {
   saveBiometricLoginCredentials,
   setBiometricEnabled,
 } from "@/services/biometricSessionStorage"
+import { mockRevenueCat } from "@/services/mocks/revenueCat"
+import { isRevenueCatMock } from "@/services/revenuecat"
 import { supabase } from "@/services/supabase"
 import { useSubscriptionStore, useWidgetStore } from "@/stores"
 import { webDimension } from "@/types/webStyles"
@@ -679,7 +679,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           <View style={[styles.biometricPasswordSheet, { backgroundColor: theme.colors.card }]}>
             <Text style={styles.biometricPasswordTitle} tx="profileScreen:biometricPasswordTitle" />
             <Text
-              style={[styles.biometricPasswordSubtitle, { color: theme.colors.foregroundSecondary }]}
+              style={[
+                styles.biometricPasswordSubtitle,
+                { color: theme.colors.foregroundSecondary },
+              ]}
               tx="profileScreen:biometricPasswordSubtitle"
             />
             <TextField
@@ -711,14 +714,20 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
                 <Text style={{ color: theme.colors.foregroundSecondary }} tx="common:cancel" />
               </Pressable>
               <Pressable
-                style={[styles.biometricPasswordConfirm, biometricBusy && { opacity: 0.7 }]}
+                style={[
+                  styles.biometricPasswordConfirm,
+                  biometricBusy && styles.biometricPasswordConfirmBusy,
+                ]}
                 onPress={() => void confirmBiometricPassword()}
                 disabled={biometricBusy}
               >
                 {biometricBusy ? (
                   <ActivityIndicator color={theme.colors.primaryForeground} />
                 ) : (
-                  <Text style={styles.biometricPasswordConfirmText} tx="biometricEnrollment:enable" />
+                  <Text
+                    style={styles.biometricPasswordConfirmText}
+                    tx="biometricEnrollment:enable"
+                  />
                 )}
               </Pressable>
             </View>
@@ -1001,6 +1010,9 @@ const styles = StyleSheet.create((theme) => ({
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     borderRadius: theme.radius.lg,
+  },
+  biometricPasswordConfirmBusy: {
+    opacity: 0.7,
   },
   biometricPasswordConfirmText: {
     color: theme.colors.primaryForeground,

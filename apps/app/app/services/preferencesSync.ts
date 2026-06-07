@@ -14,20 +14,17 @@ import { Platform } from "react-native"
 import * as Device from "expo-device"
 import { UnistylesRuntime } from "react-native-unistyles"
 
+import { sentry } from "./sentry"
 import { isSupabase } from "../config/env"
 import type { SupabaseDatabase, UserPreferences } from "../types/supabase"
 import { logger } from "../utils/Logger"
 import { storage } from "../utils/storage"
-import { sentry } from "./sentry"
 
 // Conditionally import Supabase - only when using Supabase backend
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { supabase, isUsingMockSupabase } = isSupabase
   ? require("./supabase")
   : { supabase: null, isUsingMockSupabase: true }
-
-// Convex removed - using Supabase only
-const convexPushTokens = null
 
 // For preferences (theme, notifications settings), skip sync for Convex (use React mutations instead)
 const shouldSkipPreferenceSync = isUsingMockSupabase // Convex removed
@@ -198,7 +195,6 @@ export function applyUserPreferences(preferences: UserPreferences): void {
       value: preferences.dark_mode_enabled,
     })
   }
-
 }
 
 /**

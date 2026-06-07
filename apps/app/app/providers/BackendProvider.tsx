@@ -18,7 +18,7 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from "react"
 import { QueryClientProvider } from "@tanstack/react-query"
 
-import { env, isConvex } from "../config/env"
+import { env } from "../config/env"
 import { queryClient } from "../hooks/queries"
 import { getBackendAsync, isBackendInitialized } from "../services/backend"
 import type { Backend, BackendProvider as BackendProviderType } from "../services/backend/types"
@@ -102,7 +102,6 @@ function SupabaseProvider({ children }: { children: ReactNode }) {
 // ============================================================================
 // Convex Provider
 // ============================================================================
-
 
 // ============================================================================
 // Main Provider
@@ -195,9 +194,7 @@ export function BackendProvider({
     <BackendContext.Provider value={contextValue}>{children}</BackendContext.Provider>
   )
 
-  return (
-      <SupabaseProvider>{providerContent}</SupabaseProvider>
-  )
+  return <SupabaseProvider>{providerContent}</SupabaseProvider>
 }
 
 // ============================================================================

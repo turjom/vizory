@@ -4,8 +4,8 @@
  * `signInWithPassword` — no session refresh tokens, so token rotation cannot desync the vault.
  */
 
-import * as SecureStore from "expo-secure-store"
 import { Platform } from "react-native"
+import * as SecureStore from "expo-secure-store"
 
 const EMAIL_KEY = "vizory_biometric_login_email"
 const PASSWORD_KEY = "vizory_biometric_login_password"
@@ -45,7 +45,10 @@ async function clearLegacyTokenKeys(): Promise<void> {
  * Persist login email and password for biometric sign-in (SecureStore encryption at rest).
  * Clears any legacy session-token vault keys.
  */
-export async function saveBiometricLoginCredentials(email: string, password: string): Promise<void> {
+export async function saveBiometricLoginCredentials(
+  email: string,
+  password: string,
+): Promise<void> {
   if (Platform.OS === "web") {
     logBiometric("saveBiometricLoginCredentials: skipped (web)")
     return
@@ -176,7 +179,10 @@ export async function getBiometricEnrollmentPrompted(userId: string): Promise<bo
   }
 }
 
-export async function setBiometricEnrollmentPrompted(value: boolean, userId: string): Promise<void> {
+export async function setBiometricEnrollmentPrompted(
+  value: boolean,
+  userId: string,
+): Promise<void> {
   const id = userId.trim()
   if (Platform.OS === "web") {
     return

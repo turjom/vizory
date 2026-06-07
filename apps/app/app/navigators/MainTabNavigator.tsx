@@ -58,9 +58,7 @@ export function MainTabNavigator() {
           },
           tabBarButton: (props) => {
             const { style, ...rest } = props
-            return (
-              <PlatformPressable {...rest} style={[{ flex: 1, minWidth: 0 }, style]} />
-            )
+            return <PlatformPressable {...rest} style={[styles.tabBarButton, style]} />
           },
           tabBarActiveTintColor: "#F97316",
           tabBarInactiveTintColor: "#9CA3AF",
@@ -85,3 +83,10 @@ export function MainTabNavigator() {
     </Tab.Navigator>
   )
 }
+
+const styles = StyleSheet.create({
+  tabBarButton: {
+    flex: 1,
+    minWidth: 0,
+  },
+})

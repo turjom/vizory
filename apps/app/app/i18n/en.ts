@@ -189,9 +189,11 @@ const en = {
     barcodeScannerTitle: "Scan barcode",
     barcodeScannerHint: "Point the camera at a product barcode.",
     barcodeScannerClose: "Close",
-    barcodeScannerUnavailableWeb: "Barcode scanning is not available on web. Enter the SKU code manually.",
+    barcodeScannerUnavailableWeb:
+      "Barcode scanning is not available on web. Enter the SKU code manually.",
     barcodePermissionTitle: "Camera access needed",
-    barcodePermissionMessage: "Allow camera access to scan barcodes. You can enable it in Settings.",
+    barcodePermissionMessage:
+      "Allow camera access to scan barcodes. You can enable it in Settings.",
   },
   skuDetailScreen: {
     title: "SKU Details",
@@ -275,8 +277,7 @@ const en = {
     acceptCountConfirmTitle: "Update inventory?",
     acceptCountConfirmSingle:
       "This will update inventory from {{system}} to {{counted}}. Are you sure?",
-    acceptCountConfirmMulti:
-      "This will update inventory as follows:\n{{details}}\n\nAre you sure?",
+    acceptCountConfirmMulti: "This will update inventory as follows:\n{{details}}\n\nAre you sure?",
     acceptCountYes: "Yes",
     acceptCountNo: "No",
   },

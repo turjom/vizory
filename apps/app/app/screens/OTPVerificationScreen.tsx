@@ -199,7 +199,7 @@ export const OTPVerificationScreen = () => {
       {/* Icon */}
       <View style={styles.iconContainer}>
         <View style={[styles.iconCircle, { backgroundColor: theme.colors.secondary }]}>
-          <Ionicons name="keypad-outline" size={48} color={theme.colors.primary} />
+          <Ionicons name="keypad-outline" size={48} color={theme.colors.accent} />
         </View>
       </View>
 
@@ -261,7 +261,7 @@ export const OTPVerificationScreen = () => {
           styles.resendButton,
           countdown > 0 && styles.resendButtonDisabled,
           {
-            backgroundColor: countdown > 0 ? theme.colors.secondary : theme.colors.primary,
+            backgroundColor: countdown > 0 ? theme.colors.secondary : theme.colors.accent,
           },
         ]}
         onPress={handleResend}
@@ -282,7 +282,7 @@ export const OTPVerificationScreen = () => {
           </>
         ) : (
           <>
-            <Ionicons name="refresh" size={20} color={theme.colors.primaryForeground} />
+            <Ionicons name="refresh" size={20} color={theme.colors.accentForeground} />
             <Text
               weight="semiBold"
               style={styles.resendButtonText}
@@ -296,7 +296,7 @@ export const OTPVerificationScreen = () => {
       <TouchableOpacity onPress={handleChangeEmail} style={styles.linkButton} activeOpacity={0.6}>
         <Text color="secondary">
           <Text tx="otpVerificationScreen:wrongEmail" />{" "}
-          <Text weight="semiBold" tx="otpVerificationScreen:changeIt" />
+          <Text weight="semiBold" tx="otpVerificationScreen:changeIt" style={styles.linkAccent} />
         </Text>
       </TouchableOpacity>
 
@@ -308,7 +308,11 @@ export const OTPVerificationScreen = () => {
       >
         <Text color="secondary">
           <Text tx="otpVerificationScreen:preferPassword" />{" "}
-          <Text weight="semiBold" tx="otpVerificationScreen:signInWithPassword" />
+          <Text
+            weight="semiBold"
+            tx="otpVerificationScreen:signInWithPassword"
+            style={styles.linkAccent}
+          />
         </Text>
       </TouchableOpacity>
     </AuthScreenLayout>
@@ -374,7 +378,8 @@ const styles = StyleSheet.create((theme) => ({
     ...theme.shadows.md,
   },
   resendButtonText: {
-    color: theme.colors.primaryForeground,
+    color: theme.colors.accentForeground,
+    fontFamily: theme.typography.fonts.semiBold,
     fontSize: theme.typography.sizes.lg,
   },
   resendButtonDisabled: {
@@ -386,5 +391,8 @@ const styles = StyleSheet.create((theme) => ({
   linkButton: {
     alignItems: "center",
     paddingVertical: theme.spacing.sm,
+  },
+  linkAccent: {
+    color: theme.colors.accent,
   },
 }))

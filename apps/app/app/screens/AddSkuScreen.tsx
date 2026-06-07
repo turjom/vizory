@@ -1,6 +1,17 @@
-import { FC, lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import {
+  ElementRef,
+  FC,
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import {
   ActivityIndicator,
+  // eslint-disable-next-line react-native/split-platform-components
   ActionSheetIOS,
   Alert,
   FlatList,
@@ -13,7 +24,6 @@ import {
   type NativeSyntheticEvent,
   Platform,
   Pressable,
-  TextInput,
   TouchableOpacity,
   View,
   type TextInputKeyPressEventData,
@@ -23,26 +33,39 @@ import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import { Controller, useForm, useWatch } from "react-hook-form"
 import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-query"
+import { Controller, useForm, useWatch } from "react-hook-form"
 import { useTranslation } from "react-i18next"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { StyleSheet, useUnistyles } from "react-native-unistyles"
 import { z } from "zod"
 
-import { Button, Header, Text, TextField, useToast, type TextFieldAccessoryProps } from "@/components"
+import {
+  Button,
+  Header,
+  Text,
+  TextField,
+  useToast,
+  type TextFieldAccessoryProps,
+} from "@/components"
 import { useAuth, useProfileQuery, useTrialStatus } from "@/hooks"
 import { queryKeys } from "@/hooks/queries"
-import type { AddSkuScreenProps, AppStackParamList, MainTabParamList } from "@/navigators/navigationTypes"
-import { supabase } from "@/services/supabase"
+import type {
+  AddSkuScreenProps,
+  AppStackParamList,
+  MainTabParamList,
+} from "@/navigators/navigationTypes"
 import { uploadSkuPhotoToStorage } from "@/services/skuPhotoUpload"
+import { supabase } from "@/services/supabase"
 import {
   deviceCurrencyCode,
   isPreferredCurrencyCode,
   symbolForCurrencyCode,
   type PreferredCurrencyCode,
 } from "@/utils/currencyLocale"
+
+type TextFieldRef = ElementRef<typeof TextField>
 
 const UOM_PRESET_VALUES = [
   "Pieces",
@@ -147,12 +170,12 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
     }
   }, [isTrialExpired, isEditMode, navigation])
 
-  const nameRef = useRef<TextInput>(null)
-  const skuCodeRef = useRef<TextInput>(null)
-  const descriptionRef = useRef<TextInput>(null)
-  const priceRef = useRef<TextInput>(null)
-  const uomOtherRef = useRef<TextInput>(null)
-  const safetyStockRef = useRef<TextInput>(null)
+  const nameRef = useRef<TextFieldRef>(null)
+  const skuCodeRef = useRef<TextFieldRef>(null)
+  const descriptionRef = useRef<TextFieldRef>(null)
+  const priceRef = useRef<TextFieldRef>(null)
+  const uomOtherRef = useRef<TextFieldRef>(null)
+  const safetyStockRef = useRef<TextFieldRef>(null)
   const [uomModalVisible, setUomModalVisible] = useState(false)
   const [skuPhotoState, setSkuPhotoState] = useState<SkuPhotoState>({ kind: "none" })
   const [skuCodeDuplicateError, setSkuCodeDuplicateError] = useState<string | null>(null)
@@ -249,14 +272,14 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
       sku_code: sku?.sku_code ?? "",
       description: sku?.description ?? "",
       price:
-        sku?.price !== null && sku?.price !== undefined ? formatPriceTwoDecimals(String(sku.price)) : "",
+        sku?.price !== null && sku?.price !== undefined
+          ? formatPriceTwoDecimals(String(sku.price))
+          : "",
       uom_preset: matchedPreset ? rawUom : rawUom ? "Other" : "",
       uom_other: matchedPreset ? "" : rawUom,
       safety_stock_threshold: String(sku?.safety_stock_threshold ?? 0),
     })
-    setSkuPhotoState(
-      sku?.photo_url ? { kind: "remote", url: sku.photo_url } : { kind: "none" },
-    )
+    setSkuPhotoState(sku?.photo_url ? { kind: "remote", url: sku.photo_url } : { kind: "none" })
   }, [isStackEdit, route.params, reset])
 
   const uomPresetWatch = useWatch({ control, name: "uom_preset" })
@@ -371,7 +394,9 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         await queryClient.invalidateQueries({ queryKey: queryKeys.sku.detail(editingSku.id) })
       }
       if (result?.insertedSkuId) {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.sku.detail(result.insertedSkuId) })
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.sku.detail(result.insertedSkuId),
+        })
       }
       if (userId) {
         await persistPreferredCurrencyOnFirstSkuSave(userId, queryClient)
@@ -416,7 +441,11 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         .eq("user_id", userId)
       if (quantityError) throw quantityError
 
-      const { error: skuError } = await supabase.from("skus").delete().eq("id", skuId).eq("user_id", userId)
+      const { error: skuError } = await supabase
+        .from("skus")
+        .delete()
+        .eq("id", skuId)
+        .eq("user_id", userId)
       if (skuError) throw skuError
 
       return { deletedId: skuId }
@@ -440,8 +469,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
   })
 
   const promptDeleteSku = useCallback(() => {
-    const name =
-      editingSku?.name?.trim() || t("skuDetailScreen:deleteSkuAlertUnnamedName")
+    const name = editingSku?.name?.trim() || t("skuDetailScreen:deleteSkuAlertUnnamedName")
     Alert.alert(
       t("skuDetailScreen:deleteSkuAlertTitle", { name }),
       t("skuDetailScreen:deleteSkuAlertMessage"),
@@ -767,8 +795,17 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
           >
             {skuPhotoState.kind === "none" ? (
               <View style={styles.photoPlaceholder}>
-                <Ionicons name="camera-outline" size={28} color={theme.colors.foregroundSecondary} />
-                <Text size="sm" color="secondary" tx="addSkuScreen:photoPlaceholder" style={styles.photoHint} />
+                <Ionicons
+                  name="camera-outline"
+                  size={28}
+                  color={theme.colors.foregroundSecondary}
+                />
+                <Text
+                  size="sm"
+                  color="secondary"
+                  tx="addSkuScreen:photoPlaceholder"
+                  style={styles.photoHint}
+                />
               </View>
             ) : (
               <Image
@@ -915,10 +952,7 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                 <Text preset="label" tx="addSkuScreen:uomLabel" style={styles.uomFieldLabel} />
                 <Pressable
                   onPress={openUomPickerFromKeyboard}
-                  style={[
-                    styles.uomTrigger,
-                    fieldState.error ? styles.uomTriggerError : undefined,
-                  ]}
+                  style={[styles.uomTrigger, fieldState.error ? styles.uomTriggerError : undefined]}
                   accessibilityRole="button"
                 >
                   <Text
@@ -926,7 +960,11 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                     color={field.value ? "primary" : "tertiary"}
                     text={triggerLabel}
                   />
-                  <Ionicons name="chevron-down" size={20} color={theme.colors.foregroundSecondary} />
+                  <Ionicons
+                    name="chevron-down"
+                    size={20}
+                    color={theme.colors.foregroundSecondary}
+                  />
                 </Pressable>
                 {fieldState.error?.message ? (
                   <Text size="sm" color="error" style={styles.uomFieldHelper}>
@@ -968,7 +1006,12 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         >
           <Pressable style={styles.uomModalBackdrop} onPress={() => setUomModalVisible(false)}>
             <View style={styles.uomModalCard} pointerEvents="box-none">
-              <Text weight="semiBold" size="lg" style={styles.uomModalTitle} tx="addSkuScreen:uomModalTitle" />
+              <Text
+                weight="semiBold"
+                size="lg"
+                style={styles.uomModalTitle}
+                tx="addSkuScreen:uomModalTitle"
+              />
               <FlatList
                 data={[...UOM_PRESET_VALUES]}
                 keyExtractor={(item) => item}
@@ -980,7 +1023,10 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
                     activeOpacity={0.7}
                     onPress={() => selectUomPresetAndClose(item)}
                   >
-                    <Text size="md" text={item === "Other" ? t("addSkuScreen:uomOptionOther") : item} />
+                    <Text
+                      size="md"
+                      text={item === "Other" ? t("addSkuScreen:uomOptionOther") : item}
+                    />
                   </TouchableOpacity>
                 )}
               />

@@ -63,10 +63,14 @@ export default function AddSkuBarcodeScannerModal({
       const result = await Camera.requestCameraPermissionsAsync()
       if (cancelled) return
       if (!result.granted) {
-        Alert.alert(t("addSkuScreen:barcodePermissionTitle"), t("addSkuScreen:barcodePermissionMessage"), [
-          { text: t("common:cancel"), style: "cancel" },
-          { text: t("common:openSettings"), onPress: () => void Linking.openSettings() },
-        ])
+        Alert.alert(
+          t("addSkuScreen:barcodePermissionTitle"),
+          t("addSkuScreen:barcodePermissionMessage"),
+          [
+            { text: t("common:cancel"), style: "cancel" },
+            { text: t("common:openSettings"), onPress: () => void Linking.openSettings() },
+          ],
+        )
         onCloseRef.current()
         return
       }
@@ -89,7 +93,12 @@ export default function AddSkuBarcodeScannerModal({
   )
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      onRequestClose={onClose}
+    >
       <View style={styles.skuScannerRoot}>
         <View style={[styles.skuScannerHeader, { paddingTop: insets.top + theme.spacing.sm }]}>
           <Pressable
@@ -119,7 +128,9 @@ export default function AddSkuBarcodeScannerModal({
         ) : (
           <View style={styles.skuScannerCamera} />
         )}
-        <View style={[styles.skuScannerHintWrap, { paddingBottom: insets.bottom + theme.spacing.md }]}>
+        <View
+          style={[styles.skuScannerHintWrap, { paddingBottom: insets.bottom + theme.spacing.md }]}
+        >
           <Text size="sm" tx="addSkuScreen:barcodeScannerHint" style={styles.skuScannerHintText} />
         </View>
       </View>

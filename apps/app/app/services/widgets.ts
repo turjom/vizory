@@ -19,7 +19,6 @@
  * - Convex: HTTP action endpoints, token-based auth
  */
 
-
 // Conditional export based on backend provider
 // This ensures tree-shaking removes the unused version in production
 

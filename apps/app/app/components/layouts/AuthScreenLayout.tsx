@@ -176,73 +176,73 @@ export const AuthScreenLayout = ({
           cardStyle,
         ]}
       >
-            {/* Close Button (top right) - positioned outside ScrollView for fixed position */}
-            {showCloseButton && onClose && (
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={onClose}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={t("authScreenLayout:closeButton")}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <View style={styles.closeButtonCircle}>
-                  <Ionicons name="close" size={20} color={theme.colors.foreground} />
-                </View>
-              </TouchableOpacity>
-            )}
+        {/* Close Button (top right) - positioned outside ScrollView for fixed position */}
+        {showCloseButton && onClose && (
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={onClose}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("authScreenLayout:closeButton")}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={styles.closeButtonCircle}>
+              <Ionicons name="close" size={20} color={theme.colors.foreground} />
+            </View>
+          </TouchableOpacity>
+        )}
 
-            {/* Back Button (top left) - positioned outside ScrollView for fixed position */}
-            {showBackButton && onBack && (
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={onBack}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={t("authScreenLayout:backButton")}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <View style={styles.backButtonCircle}>
-                  <Ionicons name="arrow-back" size={20} color={theme.colors.foreground} />
-                </View>
-              </TouchableOpacity>
-            )}
+        {/* Back Button (top left) - positioned outside ScrollView for fixed position */}
+        {showBackButton && onBack && (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={t("authScreenLayout:backButton")}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <View style={styles.backButtonCircle}>
+              <Ionicons name="arrow-back" size={20} color={theme.colors.foreground} />
+            </View>
+          </TouchableOpacity>
+        )}
 
-            <ContentWrapper {...contentWrapperProps}>
-              {/* Header Icon */}
-              {headerIcon && (
-                <View style={styles.headerIconContainer}>
-                  <Text style={styles.headerIcon}>{headerIcon}</Text>
-                </View>
-              )}
+        <ContentWrapper {...contentWrapperProps}>
+          {/* Header Icon */}
+          {headerIcon && (
+            <View style={styles.headerIconContainer}>
+              <Text style={styles.headerIcon}>{headerIcon}</Text>
+            </View>
+          )}
 
-              {/* Title */}
-              {(title || titleTx) && (
-                <Text
-                  size="3xl"
-                  weight="bold"
-                  style={styles.title}
-                  text={title}
-                  tx={titleTx}
-                  txOptions={titleTxOptions}
-                />
-              )}
+          {/* Title */}
+          {(title || titleTx) && (
+            <Text
+              size="3xl"
+              weight="bold"
+              style={styles.title}
+              text={title}
+              tx={titleTx}
+              txOptions={titleTxOptions}
+            />
+          )}
 
-              {/* Subtitle */}
-              {(subtitle || subtitleTx) && (
-                <Text
-                  color="secondary"
-                  style={styles.subtitle}
-                  text={subtitle}
-                  tx={subtitleTx}
-                  txOptions={subtitleTxOptions}
-                />
-              )}
+          {/* Subtitle */}
+          {(subtitle || subtitleTx) && (
+            <Text
+              color="secondary"
+              style={styles.subtitle}
+              text={subtitle}
+              tx={subtitleTx}
+              txOptions={subtitleTxOptions}
+            />
+          )}
 
-              {/* Content */}
-              <View style={styles.content}>{safeChildren}</View>
-            </ContentWrapper>
-          </View>
+          {/* Content */}
+          <View style={styles.content}>{safeChildren}</View>
+        </ContentWrapper>
+      </View>
     </KeyboardAvoidingView>
   )
 
@@ -254,7 +254,11 @@ export const AuthScreenLayout = ({
         </View>
       ) : (
         <LinearGradient
-          colors={[theme.colors.gradientStart, theme.colors.gradientMiddle, theme.colors.gradientEnd]}
+          colors={[
+            theme.colors.gradientStart,
+            theme.colors.gradientMiddle,
+            theme.colors.gradientEnd,
+          ]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}

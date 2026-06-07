@@ -218,7 +218,10 @@ export async function fetchOnboardingFromDatabase(userId: string): Promise<boole
  * Syncs onboarding status between local storage and database.
  * The in-app onboarding flow was removed; always treat users as onboarded for navigation.
  */
-export async function syncOnboardingStatus(userId: string, _localStatus: boolean): Promise<boolean> {
+export async function syncOnboardingStatus(
+  userId: string,
+  _localStatus: boolean,
+): Promise<boolean> {
   const dbStatus = await fetchOnboardingFromDatabase(userId)
   if (dbStatus !== true) {
     await syncOnboardingToDatabase(userId, true)
