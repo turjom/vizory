@@ -29,6 +29,7 @@ import {
   type TextInputKeyPressEventData,
 } from "react-native"
 import * as ImagePicker from "expo-image-picker"
+import * as StoreReview from "expo-store-review"
 import { Ionicons } from "@expo/vector-icons"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs"
@@ -412,6 +413,25 @@ export const AddSkuScreen: FC<AddSkuScreenProps> = function AddSkuScreen({ navig
         title: t("addSkuScreen:saveSuccessTitle"),
         variant: "success",
       })
+
+      // Prompt for in-app review after the user's 3rd SKU is created.
+      if (result?.insertedSkuId && userId) {
+        try {
+          const { count, error: skuCountError } = await supabase
+            .from("skus")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", userId)
+
+          if (!skuCountError && count === 3) {
+            const isAvailable = await StoreReview.isAvailableAsync()
+            if (isAvailable) {
+              await StoreReview.requestReview()
+            }
+          }
+        } catch {
+          // Never let the review prompt crash the app.
+        }
+      }
     },
   })
 
