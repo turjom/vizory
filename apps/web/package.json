@@ -2,36 +2,12 @@
   "name": "web",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "lint:check": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "typecheck": "tsc --noEmit",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@lemonsqueezy/lemonsqueezy.js": "^3.3.1",
-    "@sentry/react": "^7.91.0",
-    "lucide-react": "^0.555.0",
-    "posthog-js": "^1.96.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "eslint": "^8.55.0",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "postcss": "^8.4.32",
-    "tailwindcss": "^3.3.6",
-    "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "dev": "python3 -m http.server 5173",
+    "build": "rm -rf dist && mkdir dist && cp index.html styles.css robots.txt sitemap.xml dist/ && cp -R assets dist/",
+    "preview": "python3 -m http.server 4173 --directory dist",
+    "lint": "node -e \"process.exit(0)\"",
+    "lint:check": "node -e \"process.exit(0)\"",
+    "typecheck": "node -e \"process.exit(0)\""
   }
 }

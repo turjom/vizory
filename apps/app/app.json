@@ -3,7 +3,7 @@
   "slug": "vizory",
   "scheme": "vizory",
   "entryPoint": "./index.tsx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "orientation": "portrait",
   "userInterfaceStyle": "automatic",
   "icon": "./assets/icons/vizory_1024.png",
@@ -34,7 +34,7 @@
     ]
   },
   "ios": {
-    "buildNumber": "15",
+    "buildNumber": "16",
     "icon": "./assets/icons/vizory_1024.png",
     "supportsTablet": true,
     "bundleIdentifier": "com.vizory.app",

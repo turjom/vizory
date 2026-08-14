@@ -189,7 +189,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: marketing-site-build
-          path: apps/web/.next
+          path: apps/web/dist
           retention-days: 30
 
   # ============================================

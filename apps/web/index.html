@@ -1,36 +1,313 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Primary Meta Tags -->
-    <title>Your App Name</title>
-    <meta name="title" content="Your App Name" />
-    <meta name="description" content="Your app description goes here" />
+    <title>Vizory — Simple Inventory Tracking for Solo Sellers</title>
+    <meta
+      name="description"
+      content="The simple, fairly-priced inventory tracker for Etsy, Carousell, and TikTok Shop sellers. Scan barcodes, track stock, get low-stock alerts. Free for 30 days."
+    />
+    <link rel="canonical" href="https://vizory.app/" />
 
-    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://yourapp.com/" />
-    <meta property="og:title" content="Your App Name" />
-    <meta property="og:description" content="Your app description goes here" />
-    <meta property="og:image" content="https://yourapp.com/og-image.jpg" />
+    <meta property="og:url" content="https://vizory.app/" />
+    <meta property="og:title" content="Vizory — Simple Inventory Tracking for Solo Sellers" />
+    <meta
+      property="og:description"
+      content="The simple, fairly-priced inventory tracker for Etsy, Carousell, and TikTok Shop sellers. Scan barcodes, track stock, get low-stock alerts. Free for 30 days."
+    />
+    <meta property="og:image" content="https://vizory.app/assets/og-image.png" />
+    <meta property="og:image:alt" content="Vizory app icon" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://yourapp.com/" />
-    <meta property="twitter:title" content="Your App Name" />
-    <meta property="twitter:description" content="Your app description goes here" />
-    <meta property="twitter:image" content="https://yourapp.com/og-image.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Vizory — Simple Inventory Tracking for Solo Sellers" />
+    <meta
+      name="twitter:description"
+      content="The simple, fairly-priced inventory tracker for Etsy, Carousell, and TikTok Shop sellers. Scan barcodes, track stock, get low-stock alerts. Free for 30 days."
+    />
+    <meta name="twitter:image" content="https://vizory.app/assets/og-image.png" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://yourapp.com/" />
+    <link rel="icon" type="image/png" href="./assets/favicon.png" />
+    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="#top" aria-label="Vizory home">
+          <img src="./assets/logo.png" alt="" width="40" height="40" />
+          <span>Vizory</span>
+        </a>
+        <nav class="nav" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#why">Why Vizory</a>
+          <a href="#pricing">Pricing</a>
+        </nav>
+        <a class="btn btn-primary header-cta" href="https://apps.apple.com/us/app/vizory-inventory-tracker/id6762545671">
+          Get the app
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <h1>Stop managing inventory in spreadsheets</h1>
+            <p class="lede">
+              The simple inventory tracker built for solo sellers, small shops, and independent
+              businesses.
+            </p>
+            <a
+              class="store-badge"
+              href="https://apps.apple.com/us/app/vizory-inventory-tracker/id6762545671"
+            >
+              <img
+                src="./assets/app-store-badge.svg"
+                alt="Download on the App Store"
+                width="180"
+                height="60"
+              />
+            </a>
+          </div>
+          <div class="hero-visual">
+            <figure class="device">
+              <img
+                src="./assets/screenshot-dashboard.jpg"
+                alt="Vizory dashboard showing total inventory value, low stock alerts, and top products"
+                width="555"
+                height="1200"
+                fetchpriority="high"
+              />
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="features" id="features">
+        <div class="wrap">
+          <p class="eyebrow">What you get</p>
+          <h2>Everything a one-person shop actually needs</h2>
+
+          <article class="feature">
+            <div class="feature-copy">
+              <h3>Track inventory your way</h3>
+              <p>Add products with photos, prices, and custom units.</p>
+            </div>
+            <figure class="device">
+              <img
+                src="./assets/screenshot-add-sku.jpg"
+                alt="Add SKU screen with product photo, name, barcode field, price, and unit of measure"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-flip">
+            <div class="feature-copy">
+              <h3>Scan barcodes instantly</h3>
+              <p>Set up SKUs in seconds, no manual entry.</p>
+            </div>
+            <figure class="device">
+              <img
+                src="./assets/screenshot-inventory.jpg"
+                alt="Inventory list with search and barcode scan, plus a stock take action"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div class="feature-copy">
+              <h3>Never run out unexpectedly</h3>
+              <p>Low stock alerts keep you ahead of demand.</p>
+            </div>
+            <figure class="device">
+              <img
+                src="./assets/screenshot-dashboard.jpg"
+                alt="Dashboard low stock alerts for products below their minimum quantity"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+
+          <article class="feature feature-flip">
+            <div class="feature-copy">
+              <h3>Reconcile with confidence</h3>
+              <p>Built-in stock takes to match physical and system counts.</p>
+            </div>
+            <figure class="device">
+              <img
+                src="./assets/screenshot-sku-details.jpg"
+                alt="SKU details showing a stock take in the transaction history"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+
+          <article class="feature">
+            <div class="feature-copy">
+              <h3>See your business at a glance</h3>
+              <p>Total inventory value, top products, weekly movement.</p>
+            </div>
+            <figure class="device">
+              <img
+                src="./assets/screenshot-dashboard.jpg"
+                alt="Dashboard with total inventory value, low stock alerts, and top SKUs by stock"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+        </div>
+      </section>
+
+      <section class="why" id="why">
+        <div class="wrap">
+          <p class="eyebrow">Why Vizory</p>
+          <h2>Simple on purpose. Priced that way too.</h2>
+
+          <div class="why-copy">
+            <p>
+              <strong>One flat price, no upgrade pressure.</strong> Sortly's free plan is genuinely
+              useful to start, but it's capped at 100 items and doesn't include export or offline
+              access. The moment your shop grows past that, you're looking at $49/month minimum.
+              Vizory is one price, no tiers, no feature-gating as you grow.
+            </p>
+            <p>
+              <strong>Built around how solo sellers actually work.</strong> Sortly's structure —
+              folders, subfolders, multi-location tracking, team permissions — is designed for
+              businesses managing physical assets across sites and staff. Vizory keeps it to what a
+              one-person operation actually uses: SKUs, barcode scanning, stock levels, and
+              low-stock alerts.
+            </p>
+            <p>
+              <strong>No item ceiling to plan around.</strong> Whether you're tracking 30 SKUs or
+              300, Vizory doesn't ask you to upgrade plans as your catalog grows.
+            </p>
+          </div>
+
+          <div class="compare" role="table" aria-label="Vizory compared with Sortly">
+            <div class="compare-head" role="row">
+              <div role="columnheader" class="compare-feature-h">Feature</div>
+              <div role="columnheader" class="compare-vizory-h">Vizory</div>
+              <div role="columnheader" class="compare-sortly-h">Sortly</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Price</div>
+              <div class="vizory-cell">$9.99/month, flat</div>
+              <div>Free (100 items, 1 user) → $49–$299/month</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Item limit</div>
+              <div class="vizory-cell">No item limits</div>
+              <div>100 (Free) / 500 (Advanced) / 2,000 (Ultra)</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Users</div>
+              <div class="vizory-cell">1 (built for solo sellers)</div>
+              <div>1 (Free) / 2+ (paid tiers)</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Barcode scanning</div>
+              <div class="vizory-cell">Included</div>
+              <div>Included</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Low stock alerts</div>
+              <div class="vizory-cell">Included</div>
+              <div>Included (paid tiers)</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Stock takes / reconciliation</div>
+              <div class="vizory-cell">Included</div>
+              <div>Included (paid tiers)</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Export / reports</div>
+              <div class="vizory-cell">Included</div>
+              <div>Paid plans only</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Free trial</div>
+              <div class="vizory-cell">30 days</div>
+              <div>14 days (paid plans)</div>
+            </div>
+            <div class="compare-row" role="row">
+              <div role="rowheader">Built for</div>
+              <div class="vizory-cell">Solo sellers, small shops</div>
+              <div>Teams, warehouses, multi-location businesses</div>
+            </div>
+          </div>
+
+          <p class="disclaimer">
+            Vizory is not affiliated with or endorsed by Sortly. Pricing and feature details for
+            Sortly are accurate as of August 2026 and subject to change.
+          </p>
+        </div>
+      </section>
+
+      <section class="pricing" id="pricing">
+        <div class="wrap">
+          <p class="eyebrow">Pricing</p>
+          <h2>One plan. That's the whole menu.</h2>
+          <article class="price-card">
+            <p class="price-amount">$9.99<span>/month</span></p>
+            <p class="price-note">30-day free trial, no credit card tricks</p>
+            <ul class="price-points">
+              <li>No item limits</li>
+              <li>Barcode scanning, alerts, and stock takes included</li>
+              <li>Built for a one-person operation</li>
+            </ul>
+            <a
+              class="btn btn-primary btn-lg"
+              href="https://apps.apple.com/us/app/vizory-inventory-tracker/id6762545671"
+            >
+              Start Your Free Trial
+            </a>
+            <figure class="device price-device">
+              <img
+                src="./assets/screenshot-profile.jpg"
+                alt="Vizory profile screen showing a Pro subscription"
+                width="555"
+                height="1200"
+                loading="lazy"
+              />
+            </figure>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <a class="brand" href="#top">
+          <img src="./assets/logo.png" alt="" width="32" height="32" />
+          <span>Vizory</span>
+        </a>
+        <p>
+          <a href="mailto:support@vizory.app">support@vizory.app</a>
+          ·
+          <a
+            href="https://app.termly.io/policy-viewer/policy.html?policyUUID=1f493bab-f99a-4c60-9bf5-e862afc9390e"
+            rel="noopener noreferrer"
+            >Privacy Policy</a>
+        </p>
+        <p class="copyright">© 2026 Turjo Mukherjee</p>
+      </div>
+    </footer>
   </body>
 </html>
